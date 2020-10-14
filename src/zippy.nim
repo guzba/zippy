@@ -63,13 +63,20 @@ const
 
 {.push checks: off.}
 
+template failUncompress() =
+  raise newException(
+    ZippyException, "Invalid buffer, unable to uncompress"
+  )
+
 func buildHuffmanAlphabet(codeLengths: seq[uint8]): seq[uint16] =
-  doAssert codeLengths.len - 1 <= high(uint16).int
+  if codeLengths.len - 1 > high(uint16).int:
+    failUncompress()
 
   var blCount: array[16, uint16]
   for i in 0 ..< codeLengths.len:
     let codeLength = codeLengths[i]
-    doAssert codeLength < 16
+    if codeLength > 15:
+      failUncompress()
     inc blCount[codeLength]
 
   blCount[0] = 0
@@ -148,11 +155,15 @@ func inflateDynamic(b: var Buffer, dst: var seq[uint8]) =
         totalLength = baseLengths[lengthIndex] +
           b.readBits(baseLengthsExtraBits[lengthIndex])
         distCode = decodeHuffman(b, distanceAlphabet, distanceLengths)
-      doAssert distCode < 30
+      if distCode >= 30:
+        failUncompress()
       let totalDist = baseDistance[distCode] +
         b.readBits(baseDistanceExtraBits[distCode])
+
       var pos = dst.len - totalDist.int
-      doAssert pos >= 0
+      if pos < 0:
+        failUncompress()
+
       for i in 0 ..< totalLength.int:
         dst.add(dst[pos])
         inc pos
