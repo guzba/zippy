@@ -92,6 +92,29 @@ func buildHuffmanAlphabet(codeLengths: seq[uint8]): seq[uint16] =
       result[n] = nextCode[len]
       inc nextCode[len]
 
+const
+  fixedCodeBitLengths = block:
+    var bitLengths = newSeq[uint8](288)
+    for i in 0 ..< bitLengths.len:
+      if i <= 143:
+        bitLengths[i] = 8
+      elif i <= 255:
+        bitLengths[i] = 9
+      elif i <= 279:
+        bitLengths[i] = 7
+      else:
+        bitLengths[i] = 8
+    bitLengths
+
+  fixedDistCodeBitLengths = block:
+    var bitLengths = newSeq[uint8](32)
+    for i in 0 ..< bitLengths.len:
+      bitLengths[i] = 5
+    bitLengths
+
+  fixedAlphabet = buildHuffmanAlphabet(fixedCodeBitLengths)
+  fixedDistAlphabet = buildHuffmanAlphabet(fixedDistCodeBitLengths)
+
 func decodeHuffman(
   b: var Buffer,
   alphabet: seq[uint16],
@@ -115,44 +138,53 @@ func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   dst.setLen(pos + len) # Make room for the bytes to be copied to
   b.readBytes(dst[pos].addr, len)
 
-func inflateDynamicCodes(b: var Buffer, dst: var seq[uint8]) =
-  let
-    hlit = b.readBits(5).int + 257
-    hdist = b.readBits(5).int + 1
-    hclen = b.readBits(4).int + 4
+func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
+  var
+    literalLengths, distanceLengths: seq[uint8]
+    literalAlphabet, distanceAlphabet: seq[uint16]
 
-  var codeLengths = newSeq[uint8](19)
-  for i in 0 ..< hclen.int:
-    codeLengths[codeLengthOrder[i]] = b.readBits(3).uint8
+  if fixedCodes:
+    literalLengths = fixedCodeBitLengths
+    distanceLengths = fixedDistCodeBitLengths
+    literalAlphabet = fixedAlphabet
+    distanceAlphabet = fixedDistAlphabet
+  else:
+    let
+      hlit = b.readBits(5).int + 257
+      hdist = b.readBits(5).int + 1
+      hclen = b.readBits(4).int + 4
 
-  let codes = buildHuffmanAlphabet(codeLengths)
+    var codeLengths = newSeq[uint8](19)
+    for i in 0 ..< hclen.int:
+      codeLengths[codeLengthOrder[i]] = b.readBits(3).uint8
 
-  var unpacked: seq[uint8]
-  while unpacked.len < hlit + hdist:
-    let symbol = decodeHuffman(b, codes, codeLengths)
-    if symbol <= 15:
-      unpacked.add(symbol.uint8)
-    elif symbol == 16:
-      let prev = unpacked[unpacked.len - 1]
-      for i in 0 ..< b.readBits(2).int + 3:
-        unpacked.add(prev)
-    elif symbol == 17:
-      for i in 0 ..< b.readBits(3).int + 3:
-        unpacked.add(0)
-    elif symbol == 18:
-      for i in 0 ..< b.readBits(7).int + 11:
-        unpacked.add(0)
-    else:
-      raise newException(ZippyException, "Invalid symbol")
+    let codes = buildHuffmanAlphabet(codeLengths)
 
-  let
+    var unpacked: seq[uint8]
+    while unpacked.len < hlit + hdist:
+      let symbol = decodeHuffman(b, codes, codeLengths)
+      if symbol <= 15:
+        unpacked.add(symbol.uint8)
+      elif symbol == 16:
+        let prev = unpacked[unpacked.len - 1]
+        for i in 0 ..< b.readBits(2).int + 3:
+          unpacked.add(prev)
+      elif symbol == 17:
+        for i in 0 ..< b.readBits(3).int + 3:
+          unpacked.add(0)
+      elif symbol == 18:
+        for i in 0 ..< b.readBits(7).int + 11:
+          unpacked.add(0)
+      else:
+        raise newException(ZippyException, "Invalid symbol")
+
     literalLengths = unpacked[0 ..< hlit]
     distanceLengths = unpacked[hlit ..< unpacked.len]
-    literalLengthAlphabet = buildHuffmanAlphabet(literalLengths)
+    literalAlphabet = buildHuffmanAlphabet(literalLengths)
     distanceAlphabet = buildHuffmanAlphabet(distanceLengths)
 
   while true:
-    let symbol = decodeHuffman(b, literalLengthAlphabet, literalLengths)
+    let symbol = decodeHuffman(b, literalAlphabet, literalLengths)
     if symbol <= 255:
       dst.add(symbol.uint8)
     elif symbol == 256:
@@ -189,9 +221,9 @@ func inflate(b: var Buffer, dst: var seq[uint8]) =
     of 0: # No compression
       inflateNoCompression(b, dst)
     of 1: # Compressed with fixed Huffman codes
-      raise newException(ZippyException, "Fixed code blocks unsupported")
+      inflateBlock(b, dst, true)
     of 2: # Compressed with dynamic Huffman codes
-      inflateDynamicCodes(b, dst)
+      inflateBlock(b, dst, false)
     else:
       raise newException(ZippyException, "Invalid block header")
 
