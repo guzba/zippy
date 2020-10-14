@@ -202,4 +202,7 @@ func uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
   ## Uncompresses src and returns the uncompressed data seq.
   uncompress(src, result)
 
+template uncompress*(src: string): string =
+  cast[string](uncompress(cast[seq[uint8]](src)))
+
 {.pop.}
