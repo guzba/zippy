@@ -57,8 +57,6 @@ func readBits*(b: var Buffer, bits: int): uint16 =
     result = result or (b.read(bits - 8).uint16 shl 8)
 
 func skipBits*(b: var Buffer, bits: int) =
-  doAssert bits <= 16
-
   var bitsLeftToSkip = bits
   while bitsLeftToSkip > 0:
     let bitsLeftInByte = 8 - b.bitPos
@@ -84,3 +82,7 @@ func skipRemainingBitsInCurrentByte*(b: var Buffer) =
   if b.bitPos > 0:
     b.bitPos = 0
     inc b.bytePos
+
+func readBytes*(b: var Buffer, dst: pointer, len: int) =
+  copyMem(dst, b.data[b.bytePos].addr, len)
+  b.skipBits(len * 8)

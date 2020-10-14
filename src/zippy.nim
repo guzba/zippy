@@ -107,7 +107,15 @@ func decodeHuffman(
       b.skipBits(codeLength)
       return i.uint16
 
-func inflateDynamic(b: var Buffer, dst: var seq[uint8]) =
+func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
+  b.skipRemainingBitsInCurrentByte()
+  let len = b.readBits(16).int
+  b.skipBits(16) # nlen
+  let pos = dst.len
+  dst.setLen(pos + len) # Make room for the bytes to be copied to
+  b.readBytes(dst[pos].addr, len)
+
+func inflateDynamicCodes(b: var Buffer, dst: var seq[uint8]) =
   let
     hlit = b.readBits(5).int + 257
     hdist = b.readBits(5).int + 1
@@ -179,15 +187,11 @@ func inflate(b: var Buffer, dst: var seq[uint8]) =
 
     case btype:
     of 0: # No compression
-      b.skipRemainingBitsInCurrentByte()
-      let len = b.readBits(16)
-      b.skipBits(16) # nlen
-      for i in 0 ..< len.int:
-        dst.add(b.readBits(8).uint8)
+      inflateNoCompression(b, dst)
     of 1: # Compressed with fixed Huffman codes
       raise newException(ZippyException, "Fixed code blocks unsupported")
     of 2: # Compressed with dynamic Huffman codes
-      inflateDynamic(b, dst)
+      inflateDynamicCodes(b, dst)
     else:
       raise newException(ZippyException, "Invalid block header")
 
