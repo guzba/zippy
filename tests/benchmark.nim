@@ -1,5 +1,4 @@
-import strformat, zippy, fidget/opengl/perf
-
+import fidget/opengl/perf, strformat, zippy
 
 proc t() =
   # let file = "alice29.txt.z"

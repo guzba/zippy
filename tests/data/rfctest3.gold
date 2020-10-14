@@ -1,0 +1,864 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://dublincore.org/documents/2008/08/04/dc-html/">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="robots" content="index,follow" />
+    <meta name="creator" content="rfcmarkup version 1.119" />
+    <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/" />
+<meta name="DC.Identifier" content="urn:ietf:rfc:1952" />
+<meta name="DC.Description.Abstract" content="This specification defines a lossless compressed data format that is
+compatible with the widely used GZIP utility. This memo provides
+information for the Internet community. This memo does not specify an
+Internet standard of any kind." />
+<meta name="DC.Creator" content="L. Peter Deutsch &lt;ghost@aladdin.com&gt;" />
+<meta name="DC.Date.Issued" content="May, 1996" />
+<meta name="DC.Title" content="GZIP file format specification version 4.3" />
+
+    <link rel="icon" href="/images/rfc.png" type="image/png" />
+    <link rel="shortcut icon" href="/images/rfc.png" type="image/png" />
+    <title>RFC 1952 - GZIP file format specification version 4.3</title>
+    
+    
+    <style type="text/css">
+	@media only screen 
+	  and (min-width: 992px)
+	  and (max-width: 1199px) {
+	    body { font-size: 14pt; }
+            div.content { width: 96ex; margin: 0 auto; }
+        }
+	@media only screen 
+	  and (min-width: 768px)
+	  and (max-width: 991px) {
+            body { font-size: 14pt; }
+            div.content { width: 96ex; margin: 0 auto; }
+        }
+	@media only screen 
+	  and (min-width: 480px)
+	  and (max-width: 767px) {
+            body { font-size: 11pt; }
+            div.content { width: 96ex; margin: 0 auto; }
+        }
+	@media only screen 
+	  and (max-width: 479px) {
+            body { font-size: 8pt; }
+            div.content { width: 96ex; margin: 0 auto; }
+        }
+	@media only screen 
+	  and (min-device-width : 375px) 
+	  and (max-device-width : 667px) {
+            body { font-size: 9.5pt; }
+            div.content { width: 96ex; margin: 0 1px; }
+        }
+	@media only screen 
+	  and (min-device-width: 1200px) {
+            body { font-size: 10pt; margin: 0 4em; }
+            div.content { width: 96ex; margin: 0; }
+        }
+        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+	    font-weight: bold;
+            line-height: 0pt;
+            display: inline;
+            white-space: pre;
+            font-family: monospace;
+            font-size: 1em;
+	    font-weight: bold;
+        }
+        pre {
+            font-size: 1em;
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
+	.pre {
+	    white-space: pre;
+	    font-family: monospace;
+	}
+	.header{
+	    font-weight: bold;
+	}
+        .newpage {
+            page-break-before: always;
+        }
+        .invisible {
+            text-decoration: none;
+            color: white;
+        }
+        a.selflink {
+          color: black;
+          text-decoration: none;
+        }
+        @media print {
+            body {
+                font-family: monospace;
+                font-size: 10.5pt;
+            }
+            h1, h2, h3, h4, h5, h6 {
+                font-size: 1em;
+            }
+        
+            a:link, a:visited {
+                color: inherit;
+                text-decoration: none;
+            }
+            .noprint {
+                display: none;
+            }
+        }
+	@media screen {
+	    .grey, .grey a:link, .grey a:visited {
+		color: #777;
+	    }
+            .docinfo {
+                background-color: #EEE;
+            }
+            .top {
+                border-top: 7px solid #EEE;
+            }
+            .bgwhite  { background-color: white; }
+            .bgred    { background-color: #F44; }
+            .bggrey   { background-color: #666; }
+            .bgbrown  { background-color: #840; }            
+            .bgorange { background-color: #FA0; }
+            .bgyellow { background-color: #EE0; }
+            .bgmagenta{ background-color: #F4F; }
+            .bgblue   { background-color: #66F; }
+            .bgcyan   { background-color: #4DD; }
+            .bggreen  { background-color: #4F4; }
+
+            .legend   { font-size: 90%; }
+            .cplate   { font-size: 70%; border: solid grey 1px; }
+	}
+    </style>
+    <!--[if IE]>
+    <style>
+    body {
+       font-size: 13px;
+       margin: 10px 10px;
+    }
+    </style>
+    <![endif]-->
+
+    <script type="text/javascript"><!--
+    function addHeaderTags() {
+	var spans = document.getElementsByTagName("span");
+	for (var i=0; i < spans.length; i++) {
+	    var elem = spans[i];
+	    if (elem) {
+		var level = elem.getAttribute("class");
+                if (level == "h1" || level == "h2" || level == "h3" || level == "h4" || level == "h5" || level == "h6") {
+                    elem.innerHTML = "<"+level+">"+elem.innerHTML+"</"+level+">";		
+                }
+	    }
+	}
+    }
+    var legend_html = "Colour legend:<br />      <table>         <tr><td>Unknown:</td>                   <td><span class='cplate bgwhite'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Draft:</td>                     <td><span class='cplate bgred'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Informational:</td>             <td><span class='cplate bgorange'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Experimental:</td>              <td><span class='cplate bgyellow'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Best Common Practice:</td>      <td><span class='cplate bgmagenta'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Proposed Standard:</td>         <td><span class='cplate bgblue'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Draft Standard (old designation):</td> <td><span class='cplate bgcyan'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Internet Standard:</td>         <td><span class='cplate bggreen'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Historic:</td>                  <td><span class='cplate bggrey'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>         <tr><td>Obsolete:</td>                  <td><span class='cplate bgbrown'>&nbsp;&nbsp;&nbsp;&nbsp;</span></td></tr>     </table>";
+    function showElem(id) {
+        var elem = document.getElementById(id);
+        elem.innerHTML = eval(id+"_html");
+        elem.style.visibility='visible';
+    }
+    function hideElem(id) {
+        var elem = document.getElementById(id);
+        elem.style.visibility='hidden';        
+        elem.innerHTML = "";
+    }
+    // -->
+    </script>
+</head>
+<body onload="addHeaderTags()">
+  <div class="content">
+   <div style="height: 13px;">
+      <div onmouseover="this.style.cursor='pointer';"
+         onclick="showElem('legend');"
+         onmouseout="hideElem('legend')"
+	 style="height: 6px; position: absolute;"
+         class="pre noprint docinfo bgorange"
+         title="Click for colour legend." >                                                                        </div>
+      <div id="legend"
+           class="docinfo noprint pre legend"
+           style="position:absolute; top: 4px; left: 4ex; visibility:hidden; background-color: white; padding: 4px 9px 5px 7px; border: solid #345 1px; "
+           onmouseover="showElem('legend');"
+           onmouseout="hideElem('legend');">
+      </div>
+   </div>
+<span class="pre noprint docinfo top">[<a href="../html/" title="Document search and retrieval page">Docs</a>] [<a href="/rfc/rfc1952.txt" title="Plaintext version of this document">txt</a>|<a href="/pdf/rfc1952" title="PDF version of this document">pdf</a>] [<a href="./draft-deutsch-gzip-spec" title="draft-deutsch-gzip-spec">draft-deutsch-gzi...</a>] [<a href="/rfcdiff?difftype=--hwdiff&amp;url2=rfc1952" title="Inline diff (wdiff)">Diff1</a>] [<a href="/rfcdiff?url2=rfc1952" title="Side-by-side diff">Diff2</a>]                 </span><br />
+<span class="pre noprint docinfo">                                                                        </span><br />
+<span class="pre noprint docinfo">                                                           INFORMATIONAL</span><br />
+<span class="pre noprint docinfo">                                                                        </span><br />
+<pre>
+Network Working Group                                         P. Deutsch
+Request for Comments: 1952                           Aladdin Enterprises
+Category: Informational                                         May 1996
+
+
+               <span class="h1">GZIP file format specification version 4.3</span>
+
+Status of This Memo
+
+   This memo provides information for the Internet community.  This memo
+   does not specify an Internet standard of any kind.  Distribution of
+   this memo is unlimited.
+
+IESG Note:
+
+   The IESG takes no position on the validity of any Intellectual
+   Property Rights statements contained in this document.
+
+Notices
+
+   Copyright (c) 1996 L. Peter Deutsch
+
+   Permission is granted to copy and distribute this document for any
+   purpose and without charge, including translations into other
+   languages and incorporation into compilations, provided that the
+   copyright notice and this notice are preserved, and that any
+   substantive changes or deletions from the original are clearly
+   marked.
+
+   A pointer to the latest version of this and related documentation in
+   HTML format can be found at the URL
+   &lt;<a href="ftp://ftp.uu.net/graphics/png/documents/zlib/zdoc-index.html">ftp://ftp.uu.net/graphics/png/documents/zlib/zdoc-index.html</a>&gt;.
+
+Abstract
+
+   This specification defines a lossless compressed data format that is
+   compatible with the widely used GZIP utility.  The format includes a
+   cyclic redundancy check value for detecting data corruption.  The
+   format presently uses the DEFLATE method of compression but can be
+   easily extended to use other compression methods.  The format can be
+   implemented readily in a manner not covered by patents.
+
+
+
+
+
+
+
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 1]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-2" id="page-2" href="#page-2" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+Table of Contents
+
+   <a href="#section-1">1</a>. Introduction ................................................... <a href="#page-2">2</a>
+      <a href="#section-1.1">1.1</a>. Purpose ................................................... <a href="#page-2">2</a>
+      <a href="#section-1.2">1.2</a>. Intended audience ......................................... <a href="#page-3">3</a>
+      <a href="#section-1.3">1.3</a>. Scope ..................................................... <a href="#page-3">3</a>
+      <a href="#section-1.4">1.4</a>. Compliance ................................................ <a href="#page-3">3</a>
+      <a href="#section-1.5">1.5</a>. Definitions of terms and conventions used ................. <a href="#page-3">3</a>
+      <a href="#section-1.6">1.6</a>. Changes from previous versions ............................ <a href="#page-3">3</a>
+   <a href="#section-2">2</a>. Detailed specification ......................................... <a href="#page-4">4</a>
+      <a href="#section-2.1">2.1</a>. Overall conventions ....................................... <a href="#page-4">4</a>
+      <a href="#section-2.2">2.2</a>. File format ............................................... <a href="#page-5">5</a>
+      <a href="#section-2.3">2.3</a>. Member format ............................................. <a href="#page-5">5</a>
+          <a href="#section-2.3.1">2.3.1</a>. Member header and trailer ........................... <a href="#page-6">6</a>
+              <a href="#section-2.3.1.1">2.3.1.1</a>. Extra field ................................... <a href="#page-8">8</a>
+              <a href="#section-2.3.1.2">2.3.1.2</a>. Compliance .................................... <a href="#page-9">9</a>
+      <a href="#section-3">3</a>. References .................................................. <a href="#page-9">9</a>
+      <a href="#section-4">4</a>. Security Considerations .................................... <a href="#page-10">10</a>
+      <a href="#section-5">5</a>. Acknowledgements ........................................... <a href="#page-10">10</a>
+      <a href="#section-6">6</a>. Author's Address ........................................... <a href="#page-10">10</a>
+      <a href="#section-7">7</a>. Appendix: Jean-Loup Gailly's gzip utility .................. <a href="#page-11">11</a>
+      <a href="#section-8">8</a>. Appendix: Sample CRC Code .................................. <a href="#page-11">11</a>
+
+<span class="h2"><a class="selflink" name="section-1" href="#section-1">1</a>. Introduction</span>
+
+   1.1. Purpose
+
+      The purpose of this specification is to define a lossless
+      compressed data format that:
+
+          * Is independent of CPU type, operating system, file system,
+            and character set, and hence can be used for interchange;
+          * Can compress or decompress a data stream (as opposed to a
+            randomly accessible file) to produce another data stream,
+            using only an a priori bounded amount of intermediate
+            storage, and hence can be used in data communications or
+            similar structures such as Unix filters;
+          * Compresses data with efficiency comparable to the best
+            currently available general-purpose compression methods,
+            and in particular considerably better than the "compress"
+            program;
+          * Can be implemented readily in a manner not covered by
+            patents, and hence can be practiced freely;
+          * Is compatible with the file format produced by the current
+            widely used gzip utility, in that conforming decompressors
+            will be able to read data produced by the existing gzip
+            compressor.
+
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 2]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-3" id="page-3" href="#page-3" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+      The data format defined by this specification does not attempt to:
+
+          * Provide random access to compressed data;
+          * Compress specialized data (e.g., raster graphics) as well as
+            the best currently available specialized algorithms.
+
+   1.2. Intended audience
+
+      This specification is intended for use by implementors of software
+      to compress data into gzip format and/or decompress data from gzip
+      format.
+
+      The text of the specification assumes a basic background in
+      programming at the level of bits and other primitive data
+      representations.
+
+   1.3. Scope
+
+      The specification specifies a compression method and a file format
+      (the latter assuming only that a file can store a sequence of
+      arbitrary bytes).  It does not specify any particular interface to
+      a file system or anything about character sets or encodings
+      (except for file names and comments, which are optional).
+
+   1.4. Compliance
+
+      Unless otherwise indicated below, a compliant decompressor must be
+      able to accept and decompress any file that conforms to all the
+      specifications presented here; a compliant compressor must produce
+      files that conform to all the specifications presented here.  The
+      material in the appendices is not part of the specification per se
+      and is not relevant to compliance.
+
+   1.5. Definitions of terms and conventions used
+
+      byte: 8 bits stored or transmitted as a unit (same as an octet).
+      (For this specification, a byte is exactly 8 bits, even on
+      machines which store a character on a number of bits different
+      from 8.)  See below for the numbering of bits within a byte.
+
+   1.6. Changes from previous versions
+
+      There have been no technical changes to the gzip format since
+      version 4.1 of this specification.  In version 4.2, some
+      terminology was changed, and the sample CRC code was rewritten for
+      clarity and to eliminate the requirement for the caller to do pre-
+      and post-conditioning.  Version 4.3 is a conversion of the
+      specification to RFC style.
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 3]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-4" id="page-4" href="#page-4" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+<span class="h2"><a class="selflink" name="section-2" href="#section-2">2</a>. Detailed specification</span>
+
+   2.1. Overall conventions
+
+      In the diagrams below, a box like this:
+
+         +---+
+         |   | &lt;-- the vertical bars might be missing
+         +---+
+
+      represents one byte; a box like this:
+
+         +==============+
+         |              |
+         +==============+
+
+      represents a variable number of bytes.
+
+      Bytes stored within a computer do not have a "bit order", since
+      they are always treated as a unit.  However, a byte considered as
+      an integer between 0 and 255 does have a most- and least-
+      significant bit, and since we write numbers with the most-
+      significant digit on the left, we also write bytes with the most-
+      significant bit on the left.  In the diagrams below, we number the
+      bits of a byte so that bit 0 is the least-significant bit, i.e.,
+      the bits are numbered:
+
+         +--------+
+         |76543210|
+         +--------+
+
+      This document does not address the issue of the order in which
+      bits of a byte are transmitted on a bit-sequential medium, since
+      the data format described here is byte- rather than bit-oriented.
+
+      Within a computer, a number may occupy multiple bytes.  All
+      multi-byte numbers in the format described here are stored with
+      the least-significant byte first (at the lower memory address).
+      For example, the decimal number 520 is stored as:
+
+             0        1
+         +--------+--------+
+         |00001000|00000010|
+         +--------+--------+
+          ^        ^
+          |        |
+          |        + more significant byte = 2 x 256
+          + less significant byte = 8
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 4]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-5" id="page-5" href="#page-5" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+   2.2. File format
+
+      A gzip file consists of a series of "members" (compressed data
+      sets).  The format of each member is specified in the following
+      section.  The members simply appear one after another in the file,
+      with no additional information before, between, or after them.
+
+   2.3. Member format
+
+      Each member has the following structure:
+
+         +---+---+---+---+---+---+---+---+---+---+
+         |ID1|ID2|CM |FLG|     MTIME     |XFL|OS | (more--&gt;)
+         +---+---+---+---+---+---+---+---+---+---+
+
+      (if FLG.FEXTRA set)
+
+         +---+---+=================================+
+         | XLEN  |...XLEN bytes of "extra field"...| (more--&gt;)
+         +---+---+=================================+
+
+      (if FLG.FNAME set)
+
+         +=========================================+
+         |...original file name, zero-terminated...| (more--&gt;)
+         +=========================================+
+
+      (if FLG.FCOMMENT set)
+
+         +===================================+
+         |...file comment, zero-terminated...| (more--&gt;)
+         +===================================+
+
+      (if FLG.FHCRC set)
+
+         +---+---+
+         | CRC16 |
+         +---+---+
+
+         +=======================+
+         |...compressed blocks...| (more--&gt;)
+         +=======================+
+
+           0   1   2   3   4   5   6   7
+         +---+---+---+---+---+---+---+---+
+         |     CRC32     |     ISIZE     |
+         +---+---+---+---+---+---+---+---+
+
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 5]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-6" id="page-6" href="#page-6" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+      2.3.1. Member header and trailer
+
+         ID1 (IDentification 1)
+         ID2 (IDentification 2)
+            These have the fixed values ID1 = 31 (0x1f, \037), ID2 = 139
+            (0x8b, \213), to identify the file as being in gzip format.
+
+         CM (Compression Method)
+            This identifies the compression method used in the file.  CM
+            = 0-7 are reserved.  CM = 8 denotes the "deflate"
+            compression method, which is the one customarily used by
+            gzip and which is documented elsewhere.
+
+         FLG (FLaGs)
+            This flag byte is divided into individual bits as follows:
+
+               bit 0   FTEXT
+               bit 1   FHCRC
+               bit 2   FEXTRA
+               bit 3   FNAME
+               bit 4   FCOMMENT
+               bit 5   reserved
+               bit 6   reserved
+               bit 7   reserved
+
+            If FTEXT is set, the file is probably ASCII text.  This is
+            an optional indication, which the compressor may set by
+            checking a small amount of the input data to see whether any
+            non-ASCII characters are present.  In case of doubt, FTEXT
+            is cleared, indicating binary data. For systems which have
+            different file formats for ascii text and binary data, the
+            decompressor can use FTEXT to choose the appropriate format.
+            We deliberately do not specify the algorithm used to set
+            this bit, since a compressor always has the option of
+            leaving it cleared and a decompressor always has the option
+            of ignoring it and letting some other program handle issues
+            of data conversion.
+
+            If FHCRC is set, a CRC16 for the gzip header is present,
+            immediately before the compressed data. The CRC16 consists
+            of the two least significant bytes of the CRC32 for all
+            bytes of the gzip header up to and not including the CRC16.
+            [The FHCRC bit was never set by versions of gzip up to
+            1.2.4, even though it was documented with a different
+            meaning in gzip 1.2.4.]
+
+            If FEXTRA is set, optional extra fields are present, as
+            described in a following section.
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 6]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-7" id="page-7" href="#page-7" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+            If FNAME is set, an original file name is present,
+            terminated by a zero byte.  The name must consist of ISO
+            8859-1 (LATIN-1) characters; on operating systems using
+            EBCDIC or any other character set for file names, the name
+            must be translated to the ISO LATIN-1 character set.  This
+            is the original name of the file being compressed, with any
+            directory components removed, and, if the file being
+            compressed is on a file system with case insensitive names,
+            forced to lower case. There is no original file name if the
+            data was compressed from a source other than a named file;
+            for example, if the source was stdin on a Unix system, there
+            is no file name.
+
+            If FCOMMENT is set, a zero-terminated file comment is
+            present.  This comment is not interpreted; it is only
+            intended for human consumption.  The comment must consist of
+            ISO 8859-1 (LATIN-1) characters.  Line breaks should be
+            denoted by a single line feed character (10 decimal).
+
+            Reserved FLG bits must be zero.
+
+         MTIME (Modification TIME)
+            This gives the most recent modification time of the original
+            file being compressed.  The time is in Unix format, i.e.,
+            seconds since 00:00:00 GMT, Jan.  1, 1970.  (Note that this
+            may cause problems for MS-DOS and other systems that use
+            local rather than Universal time.)  If the compressed data
+            did not come from a file, MTIME is set to the time at which
+            compression started.  MTIME = 0 means no time stamp is
+            available.
+
+         XFL (eXtra FLags)
+            These flags are available for use by specific compression
+            methods.  The "deflate" method (CM = 8) sets these flags as
+            follows:
+
+               XFL = 2 - compressor used maximum compression,
+                         slowest algorithm
+               XFL = 4 - compressor used fastest algorithm
+
+         OS (Operating System)
+            This identifies the type of file system on which compression
+            took place.  This may be useful in determining end-of-line
+            convention for text files.  The currently defined values are
+            as follows:
+
+
+
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 7]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-8" id="page-8" href="#page-8" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+                 0 - FAT filesystem (MS-DOS, OS/2, NT/Win32)
+                 1 - Amiga
+                 2 - VMS (or OpenVMS)
+                 3 - Unix
+                 4 - VM/CMS
+                 5 - Atari TOS
+                 6 - HPFS filesystem (OS/2, NT)
+                 7 - Macintosh
+                 8 - Z-System
+                 9 - CP/M
+                10 - TOPS-20
+                11 - NTFS filesystem (NT)
+                12 - QDOS
+                13 - Acorn RISCOS
+               255 - unknown
+
+         XLEN (eXtra LENgth)
+            If FLG.FEXTRA is set, this gives the length of the optional
+            extra field.  See below for details.
+
+         CRC32 (CRC-32)
+            This contains a Cyclic Redundancy Check value of the
+            uncompressed data computed according to CRC-32 algorithm
+            used in the ISO 3309 standard and in <a href="#section-8.1.1.6.2">section 8.1.1.6.2</a> of
+            ITU-T recommendation V.42.  (See <a href="http://www.iso.ch">http://www.iso.ch</a> for
+            ordering ISO documents. See gopher://info.itu.ch for an
+            online version of ITU-T V.42.)
+
+         ISIZE (Input SIZE)
+            This contains the size of the original (uncompressed) input
+            data modulo 2^32.
+
+      2.3.1.1. Extra field
+
+         If the FLG.FEXTRA bit is set, an "extra field" is present in
+         the header, with total length XLEN bytes.  It consists of a
+         series of subfields, each of the form:
+
+            +---+---+---+---+==================================+
+            |SI1|SI2|  LEN  |... LEN bytes of subfield data ...|
+            +---+---+---+---+==================================+
+
+         SI1 and SI2 provide a subfield ID, typically two ASCII letters
+         with some mnemonic value.  Jean-Loup Gailly
+         &lt;gzip@prep.ai.mit.edu&gt; is maintaining a registry of subfield
+         IDs; please send him any subfield ID you wish to use.  Subfield
+         IDs with SI2 = 0 are reserved for future use.  The following
+         IDs are currently defined:
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 8]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-9" id="page-9" href="#page-9" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+            SI1         SI2         Data
+            ----------  ----------  ----
+            0x41 ('A')  0x70 ('P')  Apollo file type information
+
+         LEN gives the length of the subfield data, excluding the 4
+         initial bytes.
+
+      2.3.1.2. Compliance
+
+         A compliant compressor must produce files with correct ID1,
+         ID2, CM, CRC32, and ISIZE, but may set all the other fields in
+         the fixed-length part of the header to default values (255 for
+         OS, 0 for all others).  The compressor must set all reserved
+         bits to zero.
+
+         A compliant decompressor must check ID1, ID2, and CM, and
+         provide an error indication if any of these have incorrect
+         values.  It must examine FEXTRA/XLEN, FNAME, FCOMMENT and FHCRC
+         at least so it can skip over the optional fields if they are
+         present.  It need not examine any other part of the header or
+         trailer; in particular, a decompressor may ignore FTEXT and OS
+         and always produce binary output, and still be compliant.  A
+         compliant decompressor must give an error indication if any
+         reserved bit is non-zero, since such a bit could indicate the
+         presence of a new field that would cause subsequent data to be
+         interpreted incorrectly.
+
+<span class="h2"><a class="selflink" name="section-3" href="#section-3">3</a>. References</span>
+
+   [<a name="ref-1" id="ref-1">1</a>] "Information Processing - 8-bit single-byte coded graphic
+       character sets - Part 1: Latin alphabet No.1" (ISO 8859-1:1987).
+       The ISO 8859-1 (Latin-1) character set is a superset of 7-bit
+       ASCII. Files defining this character set are available as
+       iso_8859-1.* in <a href="ftp://ftp.uu.net/graphics/png/documents/">ftp://ftp.uu.net/graphics/png/documents/</a>
+
+   [<a name="ref-2" id="ref-2">2</a>] ISO 3309
+
+   [<a name="ref-3" id="ref-3">3</a>] ITU-T recommendation V.42
+
+   [<a name="ref-4" id="ref-4">4</a>] Deutsch, L.P.,"DEFLATE Compressed Data Format Specification",
+       available in <a href="ftp://ftp.uu.net/pub/archiving/zip/doc/">ftp://ftp.uu.net/pub/archiving/zip/doc/</a>
+
+   [<a name="ref-5" id="ref-5">5</a>] Gailly, J.-L., GZIP documentation, available as gzip-*.tar in
+       <a href="ftp://prep.ai.mit.edu/pub/gnu/">ftp://prep.ai.mit.edu/pub/gnu/</a>
+
+   [<a name="ref-6" id="ref-6">6</a>] Sarwate, D.V., "Computation of Cyclic Redundancy Checks via Table
+       Look-Up", Communications of the ACM, 31(8), pp.1008-1013.
+
+
+
+
+<span class="grey">Deutsch                      Informational                      [Page 9]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-10" id="page-10" href="#page-10" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+   [<a name="ref-7" id="ref-7">7</a>] Schwaderer, W.D., "CRC Calculation", April 85 PC Tech Journal,
+       pp.118-133.
+
+   [<a name="ref-8" id="ref-8">8</a>] <a href="ftp://ftp.adelaide.edu.au/pub/rocksoft/papers/crc_v3.txt">ftp://ftp.adelaide.edu.au/pub/rocksoft/papers/crc_v3.txt</a>,
+       describing the CRC concept.
+
+<span class="h2"><a class="selflink" name="section-4" href="#section-4">4</a>. Security Considerations</span>
+
+   Any data compression method involves the reduction of redundancy in
+   the data.  Consequently, any corruption of the data is likely to have
+   severe effects and be difficult to correct.  Uncompressed text, on
+   the other hand, will probably still be readable despite the presence
+   of some corrupted bytes.
+
+   It is recommended that systems using this data format provide some
+   means of validating the integrity of the compressed data, such as by
+   setting and checking the CRC-32 check value.
+
+<span class="h2"><a class="selflink" name="section-5" href="#section-5">5</a>. Acknowledgements</span>
+
+   Trademarks cited in this document are the property of their
+   respective owners.
+
+   Jean-Loup Gailly designed the gzip format and wrote, with Mark Adler,
+   the related software described in this specification.  Glenn
+   Randers-Pehrson converted this document to RFC and HTML format.
+
+<span class="h2"><a class="selflink" name="section-6" href="#section-6">6</a>. Author's Address</span>
+
+   L. Peter Deutsch
+   Aladdin Enterprises
+   203 Santa Margarita Ave.
+   Menlo Park, CA 94025
+
+   Phone: (415) 322-0103 (AM only)
+   FAX:   (415) 322-1734
+   EMail: &lt;ghost@aladdin.com&gt;
+
+   Questions about the technical content of this specification can be
+   sent by email to:
+
+   Jean-Loup Gailly &lt;gzip@prep.ai.mit.edu&gt; and
+   Mark Adler &lt;madler@alumni.caltech.edu&gt;
+
+   Editorial comments on this specification can be sent by email to:
+
+   L. Peter Deutsch &lt;ghost@aladdin.com&gt; and
+   Glenn Randers-Pehrson &lt;randeg@alumni.rpi.edu&gt;
+
+
+
+<span class="grey">Deutsch                      Informational                     [Page 10]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-11" id="page-11" href="#page-11" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+<span class="h2"><a class="selflink" name="section-7" href="#section-7">7</a>. Appendix: Jean-Loup Gailly's gzip utility</span>
+
+   The most widely used implementation of gzip compression, and the
+   original documentation on which this specification is based, were
+   created by Jean-Loup Gailly &lt;gzip@prep.ai.mit.edu&gt;.  Since this
+   implementation is a de facto standard, we mention some more of its
+   features here.  Again, the material in this section is not part of
+   the specification per se, and implementations need not follow it to
+   be compliant.
+
+   When compressing or decompressing a file, gzip preserves the
+   protection, ownership, and modification time attributes on the local
+   file system, since there is no provision for representing protection
+   attributes in the gzip file format itself.  Since the file format
+   includes a modification time, the gzip decompressor provides a
+   command line switch that assigns the modification time from the file,
+   rather than the local modification time of the compressed input, to
+   the decompressed output.
+
+<span class="h2"><a class="selflink" name="section-8" href="#section-8">8</a>. Appendix: Sample CRC Code</span>
+
+   The following sample code represents a practical implementation of
+   the CRC (Cyclic Redundancy Check). (See also ISO 3309 and ITU-T V.42
+   for a formal specification.)
+
+   The sample code is in the ANSI C programming language. Non C users
+   may find it easier to read with these hints:
+
+      &amp;      Bitwise AND operator.
+      ^      Bitwise exclusive-OR operator.
+      &gt;&gt;     Bitwise right shift operator. When applied to an
+             unsigned quantity, as here, right shift inserts zero
+             bit(s) at the left.
+      !      Logical NOT operator.
+      ++     "n++" increments the variable n.
+      0xNNN  0x introduces a hexadecimal (base 16) constant.
+             Suffix L indicates a long value (at least 32 bits).
+
+      /* Table of CRCs of all 8-bit messages. */
+      unsigned long crc_table[256];
+
+      /* Flag: has the table been computed? Initially false. */
+      int crc_table_computed = 0;
+
+      /* Make the table for a fast CRC. */
+      void make_crc_table(void)
+      {
+        unsigned long c;
+
+
+
+<span class="grey">Deutsch                      Informational                     [Page 11]</span></pre>
+<hr class='noprint' style='width: 96ex;' align='left'/><!--NewPage--><pre class='newpage'><a name="page-12" id="page-12" href="#page-12" class="invisible"> </a>
+<span class="grey"><a href="./rfc1952">RFC 1952</a>             GZIP File Format Specification             May 1996</span>
+
+
+        int n, k;
+        for (n = 0; n &lt; 256; n++) {
+          c = (unsigned long) n;
+          for (k = 0; k &lt; 8; k++) {
+            if (c &amp; 1) {
+              c = 0xedb88320L ^ (c &gt;&gt; 1);
+            } else {
+              c = c &gt;&gt; 1;
+            }
+          }
+          crc_table[n] = c;
+        }
+        crc_table_computed = 1;
+      }
+
+      /*
+         Update a running crc with the bytes buf[0..len-1] and return
+       the updated crc. The crc should be initialized to zero. Pre- and
+       post-conditioning (one's complement) is performed within this
+       function so it shouldn't be done by the caller. Usage example:
+
+         unsigned long crc = 0L;
+
+         while (read_buffer(buffer, length) != EOF) {
+           crc = update_crc(crc, buffer, length);
+         }
+         if (crc != original_crc) error();
+      */
+      unsigned long update_crc(unsigned long crc,
+                      unsigned char *buf, int len)
+      {
+        unsigned long c = crc ^ 0xffffffffL;
+        int n;
+
+        if (!crc_table_computed)
+          make_crc_table();
+        for (n = 0; n &lt; len; n++) {
+          c = crc_table[(c ^ buf[n]) &amp; 0xff] ^ (c &gt;&gt; 8);
+        }
+        return c ^ 0xffffffffL;
+      }
+
+      /* Return the CRC of the bytes buf[0..len-1]. */
+      unsigned long crc(unsigned char *buf, int len)
+      {
+        return update_crc(0L, buf, len);
+      }
+
+
+
+
+Deutsch                      Informational                     [Page 12]
+
+</pre><br />
+    <span class="noprint"><small><small>Html markup produced by rfcmarkup 1.119, available from
+      <a href="https://tools.ietf.org/tools/rfcmarkup/">https://tools.ietf.org/tools/rfcmarkup/</a>
+    </small></small></span>
+  </div>
+</body>
+</html>

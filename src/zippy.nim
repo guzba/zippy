@@ -180,9 +180,12 @@ func inflate(b: var Buffer, dst: var seq[uint8]) =
     case btype:
     of 0: # No compression
       b.skipRemainingBitsInCurrentByte()
-      assert false
+      let len = b.readBits(16)
+      b.skipBits(16) # nlen
+      for i in 0 ..< len.int:
+        dst.add(b.readBits(8).uint8)
     of 1: # Compressed with fixed Huffman codes
-      assert false
+      raise newException(ZippyException, "Fixed code blocks unsupported")
     of 2: # Compressed with dynamic Huffman codes
       inflateDynamic(b, dst)
     else:
