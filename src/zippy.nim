@@ -64,6 +64,8 @@ const
 {.push checks: off.}
 
 func buildHuffmanAlphabet(codeLengths: seq[uint8]): seq[uint16] =
+  doAssert codeLengths.len - 1 <= high(uint16).int
+
   var blCount: array[16, uint16]
   for i in 0 ..< codeLengths.len:
     let codeLength = codeLengths[i]
@@ -88,7 +90,6 @@ func decodeHuffman(
   alphabet: seq[uint16],
   codeLengths: seq[uint8]
 ): uint16 =
-  doAssert codeLengths.len - 1 <= high(uint16).int
   let peeked = reverseBits(b.peekBits(15)) # 15 is max code length
   for i in 0 ..< codeLengths.len:
     let codeLength = codeLengths[i].int
