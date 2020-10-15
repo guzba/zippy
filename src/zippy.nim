@@ -207,11 +207,9 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
         for i in 0 ..< b.readBits(2).int + 3:
           unpacked.add(prev)
       elif symbol == 17:
-        for i in 0 ..< b.readBits(3).int + 3:
-          unpacked.add(0)
+        unpacked.setLen(unpacked.len + b.readBits(3).int + 3)
       elif symbol == 18:
-        for i in 0 ..< b.readBits(7).int + 11:
-          unpacked.add(0)
+        unpacked.setLen(unpacked.len + b.readBits(7).int + 11)
       else:
         raise newException(ZippyException, "Invalid symbol")
 
