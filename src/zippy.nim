@@ -94,10 +94,10 @@ func buildHuffmanAlphabet(codeLengths: seq[uint8]): seq[uint16] =
 
 func buildHuffmanTree(lengths: seq[uint8], alphabet: seq[uint16]): Node =
   result = Node()
-  for i in 0.uint16 ..< lengths.len.uint16:
-    if lengths[i] == 0:
+  for i, length in lengths:
+    if length == 0:
       continue
-    result.insert(alphabet[i], lengths[i], i)
+    result.insert(alphabet[i], length.uint8, i.uint16)
 
 const
   fixedCodeLengths = block:
