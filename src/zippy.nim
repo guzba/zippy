@@ -145,7 +145,7 @@ func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   b.readBytes(dst[pos].addr, len)
 
 proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
-  func inflate(
+  func decode(
     b: var Buffer,
     dst: var seq[uint8],
     literalTree: Node,
@@ -177,7 +177,7 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
           inc pos
 
   if fixedCodes:
-    inflate(
+    decode(
       b,
       dst,
       fixedLiteralTree,
@@ -221,7 +221,7 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
       literalTree = buildHuffmanTree(literalLengths, literalAlphabet)
       distanceTree = buildHuffmanTree(distanceLengths, distanceAlphabet)
 
-    inflate(
+    decode(
       b,
       dst,
       literalTree,
