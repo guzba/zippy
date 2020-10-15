@@ -145,9 +145,7 @@ func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   b.readBytes(dst[pos].addr, len)
 
 proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
-  func decode(
-    b: var Buffer,
-    dst: var seq[uint8],
+  template decode(
     literalTree: Node,
     distanceTree: Node
   ) =
@@ -160,26 +158,33 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
       else:
         let
           lengthIndex = symbol - 257
-          totalLength = baseLengths[lengthIndex] +
+          totalLength = (
+            baseLengths[lengthIndex] +
             b.readBits(baseLengthsExtraBits[lengthIndex])
+          ).int
           distCode = decodeHuffman(b, distanceTree)
+
         if distCode >= 30:
           failUncompress()
-        let totalDist = baseDistance[distCode] +
-          b.readBits(baseDistanceExtraBits[distCode])
 
-        var pos = dst.len - totalDist.int
-        if pos < 0:
+        let
+          totalDist = (
+            baseDistance[distCode] +
+            b.readBits(baseDistanceExtraBits[distCode])
+          ).int
+          start = dst.len
+
+        if totalDist > start:
           failUncompress()
 
-        for i in 0 ..< totalLength.int:
-          dst.add(dst[pos])
+        var pos = start - totalDist
+        dst.setLen(start + totalLength)
+        for i in 0 ..< totalLength:
+          dst[start + i] = dst[pos]
           inc pos
 
   if fixedCodes:
     decode(
-      b,
-      dst,
       fixedLiteralTree,
       fixedDistanceTree
     )
@@ -222,8 +227,6 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
       distanceTree = buildHuffmanTree(distanceLengths, distanceAlphabet)
 
     decode(
-      b,
-      dst,
       literalTree,
       distanceTree
     )
