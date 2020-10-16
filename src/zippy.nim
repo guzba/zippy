@@ -130,10 +130,13 @@ func decodeHuffman(
   b: var Buffer,
   tree: Node
 ): uint16 =
+  b.checkBytePos()
   var node = tree
-  while node.left != nil or node.right != nil:
-    var bit = b.readBits(1)
-    node = if bit != 0: node.right else: node.left
+  for i in 0 .. 15: # code lengths cannot be longer than 15
+    var bit = b.readBit()
+    node = node.kids[bit]
+    if node.stop:
+      break
   return node.symbol
 
 func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
@@ -274,6 +277,7 @@ proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
 
 proc uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
   ## Uncompresses src and returns the uncompressed data seq.
+  result = newSeqOfCap[uint8](src.len * 2)
   uncompress(src, result)
 
 template uncompress*(src: string): string =

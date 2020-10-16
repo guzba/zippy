@@ -29,11 +29,25 @@ func incBytePos(b: var Buffer) {.inline.} =
   inc b.bytePos
   b.bitPos = 0
 
+template checkBytePos*(b: Buffer) =
+  if b.data.len <= b.bytePos:
+    raise newException(ZippyException, "Cannot read further, at end of buffer")
+
+template readBit*(b: var Buffer): uint8 =
+  var result = (b.data[b.bytePos] shr b.bitPos) and masks[1]
+
+  inc b.bitPos
+  if b.bitPos == 8:
+    # b.incBytePos()
+    inc b.bytePos
+    b.bitPos = 0
+
+  result
+
 func read(b: var Buffer, bits: int): uint8 =
   doAssert bits <= 8
 
-  if b.data.len <= b.bytePos:
-    raise newException(ZippyException, "Cannot read further, at end of buffer")
+  b.checkBytePos()
 
   result = b.data[b.bytePos]
   result = result shr b.bitPos

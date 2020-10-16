@@ -7,11 +7,11 @@ proc t() =
   # let file = "randtest3.z"
   let compressed = readFile(&"tests/data/{file}")
   let uncompressed = uncompress(compressed)
-  echo uncompressed.len
+  # echo uncompressed.len
   # echo cast[string](uncompressed)
   # let compressed = compress(original, level=11)
   # writeFile(&"tests/data/{file}.z", compressed)
 
 timeIt "test":
-  for i in 0 ..< 25:
+  for i in 0 ..< 100:
     t()
