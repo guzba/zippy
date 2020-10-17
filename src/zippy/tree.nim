@@ -7,7 +7,7 @@ type
 func insert*(root: Node, code: uint16, length: uint8, symbol: uint16) =
   var node = root
   for i in countdown(length - 1, 0):
-    let b = ((code and (1.uint16 shl i)) != 0).uint8
+    let b = ((code shr i) and 1).uint8
     if node.kids[b] == nil:
       node.kids[b] = Node()
     node = node.kids[b]
