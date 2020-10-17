@@ -13,7 +13,7 @@ The goal of this library is to be a dependency-free Nim implementation that is a
 
 ### Credits
 
-This implementation has been greatly assisted by [zlib-inflate-simple](https://github.com/toomuchvoltage/zlib-inflate-simple) which is by far the smallest and most readable implemenation I've found.
+This implementation has been greatly assisted by [zlib-inflate-simple](https://github.com/toomuchvoltage/zlib-inflate-simple) which is by far the smallest and most readable implementation I've found.
 
 # API: zippy
 
