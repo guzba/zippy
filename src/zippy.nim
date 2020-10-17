@@ -203,10 +203,24 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
     literalHuffman = initHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
     distanceHuffman = initHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
 
+  var
+    pos = dst.len
+    lenUnused: int
+
+  template expand(dst: var seq[uint8], bytes: int) =
+    dst.setLen(dst.len + bytes)
+    inc(lenUnused, bytes)
+
+  expand(dst, 64)
+
   while true:
     let symbol = decodeSymbol(b, literalHuffman)
     if symbol <= 255:
-      dst.add(symbol.uint8)
+      if lenUnused == 0:
+        expand(dst, 64)
+      dst[pos] = symbol.uint8
+      inc pos
+      dec lenUnused
     elif symbol == 256:
       break
     else:
@@ -226,16 +240,19 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
           baseDistance[distCode] +
           b.readBits(baseDistanceExtraBits[distCode])
         ).int
-        start = dst.len
 
-      if totalDist > start:
+      if totalDist > pos:
         failUncompress()
 
-      var pos = start - totalDist
-      dst.setLen(start + totalLength)
+      var copyPos = pos - totalDist
+      if totalLength > lenUnused:
+        expand(dst, (totalLength - lenUnused))
       for i in 0 ..< totalLength:
-        dst[start + i] = dst[pos]
-        inc pos
+        dst[pos + i] = dst[copyPos + i]
+      inc(pos, totalLength)
+      dec(lenUnused, totalLength)
+
+  dst.setLen(dst.len - lenUnused)
 
 proc inflate(b: var Buffer, dst: var seq[uint8]) =
   var finalBlock: bool
@@ -280,6 +297,7 @@ proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
 
 proc uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
   ## Uncompresses src and returns the uncompressed data seq.
+  result = newSeqOfCap[uint8](src.len * 2)
   uncompress(src, result)
 
 template uncompress*(src: string): string =
