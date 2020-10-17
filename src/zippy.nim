@@ -132,12 +132,12 @@ func decodeHuffman(
 ): uint16 =
   b.checkBytePos()
   var node = tree
-  for i in 0 .. 15: # code lengths cannot be longer than 15
+  for i in 0 .. 15: # Code lengths cannot be longer than 15
     var bit = b.readBit()
     node = node.kids[bit]
     if node.stop:
-      break
-  return node.symbol
+      return node.symbol
+  failUncompress()
 
 func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   b.skipRemainingBitsInCurrentByte()
