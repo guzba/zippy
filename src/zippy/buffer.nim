@@ -1,4 +1,4 @@
-import zippyexception
+import zippyerror
 
 const
   masks = [
@@ -15,8 +15,8 @@ const
 
 type
   Buffer* = object
-    bytePos, bitPos: int
-    data: seq[uint8]
+    bytePos*, bitPos*: int
+    data*: seq[uint8]
 
 func initBuffer*(data: seq[uint8]): Buffer =
   result = Buffer()
@@ -25,24 +25,13 @@ func initBuffer*(data: seq[uint8]): Buffer =
 func len*(b: Buffer): int =
   b.data.len
 
-func incBytePos(b: var Buffer) {.inline.} =
+func incBytePos*(b: var Buffer) {.inline.} =
   inc b.bytePos
   b.bitPos = 0
 
 template checkBytePos*(b: Buffer) =
   if b.data.len <= b.bytePos:
-    raise newException(ZippyException, "Cannot read further, at end of buffer")
-
-template readBit*(b: var Buffer): uint8 =
-  var result = (b.data[b.bytePos] shr b.bitPos) and masks[1]
-
-  inc b.bitPos
-  if b.bitPos == 8:
-    # b.incBytePos()
-    inc b.bytePos
-    b.bitPos = 0
-
-  result
+    raise newException(ZippyError, "Cannot read further, at end of buffer")
 
 func read(b: var Buffer, bits: int): uint8 =
   doAssert bits <= 8

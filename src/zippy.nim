@@ -1,8 +1,13 @@
-import zippy/buffer, zippy/zippyexception, zippy/tree
+import zippy/buffer, zippy/zippyerror
 
-export zippyexception
+export zippyerror
 
 const
+  maxCodeLength = 15 ## Maximum bits in a code
+  maxLitLenCodes = 286
+  maxDistCodes = 30
+  maxFixedLitLenCodes = 288
+
   codeLengthOrder = [
     16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
@@ -61,47 +66,8 @@ const
     13, 13                          # 28-29
   ]
 
-{.push checks: off.}
-
-template failUncompress() =
-  raise newException(
-    ZippyException, "Invalid buffer, unable to uncompress"
-  )
-
-func buildHuffmanAlphabet(codeLengths: seq[uint8]): seq[uint16] =
-  if codeLengths.len - 1 > high(uint16).int:
-    failUncompress()
-
-  var blCount: array[16, uint16]
-  for i in 0 ..< codeLengths.len:
-    let codeLength = codeLengths[i]
-    if codeLength > 15:
-      failUncompress()
-    inc blCount[codeLength]
-
-  blCount[0] = 0
-
-  var nextCode: array[16, uint16]
-  for bits in 1 ..< nextCode.len:
-    nextCode[bits] = (nextCode[bits - 1] + blCount[bits - 1]) shl 1
-
-  result.setLen(codeLengths.len)
-  for n in 0 ..< codeLengths.len:
-    let len = codeLengths[n]
-    if len != 0:
-      result[n] = nextCode[len]
-      inc nextCode[len]
-
-func buildHuffmanTree(lengths: seq[uint8], alphabet: seq[uint16]): Node =
-  result = Node()
-  for i, length in lengths:
-    if length == 0:
-      continue
-    result.insert(alphabet[i], length.uint8, i.uint16)
-
-const
   fixedCodeLengths = block:
-    var lengths = newSeq[uint8](288)
+    var lengths = newSeq[uint8](maxFixedLitLenCodes)
     for i in 0 ..< lengths.len:
       if i <= 143:
         lengths[i] = 8
@@ -114,29 +80,83 @@ const
     lengths
 
   fixedDistanceLengths = block:
-    var lengths = newSeq[uint8](32)
+    var lengths = newSeq[uint8](maxDistCodes)
     for i in 0 ..< lengths.len:
       lengths[i] = 5
     lengths
 
-  fixedAlphabet = buildHuffmanAlphabet(fixedCodeLengths)
-  fixedDistAlphabet = buildHuffmanAlphabet(fixedDistanceLengths)
+template failUncompress() =
+  raise newException(
+    ZippyError, "Invalid buffer, unable to uncompress"
+  )
 
-let
-  fixedLiteralTree = buildHuffmanTree(fixedCodeLengths, fixedAlphabet)
-  fixedDistanceTree = buildHuffmanTree(fixedDistanceLengths, fixedDistAlphabet)
+type Huffman = object
+  counts: seq[uint16]
+  symbols: seq[uint16]
 
-func decodeHuffman(
-  b: var Buffer,
-  tree: Node
-): uint16 =
-  b.checkBytePos()
-  var node = tree
-  for i in 0 .. 15: # Code lengths cannot be longer than 15
-    var bit = b.readBit()
-    node = node.kids[bit]
-    if node.stop:
-      return node.symbol
+{.push checks: off.}
+
+func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
+  ## See https://github.com/madler/zlib/blob/master/contrib/puff/puff.c
+
+  result = Huffman()
+  result.counts.setLen(maxCodeLength + 1)
+  result.symbols.setLen(maxCodes)
+
+  for symbol in 0 ..< lengths.len:
+    inc result.counts[lengths[symbol]]
+
+  var left = 1.uint16
+  for l in 1 .. maxCodeLength:
+    left = left shl 1
+    left = left - result.counts[l]
+    if left < 0:
+      failUncompress()
+
+  var offsets = newSeq[uint16](maxCodeLength + 1)
+  for l  in 1 ..< maxCodeLength:
+    offsets[l + 1] = offsets[l] + result.counts[l]
+
+  for symbol in 0 ..< lengths.len:
+    if lengths[symbol] != 0:
+      result.symbols[offsets[lengths[symbol]]] = symbol.uint16
+      inc offsets[lengths[symbol]]
+
+func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
+  var
+    code, first, count, index: int
+    len = 1
+    bits = b.data[b.bytePos] shr b.bitPos
+    left = 8 - b.bitPos
+
+  template fastSkip(count: int) =
+    inc(b.bitPos, count)
+    if b.bitPos >= 8:
+      inc b.bytePos
+      dec(b.bitPos, 8)
+
+  while true:
+    for i in 1 .. left:
+      code = code or (bits and 1).int
+      bits = bits shr 1
+      count = h.counts[len].int
+      if code - count < first:
+        fastSkip(i)
+        return h.symbols[index + (code - first)]
+      index = index + count
+      first = first + count
+      first = first shl 1
+      code = code shl 1
+      inc len
+
+    fastSkip(left)
+    left = (maxCodeLength + 1) - len
+    if left == 0:
+      break
+    b.checkBytePos()
+    bits = b.data[b.bytePos]
+    left = min(left, 8)
+
   failUncompress()
 
 func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
@@ -148,49 +168,11 @@ func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   b.readBytes(dst[pos].addr, len)
 
 proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
-  template decode(
-    literalTree: Node,
-    distanceTree: Node
-  ) =
-    while true:
-      let symbol = decodeHuffman(b, literalTree)
-      if symbol <= 255:
-        dst.add(symbol.uint8)
-      elif symbol == 256:
-        break
-      else:
-        let
-          lengthIndex = symbol - 257
-          totalLength = (
-            baseLengths[lengthIndex] +
-            b.readBits(baseLengthsExtraBits[lengthIndex])
-          ).int
-          distCode = decodeHuffman(b, distanceTree)
-
-        if distCode >= 30:
-          failUncompress()
-
-        let
-          totalDist = (
-            baseDistance[distCode] +
-            b.readBits(baseDistanceExtraBits[distCode])
-          ).int
-          start = dst.len
-
-        if totalDist > start:
-          failUncompress()
-
-        var pos = start - totalDist
-        dst.setLen(start + totalLength)
-        for i in 0 ..< totalLength:
-          dst[start + i] = dst[pos]
-          inc pos
+  var literalHuffman, distanceHuffman: Huffman
 
   if fixedCodes:
-    decode(
-      fixedLiteralTree,
-      fixedDistanceTree
-    )
+    literalHuffman = initHuffman(fixedCodeLengths, maxFixedLitLenCodes)
+    distanceHuffman = initHuffman(fixedDistanceLengths, maxDistCodes)
   else:
     let
       hlit = b.readBits(5).int + 257
@@ -201,13 +183,11 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
     for i in 0 ..< hclen.int:
       codeLengths[codeLengthOrder[i]] = b.readBits(3).uint8
 
-    let
-      codes = buildHuffmanAlphabet(codeLengths)
-      tree = buildHuffmanTree(codeLengths, codes)
+    let h = initHuffman(codeLengths, maxLitLenCodes)
 
     var unpacked: seq[uint8]
     while unpacked.len < hlit + hdist:
-      let symbol = decodeHuffman(b, tree)
+      let symbol = decodeSymbol(b, h)
       if symbol <= 15:
         unpacked.add(symbol.uint8)
       elif symbol == 16:
@@ -219,20 +199,44 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
       elif symbol == 18:
         unpacked.setLen(unpacked.len + b.readBits(7).int + 11)
       else:
-        raise newException(ZippyException, "Invalid symbol")
+        raise newException(ZippyError, "Invalid symbol")
 
-    let
-      literalLengths = unpacked[0 ..< hlit]
-      distanceLengths = unpacked[hlit ..< unpacked.len]
-      literalAlphabet = buildHuffmanAlphabet(literalLengths)
-      distanceAlphabet = buildHuffmanAlphabet(distanceLengths)
-      literalTree = buildHuffmanTree(literalLengths, literalAlphabet)
-      distanceTree = buildHuffmanTree(distanceLengths, distanceAlphabet)
+    literalHuffman = initHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
+    distanceHuffman = initHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
 
-    decode(
-      literalTree,
-      distanceTree
-    )
+  while true:
+    let symbol = decodeSymbol(b, literalHuffman)
+    if symbol <= 255:
+      dst.add(symbol.uint8)
+    elif symbol == 256:
+      break
+    else:
+      let
+        lengthIndex = symbol - 257
+        totalLength = (
+          baseLengths[lengthIndex] +
+          b.readBits(baseLengthsExtraBits[lengthIndex])
+        ).int
+        distCode = decodeSymbol(b, distanceHuffman)
+
+      if distCode >= 30:
+        failUncompress()
+
+      let
+        totalDist = (
+          baseDistance[distCode] +
+          b.readBits(baseDistanceExtraBits[distCode])
+        ).int
+        start = dst.len
+
+      if totalDist > start:
+        failUncompress()
+
+      var pos = start - totalDist
+      dst.setLen(start + totalLength)
+      for i in 0 ..< totalLength:
+        dst[start + i] = dst[pos]
+        inc pos
 
 proc inflate(b: var Buffer, dst: var seq[uint8]) =
   var finalBlock: bool
@@ -251,7 +255,7 @@ proc inflate(b: var Buffer, dst: var seq[uint8]) =
     of 2: # Compressed with dynamic Huffman codes
       inflateBlock(b, dst, false)
     else:
-      raise newException(ZippyException, "Invalid block header")
+      raise newException(ZippyError, "Invalid block header")
 
 proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
   ## Uncompresses src into dst. This resizes dst as needed and starts writing
@@ -265,19 +269,18 @@ proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
     cinfo = cmf shr 4
 
   if cm != 8: # DEFLATE
-    raise newException(ZippyException, "Unsupported compression method")
+    raise newException(ZippyError, "Unsupported compression method")
   if cinfo > 7:
-    raise newException(ZippyException, "Invalid compression info")
+    raise newException(ZippyError, "Invalid compression info")
   if ((cmf.uint16 * 256) + flg.uint16) mod 31 != 0:
-    raise newException(ZippyException, "Invalid header")
+    raise newException(ZippyError, "Invalid header")
   if (flg and 0b00100000) != 0: # FDICT
-    raise newException(ZippyException, "Preset dictionary is not yet supported")
+    raise newException(ZippyError, "Preset dictionary is not yet supported")
 
   inflate(b, dst)
 
 proc uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
   ## Uncompresses src and returns the uncompressed data seq.
-  result = newSeqOfCap[uint8](src.len * 2)
   uncompress(src, result)
 
 template uncompress*(src: string): string =
