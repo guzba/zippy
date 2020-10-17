@@ -1,4 +1,4 @@
-import fidget/opengl/perf, strformat, zippy, zip/zlib
+import fidget/opengl/perf, strformat, zippy
 
 # let file = "alice29.txt.z"
 let file = "urls.10K.z"
@@ -16,14 +16,3 @@ proc t() =
 timeIt "test":
   for i in 0 ..< 100:
     t()
-
-
-
-# proc z() =
-#   let compressed = readFile(&"tests/data/{file}")
-#   let uncompressed = zlib.uncompress(compressed)
-#   # echo uncompressed.len
-
-# timeIt "z":
-#   for i in 0 ..< 100:
-#     z()
