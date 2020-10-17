@@ -25,7 +25,7 @@ func initBuffer*(data: seq[uint8]): Buffer =
 func len*(b: Buffer): int =
   b.data.len
 
-func incBytePos*(b: var Buffer) {.inline.} =
+func incBytePos(b: var Buffer) {.inline.} =
   inc b.bytePos
   b.bitPos = 0
 
