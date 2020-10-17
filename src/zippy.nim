@@ -131,9 +131,8 @@ func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
 
   template fastSkip(count: int) =
     inc(b.bitPos, count)
-    if b.bitPos >= 8:
-      inc b.bytePos
-      dec(b.bitPos, 8)
+    inc(b.bytePos, (b.bitPos shr 3) and 1)
+    b.bitPos = b.bitPos and 7
 
   while true:
     for i in 1 .. left:
