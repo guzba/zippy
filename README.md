@@ -6,6 +6,8 @@ Zippy is an in-progress and experimental implementation of [DEFLATE](https://too
 
 The goal of this library is to be a dependency-free Nim implementation that is as small and straightforward as possible while still focusing on performance.
 
+Zippy works well using Nim's relatively new --gc:arc and --gc:orc as well as the default garbage collector. This library also works using both nim c and nim cpp, in addition to --cc:vcc on Windows.
+
 **This library is an active project and not ready for production use.**
 
 ### Testing
