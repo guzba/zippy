@@ -1,18 +1,22 @@
 import fidget/opengl/perf, strformat, zippy
 
-# let file = "alice29.txt.z"
-let file = "urls.10K.z"
-# let file = "test.z"
-# let file = "randtest3.z"
+const compressed = [
+  "randtest1.z",
+  "randtest2.z",
+  "randtest3.z",
+  "rfctest1.z",
+  "rfctest2.z",
+  "rfctest3.z",
+  "zerotest1.z",
+  "zerotest2.z",
+  "zerotest3.z",
+  "alice29.txt.z",
+  "urls.10K.z",
+  "fixed.z"
+]
 
-proc t() =
-  let compressed = readFile(&"tests/data/{file}")
-  let uncompressed = zippy.uncompress(compressed)
-  # echo uncompressed.len
-  # echo cast[string](uncompressed)
-  # let compressed = compress(original, level=11)
-  # writeFile(&"tests/data/{file}.z", compressed)
-
-timeIt "test":
-  for i in 0 ..< 100:
-    t()
+timeIt "zippy":
+  for file in compressed:
+    let data = readFile(&"tests/data/{file}")
+    for i in 0 ..< 100:
+      discard zippy.uncompress(data)
