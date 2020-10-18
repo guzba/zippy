@@ -262,11 +262,73 @@ proc inflate(b: var Buffer, dst: var seq[uint8]) =
     else:
       raise newException(ZippyError, "Invalid block header")
 
+proc adler32(data: seq[uint8]): uint32 =
+  ## https://github.com/madler/zlib/blob/master/adler32.c
+
+  const nmax = 5552
+
+  var
+    s1 = 1.uint32
+    s2 = 0.uint32
+    l = data.len
+    pos: int
+
+  template do1(i: int) =
+    s1 += data[pos + i]
+    s2 += s1
+
+  template do8(i: int) =
+    do1(i + 0)
+    do1(i + 1)
+    do1(i + 2)
+    do1(i + 3)
+    do1(i + 4)
+    do1(i + 5)
+    do1(i + 6)
+    do1(i + 7)
+
+  template do16() =
+    do8(0)
+    do8(8)
+
+  while l >= nmax:
+    dec(l, nmax)
+    for i in 0 ..< nmax div 16:
+      do16()
+      inc(pos, 16)
+
+    s1 = s1 mod 65521
+    s2 = s2 mod 65521
+
+  while l >= 16:
+    dec(l, 16)
+    do16()
+    inc(pos, 16)
+
+  for i in 0 ..< l:
+    s1 += data[pos + i]
+    s2 += s1
+
+  s1 = s1 mod 65521
+  s2 = s2 mod 65521
+
+  result = (s2 shl 16) or s1
+
 proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
   ## Uncompresses src into dst. This resizes dst as needed and starts writing
   ## at dst index 0.
 
-  var b = initBuffer(src)
+  if src.len < 6:
+    failUncompress()
+
+  let checksum = (
+    cast[uint32](src[src.len - 4]) shl 24 or
+    cast[uint32](src[src.len - 3]) shl 16 or
+    cast[uint32](src[src.len - 2]) shl 8 or
+    cast[uint32](src[src.len - 1])
+  )
+
+  var b = initBuffer(src[0 ..< src.len - 4])
   let
     cmf = b.readBits(8)
     flg = b.readBits(8)
@@ -283,6 +345,9 @@ proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
     raise newException(ZippyError, "Preset dictionary is not yet supported")
 
   inflate(b, dst)
+
+  if checksum != adler32(dst):
+    raise newException(ZippyError, "Checksum verification failed")
 
 proc uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
   ## Uncompresses src and returns the uncompressed data seq.
