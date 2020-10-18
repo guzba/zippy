@@ -41,6 +41,7 @@ proc uncompress(src: seq[uint8]): seq[uint8] {.inline, raises: [ZippyError], tag
 
 ## **template** uncompress
 
+Helper for when prefering to work with strings.
 
 ```nim
 template uncompress(src: string): string
