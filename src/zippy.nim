@@ -96,7 +96,7 @@ type Huffman = object
 
 {.push checks: off.}
 
-func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
+proc initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   ## See https://github.com/madler/zlib/blob/master/contrib/puff/puff.c
 
   result = Huffman()
@@ -122,7 +122,7 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       result.symbols[offsets[lengths[symbol]]] = symbol.uint16
       inc offsets[lengths[symbol]]
 
-func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
+proc decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
   var
     code, first, count, index: int
     len = 1
@@ -158,7 +158,7 @@ func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
 
   failUncompress()
 
-func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
+proc inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   b.skipRemainingBitsInCurrentByte()
   let len = b.readBits(16).int
   b.skipBits(16) # nlen
@@ -208,7 +208,7 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
     let symbol = decodeSymbol(b, literalHuffman)
     if symbol <= 255:
       if pos >= dst.len:
-        dst.setLen(max(dst.len, 1) * 2)
+        dst.setLen((pos + 1) * 2)
       dst[pos] = symbol.uint8
       inc pos
     elif symbol == 256:
