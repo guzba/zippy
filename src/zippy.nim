@@ -3,7 +3,7 @@ import zippy/buffer, zippy/zippyerror
 export zippyerror
 
 const
-  maxCodeLength = 15 ## Maximum bits in a code
+  maxCodeLength = 15                ## Maximum bits in a code
   maxLitLenCodes = 286
   maxDistCodes = 30
   maxFixedLitLenCodes = 288
@@ -114,7 +114,7 @@ proc initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       failUncompress()
 
   var offsets = newSeq[uint16](maxCodeLength + 1)
-  for l  in 1 ..< maxCodeLength:
+  for l in 1 ..< maxCodeLength:
     offsets[l + 1] = offsets[l] + result.counts[l]
 
   for symbol in 0 ..< lengths.len:
