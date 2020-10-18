@@ -34,7 +34,7 @@ template checkBytePos*(b: Buffer) =
     raise newException(ZippyError, "Cannot read further, at end of buffer")
 
 func read(b: var Buffer, bits: int): uint8 =
-  doAssert bits <= 8
+  assert bits <= 8
 
   b.checkBytePos()
 
@@ -53,7 +53,7 @@ func read(b: var Buffer, bits: int): uint8 =
     result = result or (b.read(bitsNeeded) shl bitsLeftInByte)
 
 func readBits*(b: var Buffer, bits: int): uint16 =
-  doAssert bits <= 16
+  assert bits <= 16
 
   result = b.read(min(bits, 8)).uint16
   if bits > 8:
