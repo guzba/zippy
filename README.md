@@ -23,25 +23,25 @@ This implementation has been greatly assisted by [zlib-inflate-simple](https://g
 import zippy
 ```
 
-## **proc** uncompress
+## **func** uncompress
 
 Uncompresses src into dst. This resizes dst as needed and starts writing at dst index 0.
 
 ```nim
-proc uncompress(src: seq[uint8]; dst: var seq[uint8]) {.raises: [ZippyError], tags: [].}
+func uncompress(src: seq[uint8]; dst: var seq[uint8]) {.raises: [ZippyError], tags: [].}
 ```
 
-## **proc** uncompress
+## **func** uncompress
 
 Uncompresses src and returns the uncompressed data seq.
 
 ```nim
-proc uncompress(src: seq[uint8]): seq[uint8] {.inline, raises: [ZippyError], tags: [].}
+func uncompress(src: seq[uint8]): seq[uint8] {.inline, raises: [ZippyError], tags: [].}
 ```
 
 ## **template** uncompress
 
-Helper for when prefering to work with strings.
+Helper for when preferring to work with strings.
 
 ```nim
 template uncompress(src: string): string

@@ -96,7 +96,7 @@ type Huffman = object
 
 {.push checks: off.}
 
-proc initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
+func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   ## See https://github.com/madler/zlib/blob/master/contrib/puff/puff.c
 
   result = Huffman()
@@ -122,7 +122,7 @@ proc initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       result.symbols[offsets[lengths[symbol]]] = symbol.uint16
       inc offsets[lengths[symbol]]
 
-proc decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
+func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
   var
     code, first, count, index: int
     len = 1
@@ -158,7 +158,7 @@ proc decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
 
   failUncompress()
 
-proc inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
+func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   b.skipRemainingBitsInCurrentByte()
   let len = b.readBits(16).int
   b.skipBits(16) # nlen
@@ -166,7 +166,7 @@ proc inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   dst.setLen(pos + len) # Make room for the bytes to be copied to
   b.readBytes(dst[pos].addr, len)
 
-proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
+func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
 
   if fixedCodes:
@@ -243,7 +243,7 @@ proc inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
 
   dst.setLen(pos)
 
-proc inflate(b: var Buffer, dst: var seq[uint8]) =
+func inflate(b: var Buffer, dst: var seq[uint8]) =
   var finalBlock: bool
   while not finalBlock:
     let
@@ -262,7 +262,7 @@ proc inflate(b: var Buffer, dst: var seq[uint8]) =
     else:
       raise newException(ZippyError, "Invalid block header")
 
-proc adler32(data: seq[uint8]): uint32 =
+func adler32(data: seq[uint8]): uint32 =
   ## https://github.com/madler/zlib/blob/master/adler32.c
 
   const nmax = 5552
@@ -314,7 +314,7 @@ proc adler32(data: seq[uint8]): uint32 =
 
   result = (s2 shl 16) or s1
 
-proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
+func uncompress*(src: seq[uint8], dst: var seq[uint8]) =
   ## Uncompresses src into dst. This resizes dst as needed and starts writing
   ## at dst index 0.
 
@@ -349,7 +349,7 @@ proc uncompress*(src: seq[uint8], dst: var seq[uint8]) =
   if checksum != adler32(dst):
     raise newException(ZippyError, "Checksum verification failed")
 
-proc uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
+func uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
   ## Uncompresses src and returns the uncompressed data seq.
   result = newSeqOfCap[uint8](src.len * 3)
   uncompress(src, result)
