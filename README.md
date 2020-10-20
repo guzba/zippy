@@ -8,6 +8,8 @@ The goal of this library is to be a dependency-free Nim implementation that is a
 
 Zippy works well using Nim's relatively new --gc:arc and --gc:orc as well as the default garbage collector. This library also works using both nim c and nim cpp, in addition to --cc:vcc on Windows.
 
+I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 1.4.0.
+
 **This library is an active project and not ready for production use.**
 
 ### Testing
