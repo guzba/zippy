@@ -322,10 +322,10 @@ func uncompress*(src: seq[uint8], dst: var seq[uint8]) =
     failUncompress()
 
   let checksum = (
-    cast[uint32](src[src.len - 4]) shl 24 or
-    cast[uint32](src[src.len - 3]) shl 16 or
-    cast[uint32](src[src.len - 2]) shl 8 or
-    cast[uint32](src[src.len - 1])
+    src[src.len - 4].uint32 shl 24 or
+    src[src.len - 3].uint32 shl 16 or
+    src[src.len - 2].uint32 shl 8 or
+    src[src.len - 1].uint32
   )
 
   var b = initBuffer(src[0 ..< src.len - 4])
