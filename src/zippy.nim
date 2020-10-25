@@ -263,7 +263,7 @@ func inflate(b: var Buffer, dst: var seq[uint8]) =
       raise newException(ZippyError, "Invalid block header")
 
 func adler32(data: seq[uint8]): uint32 =
-  ## https://github.com/madler/zlib/blob/master/adler32.c
+  ## See https://github.com/madler/zlib/blob/master/adler32.c
 
   const nmax = 5552
 
