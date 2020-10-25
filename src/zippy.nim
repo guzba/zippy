@@ -119,7 +119,10 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
 
   for symbol in 0 ..< lengths.len:
     if lengths[symbol] != 0:
-      result.symbols[offsets[lengths[symbol]]] = symbol.uint16
+      let offset = offsets[lengths[symbol]]
+      if offset.int >= result.symbols.len:
+        failUncompress()
+      result.symbols[offset] = symbol.uint16
       inc offsets[lengths[symbol]]
 
 func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
@@ -221,7 +224,7 @@ func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
     else:
       let lengthIndex = symbol - 257
 
-      if lengthIndex >= 30:
+      if lengthIndex >= baseLengths.len:
         failUncompress()
 
       let
@@ -231,7 +234,7 @@ func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
         ).int
         distCode = decodeSymbol(b, distanceHuffman)
 
-      if distCode >= 30:
+      if distCode >= baseDistance.len:
         failUncompress()
 
       let
