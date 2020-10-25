@@ -214,8 +214,12 @@ func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
     elif symbol == 256:
       break
     else:
+      let lengthIndex = symbol - 257
+
+      if lengthIndex >= 30:
+        failUncompress()
+
       let
-        lengthIndex = symbol - 257
         totalLength = (
           baseLengths[lengthIndex] +
           b.readBits(baseLengthsExtraBits[lengthIndex])
