@@ -123,6 +123,8 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       inc offsets[lengths[symbol]]
 
 func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
+  b.checkBytePos()
+
   var
     code, first, count, index: int
     len = 1
@@ -162,9 +164,10 @@ func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
   b.skipRemainingBitsInCurrentByte()
   let len = b.readBits(16).int
   b.skipBits(16) # nlen
-  let pos = dst.len
-  dst.setLen(pos + len) # Make room for the bytes to be copied to
-  b.readBytes(dst[pos].addr, len)
+  if len > 0:
+    let pos = dst.len
+    dst.setLen(pos + len) # Make room for the bytes to be copied to
+    b.readBytes(dst[pos].addr, len)
 
 func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
