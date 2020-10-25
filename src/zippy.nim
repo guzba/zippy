@@ -193,6 +193,8 @@ func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
       if symbol <= 15:
         unpacked.add(symbol.uint8)
       elif symbol == 16:
+        if unpacked.len == 0:
+          failUncompress()
         let prev = unpacked[unpacked.len - 1]
         for i in 0 ..< b.readBits(2).int + 3:
           unpacked.add(prev)
