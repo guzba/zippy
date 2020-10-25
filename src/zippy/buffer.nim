@@ -29,9 +29,12 @@ func incBytePos(b: var Buffer) {.inline.} =
   inc b.bytePos
   b.bitPos = 0
 
+template failEndOfBuffer*() =
+  raise newException(ZippyError, "Cannot read further, at end of buffer")
+
 template checkBytePos*(b: Buffer) =
   if b.data.len <= b.bytePos:
-    raise newException(ZippyError, "Cannot read further, at end of buffer")
+    failEndOfBuffer()
 
 func read(b: var Buffer, bits: int): uint8 =
   assert bits <= 8
@@ -87,5 +90,8 @@ func skipRemainingBitsInCurrentByte*(b: var Buffer) =
     inc b.bytePos
 
 func readBytes*(b: var Buffer, dst: pointer, len: int) =
+  if b.bytePos + len > b.data.len:
+    failEndOfBuffer()
+
   copyMem(dst, b.data[b.bytePos].addr, len)
   b.skipBits(len * 8)
