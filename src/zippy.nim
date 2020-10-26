@@ -85,16 +85,16 @@ const
       lengths[i] = 5
     lengths
 
-template failUncompress() =
-  raise newException(
-    ZippyError, "Invalid buffer, unable to uncompress"
-  )
-
 type Huffman = object
   counts: seq[uint16]
   symbols: seq[uint16]
 
 {.push checks: off.}
+
+template failUncompress() =
+  raise newException(
+    ZippyError, "Invalid buffer, unable to uncompress"
+  )
 
 func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   ## See https://github.com/madler/zlib/blob/master/contrib/puff/puff.c
