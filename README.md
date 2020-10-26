@@ -15,6 +15,8 @@ I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 
 ### Testing
 `nimble test`
 
+To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can do run the fuzzer any time by running `nim c -r tests/fuzz.nim`
+
 ### Credits
 
 This implementation has been greatly assisted by [zlib-inflate-simple](https://github.com/toomuchvoltage/zlib-inflate-simple) which is by far the smallest and most readable implementation I've found.
