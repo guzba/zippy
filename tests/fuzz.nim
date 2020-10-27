@@ -1,4 +1,4 @@
-import strformat, random, zippy
+import random, strformat, zippy
 
 randomize()
 
