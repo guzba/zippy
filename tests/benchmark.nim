@@ -1,4 +1,4 @@
-import miniz, std/monotimes, strformat, zip/zlib, zippy
+import miniz, std/monotimes, strformat, zip/zlib, zippy, nimPNG/nimz
 
 const
   files = [
@@ -45,6 +45,19 @@ block nimlang_zip: # Requires zlib1.dll
     var c: int
     for i in 0 ..< iterations:
       let uncompressed = zlib.uncompress(compressed, stream = ZLIB_STREAM)
+      inc(c, uncompressed.len)
+    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+    echo &"  {file}: {delta:.4f}s [{c}]"
+
+block jangko_nimPNG:
+  echo "https://github.com/jangko/nimPNG"
+  for file in files:
+    let
+      compressed = readFile(&"tests/data/{file}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let uncompressed = zlib_decompress(nzInflateInit(compressed))
       inc(c, uncompressed.len)
     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
     echo &"  {file}: {delta:.4f}s [{c}]"

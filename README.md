@@ -14,7 +14,7 @@ I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 
 
 ### Performance
 
-Benchmarks can be run comparing different Zip implementations. My benchmarking shows this library performs well but it is not as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
+Benchmarks can be run comparing different Zip implementations. My benchmarking shows this library performs very well but it is not as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
 
 `nim c --gc:arc -d:release -r .\tests\benchmark.nim` (1000 uncompresses, lower time is better)
 
@@ -35,6 +35,15 @@ rfctest3.z |0.5801s
 alice29.txt.z | 3.3442s
 urls.10K.z | 16.1209s
 fixed.z | 19.8003s
+
+https://github.com/nim-lang/nimPNG results:
+File | Time
+--- | ---:
+randtest3.z | 0.1648s
+rfctest3.z | 0.5760s
+alice29.txt.z | 2.2471s
+urls.10K.z | 11.0067s
+fixed.z | 10.0772s
 
 https://github.com/nim-lang/zip results:
 File | Time
