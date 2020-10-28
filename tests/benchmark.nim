@@ -1,22 +1,37 @@
-import fidget/opengl/perf, strformat, zippy
+import std/monotimes, strformat, zippy, miniz
 
-const compressed = [
-  "randtest1.z",
-  "randtest2.z",
-  "randtest3.z",
-  "rfctest1.z",
-  "rfctest2.z",
-  "rfctest3.z",
-  "zerotest1.z",
-  "zerotest2.z",
-  "zerotest3.z",
-  "alice29.txt.z",
-  "urls.10K.z",
-  "fixed.z"
-]
+const
+  files = [
+    "randtest3.z",
+    "rfctest3.z",
+    "alice29.txt.z",
+    "urls.10K.z",
+    "fixed.z"
+  ]
+  iterations = 1000
 
-timeIt "zippy":
-  for file in compressed:
-    let data = readFile(&"tests/data/{file}")
-    for i in 0 ..< 100:
-      discard zippy.uncompress(data)
+block guzba_zippy:
+  echo "https://github.com/guzba/zippy"
+  for file in files:
+    let
+      compressed = readFile(&"tests/data/{file}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let uncompressed = zippy.uncompress(compressed)
+      inc(c, uncompressed.len)
+    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+    echo &"  {file}: {delta:.4f}s [{c}]"
+
+block treeform_miniz:
+  echo "https://github.com/treeform/miniz"
+  for file in files:
+    let
+      compressed = readFile(&"tests/data/{file}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let uncompressed = miniz.uncompress(compressed)
+      inc(c, uncompressed.len)
+    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+    echo &"  {file}: {delta:.4f}s [{c}]"

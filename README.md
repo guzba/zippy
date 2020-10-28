@@ -10,7 +10,31 @@ Zippy works well using Nim's relatively new --gc:arc and --gc:orc as well as the
 
 I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 1.4.0.
 
-**This library is an active project and not ready for production use.**
+**This library is an active project and not ready for production use. Currently only uncompress (inflating) has been implemented.**
+
+### Performance
+
+Benchmarks can be run comparing different Zip implementations. Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
+
+`nim c --gc:arc -d:release -r .\tests\benchmark.nim` (1000 uncompresses, lower time is better)
+
+**https://github.com/guzba/zippy** results:
+File | Time
+--- | ---:
+randtest3.z | 0.0519s
+rfctest3.z | 0.3295s
+alice29.txt.z | 1.4704s
+urls.10K.z | 7.3240s
+fixed.z | 6.8125s
+
+https://github.com/treeform/miniz results:
+File | Time
+--- | ---:
+randtest3.z | 0.5803s
+rfctest3.z |0.5801s
+alice29.txt.z | 3.3442s
+urls.10K.z | 16.1209s
+fixed.z | 19.8003s
 
 ### Testing
 `nimble test`
