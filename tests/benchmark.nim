@@ -1,4 +1,4 @@
-import std/monotimes, strformat, zippy, miniz, zip/zlib
+import miniz, std/monotimes, strformat, zip/zlib, zippy
 
 const
   files = [
@@ -39,12 +39,12 @@ block treeform_miniz:
 block nimlang_zip: # Requires zlib1.dll
   echo "https://github.com/nim-lang/zip"
   for file in files:
-      let
-        compressed = readFile(&"tests/data/{file}")
-        start = getMonoTime().ticks
-      var c: int
-      for i in 0 ..< iterations:
-        let uncompressed = zlib.uncompress(compressed, stream=ZLIB_STREAM)
-        inc(c, uncompressed.len)
-      let delta = float64(getMonoTime().ticks - start) / 1000000000.0
-      echo &"  {file}: {delta:.4f}s [{c}]"
+    let
+      compressed = readFile(&"tests/data/{file}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let uncompressed = zlib.uncompress(compressed, stream = ZLIB_STREAM)
+      inc(c, uncompressed.len)
+    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+    echo &"  {file}: {delta:.4f}s [{c}]"
