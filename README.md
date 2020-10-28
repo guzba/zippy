@@ -45,7 +45,7 @@ alice29.txt.z | 2.2471s
 urls.10K.z | 11.0067s
 fixed.z | 10.0772s
 
-https://github.com/nim-lang/zip results:
+https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time
 --- | ---:
 randtest3.z | 0.0061s
