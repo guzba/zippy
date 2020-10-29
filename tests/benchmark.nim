@@ -1,4 +1,4 @@
-import miniz, std/monotimes, strformat, zip/zlib, zippy, nimPNG/nimz
+import miniz, nimPNG/nimz, std/monotimes, strformat, zip/zlib, zippy
 
 const
   files = [
