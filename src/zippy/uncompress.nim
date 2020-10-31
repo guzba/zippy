@@ -1,4 +1,4 @@
-import buffers, zippyerror, adler32
+import buffers, zippyerror, common
 
 const
   maxCodeLength = 15                ## Maximum bits in a code
