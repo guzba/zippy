@@ -1,3 +1,13 @@
+const
+  maxCodeLength* = 15                ## Maximum bits in a code
+  maxLitLenCodes* = 286
+  maxDistCodes* = 30
+  maxFixedLitLenCodes* = 288
+
+  codeLengthOrder* = [
+    16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
+  ]
+
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
 

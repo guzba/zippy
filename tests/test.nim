@@ -33,11 +33,13 @@ const golds = [
 #     gold = readFile(&"tests/data/{golds[i]}")
 #   assert uncompress(z) == gold
 
-let compressed = compress(readFile("tests/data/randtest1.gold"))
-let uncompressed = uncompress(compressed)
+# let c = cast[seq[uint8]](compress(readFile("tests/data/randtest1.gold")))
+# let uncompressed = uncompress(compressed)
 
-echo compress("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED")
-
+let c = cast[seq[uint8]](compress("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"))
+# let c = cast[seq[uint8]](compress("aaaaaaaaaabcccccccccccccccddddddd"))
+# echo c
+echo uncompress(c)
 # import random, fidget/opengl/perf, algorithm
 
 # include zippy/compress

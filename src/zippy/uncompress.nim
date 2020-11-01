@@ -1,15 +1,6 @@
-import buffers, zippyerror, common
+import bitstreams, zippyerror, common
 
 const
-  maxCodeLength = 15                ## Maximum bits in a code
-  maxLitLenCodes = 286
-  maxDistCodes = 30
-  maxFixedLitLenCodes = 288
-
-  codeLengthOrder = [
-    16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
-  ]
-
   baseLengths = [
     3.uint16, 4, 5, 6, 7, 8, 9, 10, # 257 - 264
     11, 13, 15, 17,                 # 265 - 268
@@ -104,10 +95,13 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   for symbol in 0 ..< lengths.len:
     inc result.counts[lengths[symbol]]
 
-  var left = 1.uint16
+  if result.counts[0] == maxCodes.uint16:
+    failUncompress()
+
+  var left = 1
   for l in 1 .. maxCodeLength:
     left = left shl 1
-    left = left - result.counts[l]
+    left = left - result.counts[l].int
     if left < 0:
       failUncompress()
 
@@ -123,7 +117,9 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       result.symbols[offset] = symbol.uint16
       inc offsets[lengths[symbol]]
 
-func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
+import strutils
+
+func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   b.checkBytePos()
 
   var
@@ -142,6 +138,8 @@ func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
       code = code or (bits and 1).int
       bits = bits shr 1
       count = h.counts[len].int
+      debugEcho code, " ", toBin(code.int, 8), " ", len, " ", count, " ", first, " ", index
+      debugEcho code - count
       if code - count < first:
         fastSkip(i)
         return h.symbols[index + (code - first)]
@@ -161,7 +159,7 @@ func decodeSymbol(b: var Buffer, h: Huffman): uint16 {.inline.} =
 
   failUncompress()
 
-func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
+func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
   b.skipRemainingBitsInCurrentByte()
   let
     len = b.readBits(16).int
@@ -173,7 +171,7 @@ func inflateNoCompression(b: var Buffer, dst: var seq[uint8]) =
     dst.setLen(pos + len) # Make room for the bytes to be copied to
     b.readBytes(dst[pos].addr, len)
 
-func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
+func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
 
   if fixedCodes:
@@ -185,15 +183,24 @@ func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
       hdist = b.readBits(5).int + 1
       hclen = b.readBits(4).int + 4
 
+    # debugEcho hlit, " ", hdist, " ", hclen
+
     var codeLengths = newSeq[uint8](19)
     for i in 0 ..< hclen.int:
       codeLengths[codeLengthOrder[i]] = b.readBits(3).uint8
 
-    let h = initHuffman(codeLengths, maxLitLenCodes)
+    debugEcho "u codeLengths: ", codeLengths
+    debugEcho b.bytePos, " ", b.bitPos
+
+    let h = initHuffman(codeLengths, 19)
+
+    debugEcho "u counts: ", h.counts
+    debugEcho "u symbols: ", h.symbols
 
     var unpacked: seq[uint8]
     while unpacked.len < hlit + hdist:
       let symbol = decodeSymbol(b, h)
+      debugEcho "u s: ", symbol
       if symbol <= 15:
         unpacked.add(symbol.uint8)
       elif symbol == 16:
@@ -211,6 +218,8 @@ func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
 
     literalHuffman = initHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
     distanceHuffman = initHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
+
+    debugEcho "u unpacked: ", unpacked
 
   var pos = dst.len
   while true:
@@ -256,7 +265,7 @@ func inflateBlock(b: var Buffer, dst: var seq[uint8], fixedCodes: bool) =
 
   dst.setLen(pos)
 
-func inflate(b: var Buffer, dst: var seq[uint8]) =
+func inflate(b: var BitStream, dst: var seq[uint8]) =
   var finalBlock: bool
   while not finalBlock:
     let
@@ -289,7 +298,7 @@ func uncompress*(src: seq[uint8], dst: var seq[uint8]) =
     src[src.len - 1].uint32
   )
 
-  var b = initBuffer(src[0 ..< src.len - 4])
+  var b = initBitStream(src[0 ..< src.len - 4])
   let
     cmf = b.readBits(8)
     flg = b.readBits(8)
