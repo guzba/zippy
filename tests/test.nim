@@ -1,30 +1,30 @@
 import strformat, zippy
 
-const zs = [
-  "randtest1.z",
-  "randtest2.z",
-  "randtest3.z",
-  "rfctest1.z",
-  "rfctest2.z",
-  "rfctest3.z",
-  "tor-list.z",
-  "zerotest1.z",
-  "zerotest2.z",
-  "zerotest3.z",
-]
-
-const golds = [
-  "randtest1.gold",
-  "randtest2.gold",
-  "randtest3.gold",
-  "rfctest1.gold",
-  "rfctest2.gold",
-  "rfctest3.gold",
-  "tor-list.gold",
-  "zerotest1.gold",
-  "zerotest2.gold",
-  "zerotest3.gold",
-]
+const
+  zs = [
+    "randtest1.z",
+    "randtest2.z",
+    "randtest3.z",
+    "rfctest1.z",
+    "rfctest2.z",
+    "rfctest3.z",
+    "tor-list.z",
+    "zerotest1.z",
+    "zerotest2.z",
+    "zerotest3.z",
+  ]
+  golds = [
+    # "randtest1.gold",
+    # "randtest2.gold",
+    # "randtest3.gold",
+    "rfctest1.gold",
+    # "rfctest2.gold",
+    # "rfctest3.gold",
+    # "tor-list.gold",
+    # "zerotest1.gold",
+    # "zerotest2.gold",
+    # "zerotest3.gold",
+  ]
 
 # for i, file in zs:
 #   echo file
@@ -33,13 +33,25 @@ const golds = [
 #     gold = readFile(&"tests/data/{golds[i]}")
 #   assert uncompress(z) == gold
 
-# let c = cast[seq[uint8]](compress(readFile("tests/data/randtest1.gold")))
-# let uncompressed = uncompress(compressed)
+# let gold = readFile("tests/data/rfctest1.gold")
+# let c = compress(gold)
+# let uncompressed = uncompress(c)
+# assert uncompressed == gold
 
-let c = cast[seq[uint8]](compress("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"))
+# debugEcho "GOLD LEN: ", gold.len, " c len: ", c.len
+
+for gold in golds:
+  let
+    uncompressed = readFile(&"tests/data/{gold}")
+    compressed = compress(uncompressed)
+  assert uncompressed == uncompress(compressed)
+
+
+
+# let c = cast[seq[uint8]](compress("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"))
 # let c = cast[seq[uint8]](compress("aaaaaaaaaabcccccccccccccccddddddd"))
-echo c
-echo cast[string](uncompress(c))
+# echo c
+# echo cast[string](uncompress(c))
 # import random, fidget/opengl/perf, algorithm
 
 # include zippy/compress

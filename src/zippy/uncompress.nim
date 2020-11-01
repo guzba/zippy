@@ -117,8 +117,6 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       result.symbols[offset] = symbol.uint16
       inc offsets[lengths[symbol]]
 
-import strutils
-
 func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   b.checkBytePos()
 
@@ -138,8 +136,6 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       code = code or (bits and 1).int
       bits = bits shr 1
       count = h.counts[len].int
-      # debugEcho code, " ", toBin(code.int, 8), " ", len, " ", count, " ", first, " ", index
-      # debugEcho code - count
       if code - count < first:
         fastSkip(i)
         return h.symbols[index + (code - first)]
@@ -183,24 +179,15 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
       hdist = b.readBits(5).int + 1
       hclen = b.readBits(4).int + 4
 
-    # debugEcho hlit, " ", hdist, " ", hclen
-
     var codeLengths = newSeq[uint8](19)
     for i in 0 ..< hclen.int:
       codeLengths[codeLengthOrder[i]] = b.readBits(3).uint8
 
-    debugEcho "u codeLengths: ", codeLengths
-    debugEcho b.bytePos, " ", b.bitPos
-
     let h = initHuffman(codeLengths, 19)
-
-    debugEcho "u counts: ", h.counts
-    debugEcho "u symbols: ", h.symbols
 
     var unpacked: seq[uint8]
     while unpacked.len < hlit + hdist:
       let symbol = decodeSymbol(b, h)
-      debugEcho "u s: ", symbol
       if symbol <= 15:
         unpacked.add(symbol.uint8)
       elif symbol == 16:
@@ -218,8 +205,6 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
 
     literalHuffman = initHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
     distanceHuffman = initHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
-
-    debugEcho "u unpacked: ", unpacked
 
   var pos = dst.len
   while true:
@@ -284,9 +269,9 @@ func inflate(b: var BitStream, dst: var seq[uint8]) =
     else:
       raise newException(ZippyError, "Invalid block header")
 
-func uncompress*(src: seq[uint8], dst: var seq[uint8]) =
-  ## Uncompresses src into dst. This resizes dst as needed and starts writing
-  ## at dst index 0.
+func uncompress*(src: seq[uint8]): seq[uint8] =
+  ## Uncompresses src and returns the uncompressed data seq.
+  result = newSeqOfCap[uint8](src.len * 3)
 
   if src.len < 6:
     failUncompress()
@@ -314,15 +299,10 @@ func uncompress*(src: seq[uint8], dst: var seq[uint8]) =
   if (flg and 0b00100000) != 0: # FDICT
     raise newException(ZippyError, "Preset dictionary is not yet supported")
 
-  inflate(b, dst)
+  inflate(b, result)
 
-  if checksum != adler32(dst):
+  if checksum != adler32(result):
     raise newException(ZippyError, "Checksum verification failed")
-
-func uncompress*(src: seq[uint8]): seq[uint8] {.inline.} =
-  ## Uncompresses src and returns the uncompressed data seq.
-  result = newSeqOfCap[uint8](src.len * 3)
-  uncompress(src, result)
 
 template uncompress*(src: string): string =
   ## Helper for when preferring to work with strings.
