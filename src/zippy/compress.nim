@@ -281,13 +281,23 @@ func compress*(src: seq[uint8]): seq[uint8] =
       b.addBits(bitLensRle[k], 7)
     inc k
 
+  for i in 0 ..< encoded.len:
+    let symbol = encoded[i]
+    b.addBitsReverse(codesLitLen[symbol], depthsLitLen[symbol])
+
   if depthsLitLen[256] == 0:
     failCompress()
 
-  b.addBits(0, 8)
-  b.addBits(0, 8)
-  b.addBits(0, 8)
-  b.addBits(0, 8)
+  b.addBitsReverse(codesLitLen[256], depthsLitLen[256]) # End of block
+
+  b.skipRemainingBitsInCurrentByte()
+  b.data.setLen(b.data.len + 1)
+
+  let checksum = cast[array[4, uint8]](adler32(src))
+  b.addBits(checkSum[3], 8)
+  b.addBits(checkSum[2], 8)
+  b.addBits(checkSum[1], 8)
+  b.addBits(checkSum[0], 8)
 
   b.data
 

@@ -138,8 +138,8 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       code = code or (bits and 1).int
       bits = bits shr 1
       count = h.counts[len].int
-      debugEcho code, " ", toBin(code.int, 8), " ", len, " ", count, " ", first, " ", index
-      debugEcho code - count
+      # debugEcho code, " ", toBin(code.int, 8), " ", len, " ", count, " ", first, " ", index
+      # debugEcho code - count
       if code - count < first:
         fastSkip(i)
         return h.symbols[index + (code - first)]
