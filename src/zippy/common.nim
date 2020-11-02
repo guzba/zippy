@@ -3,6 +3,8 @@ const
   maxLitLenCodes* = 286
   maxDistCodes* = 30
   maxFixedLitLenCodes* = 288
+  # blockSize = 65535
+  # windowSize = 32768
 
   codeLengthOrder* = [
     16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15

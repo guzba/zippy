@@ -9,9 +9,10 @@ const
     "fixed.z"
   ]
   golds = [
-    "rfctest1.gold",
+    # "rfctest1.gold",
+    "tor-list.gold",
   ]
-  iterations = 10000
+  iterations = 100
 
 # block guzba_zippy_uncompress:
 #   echo "https://github.com/guzba/zippy uncompress"
