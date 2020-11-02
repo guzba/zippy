@@ -14,16 +14,16 @@ const
     "zerotest3.z",
   ]
   golds = [
-    # "randtest1.gold",
-    # "randtest2.gold",
-    # "randtest3.gold",
+    "randtest1.gold",
+    "randtest2.gold",
+    "randtest3.gold",
     "rfctest1.gold",
-    # "rfctest2.gold",
-    # "rfctest3.gold",
-    # "tor-list.gold",
-    # "zerotest1.gold",
-    # "zerotest2.gold",
-    # "zerotest3.gold",
+    "rfctest2.gold",
+    "rfctest3.gold",
+    "tor-list.gold",
+    "zerotest1.gold",
+    "zerotest2.gold",
+    "zerotest3.gold",
   ]
 
 # for i, file in zs:
@@ -33,47 +33,17 @@ const
 #     gold = readFile(&"tests/data/{golds[i]}")
 #   assert uncompress(z) == gold
 
-# let gold = readFile("tests/data/rfctest1.gold")
-# let c = compress(gold)
-# let uncompressed = uncompress(c)
-# assert uncompressed == gold
-
-# debugEcho "GOLD LEN: ", gold.len, " c len: ", c.len
+# block all_symbols:
+#   var data: seq[uint8]
+#   for i in 0.uint8 .. high(uint8):
+#     data.add(i)
+#   let compressed = compress(data)
+#   assert data == uncompress(compressed)
 
 for gold in golds:
   let
-    uncompressed = readFile(&"tests/data/{gold}")
-    compressed = compress(uncompressed)
-  assert uncompressed == uncompress(compressed)
-
-
-
-# let c = cast[seq[uint8]](compress("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"))
-# let c = cast[seq[uint8]](compress("aaaaaaaaaabcccccccccccccccddddddd"))
-# echo c
-# echo cast[string](uncompress(c))
-# import random, fidget/opengl/perf, algorithm
-
-# include zippy/compress
-
-# var
-#   a: seq[Node]
-#   b: seq[Node]
-# for i in 0 ..< 100000:
-#   let n = Node()
-#   n.weight = rand(high(uint16).int).uint16
-#   a.add(n)
-#   b.add(n)
-
-
-# timeIt "quicksort":
-#   quickSort(a)
-
-# timeIt "sort":
-#   sort(b)
-
-# var prev: Node
-# for _, n in a:
-#   if prev != nil:
-#     doAssert n.weight >= prev.weight
-#   prev = n
+    original = readFile(&"tests/data/{gold}")
+    compressed = compress(original)
+    uncompressed = uncompress(compressed)
+  echo &"{gold} original: {original.len} compressed: {compressed.len}"
+  assert original == uncompressed

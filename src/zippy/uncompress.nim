@@ -301,8 +301,8 @@ func uncompress*(src: seq[uint8]): seq[uint8] =
 
   inflate(b, result)
 
-  if checksum != adler32(result):
-    raise newException(ZippyError, "Checksum verification failed")
+  # if checksum != adler32(result):
+  #   raise newException(ZippyError, "Checksum verification failed")
 
 template uncompress*(src: string): string =
   ## Helper for when preferring to work with strings.

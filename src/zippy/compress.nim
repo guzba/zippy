@@ -28,7 +28,7 @@ const
 type
   Node {.acyclic.} = ref object
     symbol: uint16
-    weight: uint32
+    weight: uint64
     kids: array[2, Node] # left = [0], right = [1]
     leaf: bool
 
@@ -67,7 +67,7 @@ template quicksort(s: var seq[Node]) =
   quicksort(s, 0, s.high)
 
 func newHuffmanTree(
-  frequencies: seq[uint16], minCodes: int, maxBitLen: uint8
+  frequencies: seq[uint64], minCodes: int, maxBitLen: uint8
 ): (int, seq[uint8], seq[uint16]) =
   # result = (numCodes, symbol -> depth, symbol -> code)
 
@@ -78,61 +78,73 @@ func newHuffmanTree(
     if numCodes > minCodes and freq == 0: # Trim unused codes down to minCodes
       dec numCodes
       continue
-
-    # if freq == 0 and numCodes > 1:
-    #   dec numCodes
-    #   continue
-
+    if freq == 0:
+      continue
     let n = Node()
     n.symbol = i.uint16
-    n.weight = freq.uint32
+    n.weight = freq
     n.leaf = true
     nodes.add(n)
 
-  quicksort(nodes)
+  # quicksort(nodes)
 
-  # See https://en.wikipedia.org/wiki/Huffman_coding#Compression
+  # debugEcho "nodes: ", nodes.len
 
-  var q1, q2: Deque[Node]
-  for n in nodes:
-    q1.addLast(n)
-
-  while q1.len + q2.len > 1:
-    var kids: array[2, Node]
-    for i in 0 .. 1:
-      if q1.len > 0 and q2.len > 0:
-        if q1.peekFirst().weight <= q2.peekFirst().weight:
-          kids[i] = q1.popFirst()
-        else:
-          kids[i] = q2.popFirst()
-      elif q1.len > 0:
-        kids[i] = q1.popFirst()
-      else:
-        kids[i] = q2.popFirst()
-    let internal = Node()
-    internal.kids = kids
-    internal.weight = kids[0].weight + kids[1].weight
-    # debugEcho kids[0].weight, " ", kids[1].weight
-    q2.addLast(internal)
-
-  let root = if q2.len > 0: q2.popFirst() else: q1.popFirst()
-
-  # This will have at most 286 symbol depths
+  # There will be at most 286 symbols (frequencies)
   var
     depths = newSeq[uint8](frequencies.len)
     codes = newSeq[uint16](frequencies.len)
-  func walk(n: Node, d: uint8, code: uint16) =
-    if n == nil or n.weight == 0:
-      return
-    if d > maxBitLen:
+
+  if nodes.len > 0:
+    # See https://en.wikipedia.org/wiki/Huffman_coding#Compression
+
+    # var q = toHeapQueue(nodes)
+    # while q.len > 1:
+    #   let kids = [q.pop(), q.pop()]
+    #   let internal = Node()
+    #   internal.kids = kids
+    #   internal.weight = kids[0].weight + kids[1].weight
+    #   q.push(internal)
+
+    # let root = q.pop()
+
+    var q1, q2: Deque[Node]
+    for n in nodes:
+      q1.addLast(n)
+
+    while q1.len + q2.len > 1:
+      var kids: array[2, Node]
+      for i in 0 .. 1:
+        if q1.len > 0 and q2.len > 0:
+          if q1.peekFirst().weight <= q2.peekFirst().weight:
+            kids[i] = q1.popFirst()
+          else:
+            kids[i] = q2.popFirst()
+        elif q1.len > 0:
+          kids[i] = q1.popFirst()
+        else:
+          kids[i] = q2.popFirst()
+      let internal = Node()
+      internal.kids = kids
+      internal.weight = kids[0].weight + kids[1].weight
+      # debugEcho kids[0].weight, " ", kids[1].weight
+      q2.addLast(internal)
+
+    let root = if q2.len > 0: q2.popFirst() else: q1.popFirst()
+
+    var maxDepth: uint8
+    func walk(n: Node, d: uint8, code: uint16) =
+      maxDepth = max(maxDepth, d)
+      if n.leaf:
+        depths[n.symbol] = d
+        codes[n.symbol] = code
+      else:
+        walk(n.kids[0], d + 1, (code shl 1))
+        walk(n.kids[1], d + 1, (code shl 1) or 1)
+    walk(root, 0, 0)
+
+    if maxDepth > maxBitLen:
       failCompress()
-    if n.leaf:
-      depths[n.symbol] = d
-      codes[n.symbol] = code
-    else:
-      walk(n.kids[0], d + 1, (code shl 1))
-      walk(n.kids[1], d + 1, (code shl 1) or 1)
-  walk(root, 0, 0)
 
   # for i, code in codes:
   #   if depths[i] != 0:
@@ -185,12 +197,13 @@ func compress*(src: seq[uint8]): seq[uint8] =
   let encoded = src
 
   var
-    freqLitLen = newSeq[uint16](286)
-    freqDist = newSeq[uint16](30)
+    freqLitLen = newSeq[uint64](286)
+    freqDist = newSeq[uint64](30)
 
   for symbol in encoded:
     inc freqLitLen[symbol]
 
+  # debugEcho encoded.len
   # debugEcho "c freqLitLen: ", freqLitLen
 
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
@@ -251,7 +264,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.data.setLen(b.data.len + (bitCount + 7) div 8)
 
   var
-    freqCodeLen = newSeq[uint16](19)
+    freqCodeLen = newSeq[uint64](19)
     j: int
   while j < bitLensRle.len:
     inc freqCodeLen[bitLensRle[j]]
