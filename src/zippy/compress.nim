@@ -86,7 +86,7 @@ func newHuffmanTree(
     n.leaf = true
     nodes.add(n)
 
-  # quicksort(nodes)
+  quicksort(nodes)
 
   # debugEcho "nodes: ", nodes.len
 
