@@ -69,8 +69,6 @@ template quicksort(s: var seq[Node]) =
 func newHuffmanTree(
   frequencies: seq[uint64], minCodes: int, maxBitLen: uint8
 ): (int, seq[uint8], seq[uint16]) =
-  # result = (numCodes, symbol -> depth, symbol -> code)
-
   var
     numCodes = frequencies.len
     nodes = newSeq[Node]()
@@ -98,16 +96,6 @@ func newHuffmanTree(
   if nodes.len > 0:
     # See https://en.wikipedia.org/wiki/Huffman_coding#Compression
 
-    # var q = toHeapQueue(nodes)
-    # while q.len > 1:
-    #   let kids = [q.pop(), q.pop()]
-    #   let internal = Node()
-    #   internal.kids = kids
-    #   internal.weight = kids[0].weight + kids[1].weight
-    #   q.push(internal)
-
-    # let root = q.pop()
-
     var q1, q2: Deque[Node]
     for n in nodes:
       q1.addLast(n)
@@ -127,10 +115,10 @@ func newHuffmanTree(
       let internal = Node()
       internal.kids = kids
       internal.weight = kids[0].weight + kids[1].weight
-      # debugEcho kids[0].weight, " ", kids[1].weight
+      debugEcho kids[0].weight, " ", kids[1].weight
       q2.addLast(internal)
 
-    let root = if q2.len > 0: q2.popFirst() else: q1.popFirst()
+    let root = q2.popFirst()
 
     var maxDepth: uint8
     func walk(n: Node, d: uint8, code: uint16) =
