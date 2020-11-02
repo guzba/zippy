@@ -38,6 +38,10 @@ template failCompress() =
     ZippyError, "Unexpected error while compressing"
   )
 
+func newCoin(): Coin =
+  result = Coin()
+  result.symbols = newSeqOfCap[uint16](maxLitLenCodes)
+
 func `<`(a, b: Coin): bool = a.weight < b.weight
 
 func quicksort[T](s: var seq[T], inl, inr: int) =
@@ -104,8 +108,8 @@ func lengthLimitedHuffmanCodeLengths(
       prevCoins = newSeq[Coin](coins.len)
 
     for i in 0 ..< coins.len:
-      coins[i] = Coin()
-      prevCoins[i] = Coin()
+      coins[i] = newCoin()
+      prevCoins[i] = newCoin()
 
     addSymbolCoins(coins, 0)
 
@@ -127,7 +131,8 @@ func lengthLimitedHuffmanCodeLengths(
       for i in countup(0, numCoinsPrev - 2, 2):
         let coin = coins[numCoins]
         coin.weight = prevCoins[i].weight
-        coin.symbols = prevCoins[i].symbols
+        coin.symbols.setLen(0)
+        coin.symbols.add(prevCoins[i].symbols)
         coin.symbols.add(prevCoins[i + 1].symbols)
         coin.weight += prevCoins[i + 1].weight
         inc numCoins
