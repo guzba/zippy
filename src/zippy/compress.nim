@@ -202,8 +202,8 @@ func compress*(src: seq[uint8]): seq[uint8] =
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   let
-    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, 10)
-    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, 6)
+    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, 9)
+    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, 5)
     storedCodesLitLen = min(numCodesLitLen, maxLitLenCodes)
     storedCodesDist = min(numCodesDist, maxDistCodes)
 
