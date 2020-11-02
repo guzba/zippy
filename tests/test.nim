@@ -26,12 +26,12 @@ const
     "zerotest3.gold",
   ]
 
-# for i, file in zs:
-#   echo file
-#   let
-#     z = readFile(&"tests/data/{file}")
-#     gold = readFile(&"tests/data/{golds[i]}")
-#   assert uncompress(z) == gold
+for i, file in zs:
+  echo file
+  let
+    z = readFile(&"tests/data/{file}")
+    gold = readFile(&"tests/data/{golds[i]}")
+  assert uncompress(z) == gold
 
 # block all_symbols:
 #   var data: seq[uint8]
@@ -40,10 +40,10 @@ const
 #   let compressed = compress(data)
 #   assert data == uncompress(compressed)
 
-for gold in golds:
-  let
-    original = readFile(&"tests/data/{gold}")
-    compressed = compress(original)
-    uncompressed = uncompress(compressed)
-  echo &"{gold} original: {original.len} compressed: {compressed.len}"
-  assert original == uncompressed
+# for gold in golds:
+#   let
+#     original = readFile(&"tests/data/{gold}")
+#     compressed = compress(original)
+#     uncompressed = uncompress(compressed)
+#   echo &"{gold} original: {original.len} compressed: {compressed.len}"
+#   assert original == uncompressed
