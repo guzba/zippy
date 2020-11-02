@@ -27,7 +27,7 @@ const
   ]
 
 type
-  Coin = ref object
+  Coin = object
     symbols: seq[uint16]
     weight: uint64
 
@@ -38,10 +38,6 @@ template failCompress() =
     ZippyError, "Unexpected error while compressing"
   )
 
-func newCoin(): Coin =
-  result = Coin()
-  result.symbols = newSeqOfCap[uint16](maxLitLenCodes)
-
 func `<`(a, b: Coin): bool = a.weight < b.weight
 
 func quicksort[T](s: var seq[T], inl, inr: int) =
@@ -51,12 +47,12 @@ func quicksort[T](s: var seq[T], inl, inr: int) =
   let n = r - l + 1
   if n < 2:
     return
-  let p = s[l + 3 * n div 4]
+  let p = l + 3 * n div 4
   while l <= r:
-    if s[l] < p:
+    if s[l] < s[p]:
       inc l
       continue
-    if s[r] > p:
+    if s[r] > s[p]:
       dec r
       continue
     if l <= r:
@@ -108,8 +104,10 @@ func lengthLimitedHuffmanCodeLengths(
       prevCoins = newSeq[Coin](coins.len)
 
     for i in 0 ..< coins.len:
-      coins[i] = newCoin()
-      prevCoins[i] = newCoin()
+      coins[i].symbols.setLen(coins.len)
+      coins[i].symbols.setLen(0)
+      prevCoins[i].symbols.setLen(coins.len)
+      prevCoins[i].symbols.setLen(0)
 
     addSymbolCoins(coins, 0)
 
@@ -129,12 +127,10 @@ func lengthLimitedHuffmanCodeLengths(
       numCoins = 0
 
       for i in countup(0, numCoinsPrev - 2, 2):
-        let coin = coins[numCoins]
-        coin.weight = prevCoins[i].weight
-        coin.symbols.setLen(0)
-        coin.symbols.add(prevCoins[i].symbols)
-        coin.symbols.add(prevCoins[i + 1].symbols)
-        coin.weight += prevCoins[i + 1].weight
+        coins[numCoins].weight = prevCoins[i].weight
+        coins[numCoins].symbols.add(prevCoins[i].symbols)
+        coins[numCoins].symbols.add(prevCoins[i + 1].symbols)
+        coins[numCoins].weight += prevCoins[i + 1].weight
         inc numCoins
 
       if bitLen < maxBitLen:
@@ -144,9 +140,8 @@ func lengthLimitedHuffmanCodeLengths(
       quicksort(coins, 0, numCoins - 1)
 
     for i in 0 ..< numSymbolsUsed - 1:
-      let coin = coins[i]
-      for j in 0 ..< coin.symbols.len:
-        inc depths[coin.symbols[j]]
+      for j in 0 ..< coins[i].symbols.len:
+        inc depths[coins[i].symbols[j]]
 
   var depthCounts: array[16, uint8]
   for d in depths:
@@ -207,8 +202,8 @@ func compress*(src: seq[uint8]): seq[uint8] =
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   let
-    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, maxCodeLength)
-    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, maxCodeLength)
+    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, 10)
+    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, 6)
     storedCodesLitLen = min(numCodesLitLen, maxLitLenCodes)
     storedCodesDist = min(numCodesDist, maxDistCodes)
 

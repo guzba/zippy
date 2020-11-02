@@ -33,12 +33,12 @@ const
 #     gold = readFile(&"tests/data/{golds[i]}")
 #   assert uncompress(z) == gold
 
-# block all_symbols:
-#   var data: seq[uint8]
-#   for i in 0.uint8 .. high(uint8):
-#     data.add(i)
-#   let compressed = compress(data)
-#   assert data == uncompress(compressed)
+block all_symbols:
+  var data: seq[uint8]
+  for i in 0.uint8 .. high(uint8):
+    data.add(i)
+  let compressed = compress(data)
+  assert data == uncompress(compressed)
 
 for gold in golds:
   let
