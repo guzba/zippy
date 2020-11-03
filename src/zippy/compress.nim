@@ -46,7 +46,7 @@ func quickSort(s: var seq[Coin], lo, hi: int) =
     pivot = lo
     switch_i = lo + 1
   for i in lo + 1 .. hi:
-    if s[i].weight <= s[pivot].weight:
+    if s[i].weight < s[pivot].weight:
       swap(s[i], s[switch_i])
       swap(s[pivot], s[switch_i])
       inc pivot
