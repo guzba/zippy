@@ -48,13 +48,13 @@ func huffmanCodeLengths(
 
     var
       pivot = lo
-      switch_i = lo + 1
+      swapPos = lo + 1
     for i in lo + 1 .. hi:
       if s[i].weight < s[pivot].weight:
-        swap(s[i], s[switch_i])
-        swap(s[pivot], s[switch_i])
+        swap(s[i], s[swapPos])
+        swap(s[pivot], s[swapPos])
         inc pivot
-        inc switch_i
+        inc swapPos
 
     quickSort(s, lo, pivot - 1)
     quickSort(s, pivot + 1, hi)
