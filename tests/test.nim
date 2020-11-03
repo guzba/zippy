@@ -1,4 +1,4 @@
-import strformat, zippy
+import strformat, ../src/zippy
 
 const
   zs = [
