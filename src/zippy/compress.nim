@@ -266,7 +266,11 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.addBits(hdist, 5)
   b.addBits(hclen, 4)
 
-  b.data.setLen(b.data.len + (((hclen.int + 4) * 3 + 7) div 8))
+  # TODO: Make these b.data.setLens better
+  b.data.setLen(b.data.len +
+    (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
+    ((encoded.len * 15 + 7) div 8) + 4 # encoded symbols + checksum
+  )
 
   for i in 0.uint8 ..< hclen + 4:
     b.addBits(bitLensCodeLen[i], 3)
@@ -286,8 +290,6 @@ func compress*(src: seq[uint8]): seq[uint8] =
       b.addBits(bitLensRle[k], 7)
     inc k
 
-  b.data.setLen(b.data.len + ((encoded.len * 15) + 7) div 8)
-
   for i in 0 ..< encoded.len:
     let symbol = encoded[i]
     b.addBits(llCodes[symbol], llLengths[symbol].int)
@@ -298,13 +300,12 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.addBits(llCodes[256], llLengths[256].int) # End of block
 
   b.skipRemainingBitsInCurrentByte()
-  b.data.setLen(b.data.len + 1)
 
   let checksum = cast[array[4, uint8]](adler32(src))
-  b.addBits(checkSum[3], 8)
-  b.addBits(checkSum[2], 8)
-  b.addBits(checkSum[1], 8)
-  b.addBits(checkSum[0], 8)
+  b.addBits(checksum[3], 8)
+  b.addBits(checksum[2], 8)
+  b.addBits(checksum[1], 8)
+  b.addBits(checksum[0], 8)
 
   b.data.setLen(b.bytePos + 1)
   b.data
