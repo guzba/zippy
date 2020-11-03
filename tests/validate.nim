@@ -1,7 +1,5 @@
 import miniz, nimPNG/nimz, strformat, zip/zlib, zippy
 
-# Requires zlib1.dll
-
 const
   golds = [
     "randtest1.gold",
@@ -14,9 +12,10 @@ const
     "zerotest1.gold",
     "zerotest2.gold",
     "zerotest3.gold",
+    "empty.gold"
   ]
 
-block nimlang_zip:
+block nimlang_zip: # Requires zlib1.dll
   echo "https://github.com/nim-lang/zip"
   for gold in golds:
     let original = readFile(&"tests/data/{gold}")

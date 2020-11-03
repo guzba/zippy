@@ -24,6 +24,7 @@ const
     "zerotest1.gold",
     "zerotest2.gold",
     "zerotest3.gold",
+    "empty.gold"
   ]
 
 for i, z in zs:
