@@ -26,11 +26,6 @@ const
     0xDF, 0x3F, 0xBF, 0x7F, 0xFF
   ]
 
-type
-  Coin = object
-    symbols: seq[uint16]
-    weight: uint64
-
 # {.push checks: off.}
 
 template failCompress() =
@@ -38,27 +33,31 @@ template failCompress() =
     ZippyError, "Unexpected error while compressing"
   )
 
-func quickSort(s: var seq[Coin], lo, hi: int) =
-  if lo >= hi:
-    return
-
-  var
-    pivot = lo
-    switch_i = lo + 1
-  for i in lo + 1 .. hi:
-    if s[i].weight < s[pivot].weight:
-      swap(s[i], s[switch_i])
-      swap(s[pivot], s[switch_i])
-      inc pivot
-      inc switch_i
-
-  quickSort(s, lo, pivot - 1)
-  quickSort(s, pivot + 1, hi)
-
 func huffmanCodeLengths(
   frequencies: seq[uint64], minCodes, maxBitLen: int
 ): (int, seq[uint8], seq[uint16]) =
   # See https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
+
+  type Coin = object
+    symbols: seq[uint16]
+    weight: uint64
+
+  func quickSort(s: var seq[Coin], lo, hi: int) =
+    if lo >= hi:
+      return
+
+    var
+      pivot = lo
+      switch_i = lo + 1
+    for i in lo + 1 .. hi:
+      if s[i].weight < s[pivot].weight:
+        swap(s[i], s[switch_i])
+        swap(s[pivot], s[switch_i])
+        inc pivot
+        inc switch_i
+
+    quickSort(s, lo, pivot - 1)
+    quickSort(s, pivot + 1, hi)
 
   var numSymbolsUsed: int
   for freq in frequencies:
