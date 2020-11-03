@@ -188,14 +188,14 @@ func compress*(src: seq[uint8]): seq[uint8] =
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   let
-    (numCodesLitLen, lengthsLitLen, codesLitLen) = huffmanCodeLengths(freqLitLen, 257, 9)
-    (numCodesDist, lengthsDist, codesDist) = huffmanCodeLengths(freqDist, 2, 6)
+    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(freqLitLen, 257, 9)
+    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(freqDist, 2, 6)
 
-  var bitLens = newSeqOfCap[uint8](numCodesLitLen + numCodesDist)
-  for i in 0 ..< numCodesLitLen:
-    bitLens.add(lengthsLitLen[i])
-  for i in 0 ..< numCodesDist:
-    bitLens.add(lengthsDist[i])
+  var bitLens = newSeqOfCap[uint8](llNumCodes + distNumCodes)
+  for i in 0 ..< llNumCodes:
+    bitLens.add(llLengths[i])
+  for i in 0 ..< distNumCodes:
+    bitLens.add(distLengths[i])
 
   var
     bitLensRle: seq[uint8]
@@ -236,20 +236,20 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.data.setLen(b.data.len + (bitCount + 7) div 8)
 
   var
-    freqCodeLen = newSeq[uint64](19)
-    j: int
-  while j < bitLensRle.len:
-    inc freqCodeLen[bitLensRle[j]]
+    clFreq = newSeq[uint64](19)
+    pos: int
+  while pos < bitLensRle.len:
+    inc clFreq[bitLensRle[pos]]
     # Skip the number of times codes are repeated
-    if bitLensRle[j] >= 16:
-      inc j
-    inc j
+    if bitLensRle[pos] >= 16:
+      inc pos
+    inc pos
 
-  let (_, depthsCodeLen, codesCodeLen) = huffmanCodeLengths(freqCodeLen, freqCodeLen.len, 7)
+  let (_, clLengths, clCodes) = huffmanCodeLengths(clFreq, clFreq.len, 7)
 
-  var bitLensCodeLen = newSeq[uint8](freqCodeLen.len)
+  var bitLensCodeLen = newSeq[uint8](clFreq.len)
   for i in 0 ..< bitLensCodeLen.len:
-    bitLensCodeLen[i] = depthsCodeLen[codeLengthOrder[i]]
+    bitLensCodeLen[i] = clLengths[codeLengthOrder[i]]
 
   while bitLensCodeLen[bitLensCodeLen.high] == 0 and bitLensCodeLen.len > 4:
     bitLensCodeLen.setLen(bitLensCodeLen.len - 1)
@@ -258,8 +258,8 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.addBits(2, 2)
 
   let
-    hlit = (numCodesLitLen - 257).uint8
-    hdist = numCodesDist.uint8 - 1
+    hlit = (llNumCodes - 257).uint8
+    hdist = distNumCodes.uint8 - 1
     hclen = bitLensCodeLen.len.uint8 - 4
 
   b.addBits(hlit, 5)
@@ -274,7 +274,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
   var k: int
   while k < bitLensRle.len:
     let symbol = bitLensRle[k]
-    b.addBits(codesCodeLen[symbol], depthsCodeLen[symbol].int)
+    b.addBits(clCodes[symbol], clLengths[symbol].int)
     if symbol == 16:
       inc k
       b.addBits(bitLensRle[k], 2)
@@ -290,12 +290,12 @@ func compress*(src: seq[uint8]): seq[uint8] =
 
   for i in 0 ..< encoded.len:
     let symbol = encoded[i]
-    b.addBits(codesLitLen[symbol], lengthsLitLen[symbol].int)
+    b.addBits(llCodes[symbol], llLengths[symbol].int)
 
-  if lengthsLitLen[256] == 0:
+  if llLengths[256] == 0:
     failCompress()
 
-  b.addBits(codesLitLen[256], lengthsLitLen[256].int) # End of block
+  b.addBits(llCodes[256], llLengths[256].int) # End of block
 
   b.skipRemainingBitsInCurrentByte()
   b.data.setLen(b.data.len + 1)
