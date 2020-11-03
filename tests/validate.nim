@@ -31,7 +31,8 @@ block treeform_miniz:
   echo "https://github.com/treeform/miniz"
   for gold in golds:
     let original = readFile(&"tests/data/{gold}")
-    # doAssert miniz.uncompress(zippy.compress(original)) == original
+    if gold != "tor-list.gold": # Something bad happens here in miniz
+      doAssert miniz.uncompress(zippy.compress(original)) == original
     doAssert zippy.uncompress(miniz.compress(original)) == original
   echo "pass!"
 
@@ -41,5 +42,8 @@ block jangko_nimPNG:
     let original = readFile(&"tests/data/{gold}")
     doAssert nimz.zlib_decompress(
       nzInflateInit(zippy.compress(original))
+    ) == original
+    doAssert zippy.uncompress(
+      zlib_compress(nzDeflateInit(original))
     ) == original
   echo "pass!"
