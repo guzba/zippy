@@ -32,7 +32,7 @@ for i, z in zs:
     compressed = readFile(&"tests/data/{z}")
     gold = readFile(&"tests/data/{golds[i]}")
   echo &"{z} compressed: {z.len} gold: {gold.len}"
-  assert uncompress(compressed) == gold
+  doAssert uncompress(compressed) == gold
 
 for gold in golds:
   let
@@ -40,7 +40,7 @@ for gold in golds:
     compressed = compress(original)
     uncompressed = uncompress(compressed)
   echo &"{gold} original: {original.len} compressed: {compressed.len}"
-  assert original == uncompressed
+  doAssert original == uncompressed
 
 block all_uint8:
   var original: seq[uint8]
@@ -48,4 +48,4 @@ block all_uint8:
     original.add(i)
   let compressed = compress(original)
   echo &"all_uint8 original: {original.len} compressed: {compressed.len}"
-  assert original == uncompress(compressed)
+  doAssert original == uncompress(compressed)

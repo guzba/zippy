@@ -23,6 +23,6 @@ for i in 0 ..< 10_000:
   compressed[pos] = value
   echo &"{i} {file} {pos} {value.uint8}"
   try:
-    assert uncompress(compressed).len > 0
+    doAssert uncompress(compressed).len > 0
   except ZippyError:
     discard
