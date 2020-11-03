@@ -96,6 +96,8 @@ func huffmanCodeLengths(
       prevCoins = newSeq[Coin](coins.len)
 
     for i in 0 ..< coins.len:
+      # Cause the symbol seqs to have the correct capacity.
+      # Benchmarking shows this increases perf.
       coins[i].symbols.setLen(coins.len)
       coins[i].symbols.setLen(0)
       prevCoins[i].symbols.setLen(coins.len)
