@@ -38,38 +38,28 @@ template failCompress() =
     ZippyError, "Unexpected error while compressing"
   )
 
-proc cmpx(a, b: Coin): int {.locks:0.} =
-  var wa = a.weight
-  var wb = b.weight
-  if wa > wb: result = 1
-  elif wa < wb: result = -1
-  else: result = 0
+func quickSort(s: var seq[Coin], lo, hi: int) =
+  if lo >= hi:
+    return
 
-proc placePivot[T](a: var openArray[T], lo, hi: int): int {.locks:0.} =
-  var pivot = lo #set pivot
-  var switch_i = lo + 1
-  let x = lo+1
+  var
+    pivot = lo
+    switch_i = lo + 1
+  for i in lo + 1 .. hi:
+    if s[i].weight <= s[pivot].weight:
+      swap(s[i], s[switch_i])
+      swap(s[pivot], s[switch_i])
+      inc pivot
+      inc switch_i
 
-  for i in x..hi: #run on array
-    if cmpx(a[i], a[pivot]) <= 0:        #compare pivot and i
-      swap(a[i], a[switch_i])      #swap i and i to switch
-      swap(a[pivot], a[switch_i])  #swap pivot and i to switch
-      inc pivot    #set current location of pivot
-      inc switch_i #set location for i to switch with pivot
-  result = pivot #return pivot location
+  quickSort(s, lo, pivot - 1)
+  quickSort(s, pivot + 1, hi)
 
-proc quickSort[T](a: var openArray[T], lo, hi: int) {.locks:0.} =
-  # debugEcho "quicksort ", lo, " ", hi
-  if lo >= hi: return #stop condition
-  #set pivot location
-  var pivot = placePivot(a, lo, hi)
-  quickSort(a, lo, pivot-1) #sort bottom half
-  quickSort(a, pivot+1, hi) #sort top half
-
-proc quickSort[T](a: var openArray[T], length = -1) {.locks:0.} =
-  var lo = 0
-  var hi = if length < 0: a.high else: length-1
-  quickSort(a, lo, hi)
+func quickSort(s: var seq[Coin], length = -1) =
+  let
+    lo = 0
+    hi = if length < 0: s.high else: length - 1
+  quickSort(s, lo, hi)
 
 func lengthLimitedHuffmanCodeLengths(
   frequencies: seq[uint64], minCodes, maxBitLen: int
@@ -224,8 +214,8 @@ func compress*(src: seq[uint8]): seq[uint8] =
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   let
-    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, maxCodeLength)
-    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, maxCodeLength)
+    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, 9)
+    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, 6)
     storedCodesLitLen = min(numCodesLitLen, maxLitLenCodes)
     storedCodesDist = min(numCodesDist, maxDistCodes)
 
