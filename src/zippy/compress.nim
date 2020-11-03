@@ -103,7 +103,7 @@ func huffmanCodeLengths(
 
     addSymbolCoins(coins, 0)
 
-    quicksort(coins, 0, numSymbolsUsed - 1)
+    quickSort(coins, 0, numSymbolsUsed - 1)
 
     var
       numCoins = numSymbolsUsed
@@ -129,7 +129,7 @@ func huffmanCodeLengths(
         addSymbolCoins(coins, numCoins)
         inc(numCoins, numSymbolsUsed)
 
-      quicksort(coins, 0, numCoins - 1)
+      quickSort(coins, 0, numCoins - 1)
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:

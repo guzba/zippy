@@ -37,7 +37,7 @@ func incPos(b: var BitStream) {.inline.} =
 func movePos(b: var BitStream, bits: int) {.inline.} =
   assert b.bitPos + bits <= 8
   inc(b.bitPos, bits)
-  inc(b.bytePos, (b.bitPos shr 3) and 1)
+  inc(b.bytePos, b.bitPos shr 3)
   b.bitPos = b.bitPos and 7
 
 template checkBytePos*(b: BitStream) =

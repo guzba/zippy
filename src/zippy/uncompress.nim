@@ -130,7 +130,7 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
 
   template fastSkip(count: int) =
     inc(b.bitPos, count)
-    inc(b.bytePos, (b.bitPos shr 3) and 1)
+    inc(b.bytePos, b.bitPos shr 3)
     b.bitPos = b.bitPos and 7
 
   while true:
