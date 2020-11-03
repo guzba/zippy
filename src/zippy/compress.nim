@@ -112,11 +112,6 @@ func lengthLimitedHuffmanCodeLengths(
 
     quicksort(coins, numSymbolsUsed)
 
-    # for i in 0 ..< coins.len:
-    #   debugEcho coins[i].symbols, " ", coins[i].weight
-
-    # assert false
-
     var
       numCoins = numSymbolsUsed
       numCoinsPrev = 0
@@ -143,18 +138,9 @@ func lengthLimitedHuffmanCodeLengths(
 
       quicksort(coins, numCoins)
 
-      # for i in 0 ..< coins.len:
-      #   debugEcho coins[i].symbols, " ", coins[i].weight
-
-      # assert false
-
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:
         inc depths[coins[i].symbols[j]]
-
-  # debugEcho "c depths: ", depths
-
-  # assert false
 
   var depthCounts: array[16, uint8]
   for d in depths:
@@ -162,13 +148,9 @@ func lengthLimitedHuffmanCodeLengths(
 
   depthCounts[0] = 0
 
-  # debugEcho "c depthCounts: ", depthCounts
-
   var nextCode: array[16, uint16]
   for i in 1 .. maxBitLen:
     nextCode[i] = (nextCode[i - 1] + depthCounts[i - 1]) shl 1
-
-  # debugEcho "c nextCode: ", nextCode
 
   template reverseCode(code: uint16, depth: uint8): uint16 =
     (
@@ -181,8 +163,6 @@ func lengthLimitedHuffmanCodeLengths(
     if depths[i] != 0:
       codes[i] = reverseCode(nextCode[depths[i]], depths[i])
       inc nextCode[depths[i]]
-
-  # debugEcho "codes: ", codes
 
   (numCodes, depths, codes)
 
