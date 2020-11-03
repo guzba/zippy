@@ -1,4 +1,4 @@
-import zippyerror, common, deques, bitstreams, strutils
+import zippyerror, common, deques, bitstreams
 
 const
   bitReverseTable = [
@@ -55,12 +55,6 @@ func quickSort(s: var seq[Coin], lo, hi: int) =
   quickSort(s, lo, pivot - 1)
   quickSort(s, pivot + 1, hi)
 
-func quickSort(s: var seq[Coin], length = -1) =
-  let
-    lo = 0
-    hi = if length < 0: s.high else: length - 1
-  quickSort(s, lo, hi)
-
 func lengthLimitedHuffmanCodeLengths(
   frequencies: seq[uint64], minCodes, maxBitLen: int
 ): (int, seq[uint8], seq[uint16]) =
@@ -110,7 +104,7 @@ func lengthLimitedHuffmanCodeLengths(
 
     addSymbolCoins(coins, 0)
 
-    quicksort(coins, numSymbolsUsed)
+    quicksort(coins, 0, numSymbolsUsed - 1)
 
     var
       numCoins = numSymbolsUsed
@@ -136,7 +130,7 @@ func lengthLimitedHuffmanCodeLengths(
         addSymbolCoins(coins, numCoins)
         inc(numCoins, numSymbolsUsed)
 
-      quicksort(coins, numCoins)
+      quicksort(coins, 0, numCoins - 1)
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:
