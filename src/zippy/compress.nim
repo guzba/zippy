@@ -1,4 +1,4 @@
-import zippyerror, common, deques, bitstreams
+import bitstreams, common, deques, zippyerror
 
 const
   bitReverseTable = [

@@ -1,4 +1,4 @@
-import strformat, zippy, zip/zlib, miniz, nimPNG/nimz
+import miniz, nimPNG/nimz, strformat, zip/zlib, zippy
 
 # Requires zlib1.dll
 

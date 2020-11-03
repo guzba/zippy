@@ -1,4 +1,4 @@
-import bitstreams, zippyerror, common
+import bitstreams, common, zippyerror
 
 const
   baseLengths = [

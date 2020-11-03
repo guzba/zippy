@@ -1,5 +1,5 @@
 const
-  maxCodeLength* = 15                ## Maximum bits in a code
+  maxCodeLength* = 15 ## Maximum bits in a code
   maxLitLenCodes* = 286
   maxDistCodes* = 30
   maxFixedLitLenCodes* = 288
