@@ -1,13 +1,13 @@
 import miniz, nimPNG/nimz, std/monotimes, strformat, zip/zlib, zippy
 
 const
-  # zs = [
-  #   "randtest3.z",
-  #   "rfctest3.z",
-  #   "alice29.txt.z",
-  #   "urls.10K.z",
-  #   "fixed.z"
-  # ]
+  zs = [
+    "randtest3.z",
+    "rfctest3.z",
+    "alice29.txt.z",
+    "urls.10K.z",
+    "fixed.z"
+  ]
   golds = [
     # "randtest1.gold",
     # "randtest2.gold",

@@ -306,7 +306,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.addBits(checksum[1], 8)
   b.addBits(checksum[0], 8)
 
-  b.data.setLen(b.bytePos + 1)
+  b.data.setLen(b.bytePos)
   b.data
 
 template compress*(src: string): string =

@@ -18,6 +18,9 @@ type
     bytePos*, bitPos*: int
     data*: seq[uint8]
 
+template failEndOfBuffer*() =
+  raise newException(ZippyError, "Cannot read further, at end of buffer")
+
 func initBitStream*(data: seq[uint8]): BitStream =
   result.data = data
 
@@ -27,12 +30,15 @@ func initBitStream*(): BitStream =
 func len*(b: BitStream): int =
   b.data.len
 
-func incBytePos(b: var BitStream) {.inline.} =
+func incPos(b: var BitStream) {.inline.} =
   inc b.bytePos
   b.bitPos = 0
 
-template failEndOfBuffer*() =
-  raise newException(ZippyError, "Cannot read further, at end of buffer")
+func movePos(b: var BitStream, bits: int) {.inline.} =
+  assert b.bitPos + bits <= 8
+  inc(b.bitPos, bits)
+  inc(b.bytePos, (b.bitPos shr 3) and 1)
+  b.bitPos = b.bitPos and 7
 
 template checkBytePos*(b: BitStream) =
   if b.data.len <= b.bytePos:
@@ -48,13 +54,11 @@ func read(b: var BitStream, bits: int): uint8 =
 
   let bitsLeftInByte = 8 - b.bitPos
   if bitsLeftInByte >= bits:
-    inc(b.bitPos, bits)
-    if b.bitPos == 8:
-      b.incBytePos()
+    b.movePos(bits)
     result = result and masks[bits]
   else:
     let bitsNeeded = bits - bitsLeftInByte
-    b.incBytePos()
+    b.incPos()
     result = result or (b.read(bitsNeeded) shl bitsLeftInByte)
 
 func readBits*(b: var BitStream, bits: int): uint16 =
@@ -65,18 +69,13 @@ func readBits*(b: var BitStream, bits: int): uint16 =
     result = result or (b.read(bits - 8).uint16 shl 8)
 
 func skipBits*(b: var BitStream, bits: int) =
-  if b.bitPos == 8 and bits > 0:
-    b.incBytePos()
-
   var bitsLeftToSkip = bits
   while bitsLeftToSkip > 0:
     let bitsLeftInByte = 8 - b.bitPos
     if bitsLeftInByte > 0:
       let skipping = min(bitsLeftToSkip, bitsLeftInByte)
       dec(bitsLeftToSkip, skipping)
-      inc(b.bitPos, skipping)
-      if b.bitPos == 8:
-        b.incBytePos()
+      b.movePos(skipping)
 
 func peekBits*(b: var BitStream, bits: int): uint16 =
   let
@@ -91,10 +90,11 @@ func peekBits*(b: var BitStream, bits: int): uint16 =
 
 func skipRemainingBitsInCurrentByte*(b: var BitStream) =
   if b.bitPos > 0:
-    b.bitPos = 0
-    inc b.bytePos
+    b.incPos()
 
 func readBytes*(b: var BitStream, dst: pointer, len: int) =
+  assert b.bitPos == 0
+
   if b.bytePos + len > b.data.len:
     failEndOfBuffer()
 
@@ -102,25 +102,18 @@ func readBytes*(b: var BitStream, dst: pointer, len: int) =
   b.skipBits(len * 8)
 
 func addBit*(b: var BitStream, bit: uint8) =
-  if b.bitPos == 8:
-    b.incBytePos()
-
   b.data[b.bytePos] = b.data[b.bytePos] or (bit shl b.bitPos)
-  inc b.bitPos
+  b.movePos(1)
 
 func addBits*(b: var BitStream, value: uint16, bits: int) =
   assert bits <= 16
 
   var bitsRemaining = bits
   for i in 0 ..< 3: # 16 bits cannot spread out across more than 3 bytes
-    if bitsRemaining == 0:
-      break
-    if b.bitPos == 8:
-      b.incBytePos()
     let
       bitsLeftInByte = 8 - b.bitPos
-      bitsAdded = min(bitsLeftInByte, bitsRemaining)
+      bitsAdded = min(bitsLeftInByte, bitsRemaining) # Can be 0 which is fine
       bitsToAdd = ((value shr (bits - bitsRemaining)) shl b.bitPos).uint8
     b.data[b.bytePos] = b.data[b.bytePos] or bitsToAdd
-    inc(b.bitPos, bitsAdded)
     dec(bitsRemaining, bitsAdded)
+    b.movePos(bitsAdded)
