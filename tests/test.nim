@@ -24,7 +24,18 @@ const
     "zerotest1.gold",
     "zerotest2.gold",
     "zerotest3.gold",
-    "empty.gold"
+    "empty.gold",
+    "alice29.txt",
+    "asyoulik.txt",
+    "fireworks.jpg",
+    "geo.protodata",
+    "html",
+    "html_x_4",
+    "kppkn.gtb",
+    "lcet10.txt",
+    "paper-100k.pdf",
+    "plrabn12.txt",
+    "urls.10K"
   ]
 
 for i, z in zs:
