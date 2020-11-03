@@ -88,6 +88,8 @@ template failUncompress() =
 func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   ## See https://github.com/madler/zlib/blob/master/contrib/puff/puff.c
 
+  assert lengths.len <= maxCodes
+
   result = Huffman()
   result.counts.setLen(maxCodeLength + 1)
   result.symbols.setLen(maxCodes)
@@ -95,7 +97,7 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   for symbol in 0 ..< lengths.len:
     inc result.counts[lengths[symbol]]
 
-  if result.counts[0] == maxCodes.uint16:
+  if result.counts[0] >= maxCodes.uint16:
     failUncompress()
 
   var left = 1

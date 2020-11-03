@@ -38,29 +38,38 @@ template failCompress() =
     ZippyError, "Unexpected error while compressing"
   )
 
-func `<`(a, b: Coin): bool = a.weight < b.weight
+proc cmpx(a, b: Coin): int {.locks:0.} =
+  var wa = a.weight
+  var wb = b.weight
+  if wa > wb: result = 1
+  elif wa < wb: result = -1
+  else: result = 0
 
-func quicksort[T](s: var seq[T], inl, inr: int) =
-  var
-    r = inr
-    l = inl
-  let n = r - l + 1
-  if n < 2:
-    return
-  let p = l + 3 * n div 4
-  while l <= r:
-    if s[l] < s[p]:
-      inc l
-      continue
-    if s[r] > s[p]:
-      dec r
-      continue
-    if l <= r:
-      swap(s[l], s[r])
-      inc l
-      dec r
-  quicksort(s, inl, r)
-  quicksort(s, l, inr)
+proc placePivot[T](a: var openArray[T], lo, hi: int): int {.locks:0.} =
+  var pivot = lo #set pivot
+  var switch_i = lo + 1
+  let x = lo+1
+
+  for i in x..hi: #run on array
+    if cmpx(a[i], a[pivot]) <= 0:        #compare pivot and i
+      swap(a[i], a[switch_i])      #swap i and i to switch
+      swap(a[pivot], a[switch_i])  #swap pivot and i to switch
+      inc pivot    #set current location of pivot
+      inc switch_i #set location for i to switch with pivot
+  result = pivot #return pivot location
+
+proc quickSort[T](a: var openArray[T], lo, hi: int) {.locks:0.} =
+  # debugEcho "quicksort ", lo, " ", hi
+  if lo >= hi: return #stop condition
+  #set pivot location
+  var pivot = placePivot(a, lo, hi)
+  quickSort(a, lo, pivot-1) #sort bottom half
+  quickSort(a, pivot+1, hi) #sort top half
+
+proc quickSort[T](a: var openArray[T], length = -1) {.locks:0.} =
+  var lo = 0
+  var hi = if length < 0: a.high else: length-1
+  quickSort(a, lo, hi)
 
 func lengthLimitedHuffmanCodeLengths(
   frequencies: seq[uint64], minCodes, maxBitLen: int
@@ -111,11 +120,16 @@ func lengthLimitedHuffmanCodeLengths(
 
     addSymbolCoins(coins, 0)
 
-    quicksort(coins, 0, numSymbolsUsed - 1)
+    quicksort(coins, numSymbolsUsed)
+
+    # for i in 0 ..< coins.len:
+    #   debugEcho coins[i].symbols, " ", coins[i].weight
+
+    # assert false
 
     var
       numCoins = numSymbolsUsed
-      numCoinsPrev: int
+      numCoinsPrev = 0
     for bitLen in 1 .. maxBitLen:
       swap(prevCoins, coins)
       swap(numCoinsPrev, numCoins)
@@ -137,11 +151,20 @@ func lengthLimitedHuffmanCodeLengths(
         addSymbolCoins(coins, numCoins)
         inc(numCoins, numSymbolsUsed)
 
-      quicksort(coins, 0, numCoins - 1)
+      quicksort(coins, numCoins)
+
+      # for i in 0 ..< coins.len:
+      #   debugEcho coins[i].symbols, " ", coins[i].weight
+
+      # assert false
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:
         inc depths[coins[i].symbols[j]]
+
+  # debugEcho "c depths: ", depths
+
+  # assert false
 
   var depthCounts: array[16, uint8]
   for d in depths:
@@ -168,6 +191,8 @@ func lengthLimitedHuffmanCodeLengths(
     if depths[i] != 0:
       codes[i] = reverseCode(nextCode[depths[i]], depths[i])
       inc nextCode[depths[i]]
+
+  # debugEcho "codes: ", codes
 
   (numCodes, depths, codes)
 
@@ -196,26 +221,19 @@ func compress*(src: seq[uint8]): seq[uint8] =
   for symbol in encoded:
     inc freqLitLen[symbol]
 
-  # debugEcho encoded.len
-  # debugEcho "c freqLitLen: ", freqLitLen
-
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   let
-    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, 9)
-    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, 5)
+    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, maxCodeLength)
+    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, maxCodeLength)
     storedCodesLitLen = min(numCodesLitLen, maxLitLenCodes)
     storedCodesDist = min(numCodesDist, maxDistCodes)
-
-  # fail if numCodesLitLen + numCodesDist > max stored limit
 
   var bitLens = newSeq[uint8](storedCodesLitLen + storedCodesDist)
   for i in 0 ..< storedCodesLitLen:
     bitLens[i] = depthsLitLen[i]
   for i in 0 ..< storedCodesDist:
     bitLens[i + storedCodesLitLen] = depthsDist[i]
-
-  # debugEcho "c bitLens: ", bitLens
 
   var
     bitLensRle: seq[uint8]
@@ -253,9 +271,6 @@ func compress*(src: seq[uint8]): seq[uint8] =
     inc i
     inc(bitCount, 7)
 
-  # debugEcho "c bitLensRle: ", bitLensRle
-
-  # debugEcho (bitCount + 7) div 8
   b.data.setLen(b.data.len + (bitCount + 7) div 8)
 
   var
@@ -268,20 +283,14 @@ func compress*(src: seq[uint8]): seq[uint8] =
       inc j
     inc j
 
-  # debugEcho "c freqCodeLen: ", freqCodeLen
-
   let (_, depthsCodeLen, codesCodeLen) = lengthLimitedHuffmanCodeLengths(freqCodeLen, freqCodeLen.len, 7)
 
   var bitLensCodeLen = newSeq[uint8](freqCodeLen.len)
   for i in 0 ..< bitLensCodeLen.len:
     bitLensCodeLen[i] = depthsCodeLen[codeLengthOrder[i]]
 
-  # debugEcho bitLensCodeLen
-
   while bitLensCodeLen[bitLensCodeLen.high] == 0 and bitLensCodeLen.len > 4:
     bitLensCodeLen.setLen(bitLensCodeLen.len - 1)
-
-  # debugEcho "c bitLensCodeLen: ", bitLensCodeLen
 
   b.addBit(1)
   b.addBits(2, 2)
@@ -291,25 +300,18 @@ func compress*(src: seq[uint8]): seq[uint8] =
     hdist = storedCodesDist.uint8 - 1
     hclen = bitLensCodeLen.len.uint8 - 4
 
-  # debugEcho hlit + 257, " ", hdist + 1, " ", hclen + 4
-
   b.addBits(hlit, 5)
   b.addBits(hdist, 5)
   b.addBits(hclen, 4)
-
-  # debugEcho "c depthsCodeLen: ", depthsCodeLen
 
   b.data.setLen(b.data.len + (((hclen.int + 4) * 3 + 7) div 8))
 
   for i in 0.uint8 ..< hclen + 4:
     b.addBits(bitLensCodeLen[i], 3)
 
-  # debugEcho b.bytePos, " ", b.bitPos
-
   var k: int
   while k < bitLensRle.len:
     let symbol = bitLensRle[k]
-    # debugEcho "c s: ", symbol, " ", codesCodeLen[symbol], " ", depthsCodeLen[symbol], " ", toBin(codesCodeLen[symbol].int, 8)
     b.addBits(codesCodeLen[symbol], depthsCodeLen[symbol].int)
     if symbol == 16:
       inc k
