@@ -10,8 +10,8 @@ const
   ]
   golds = [
     # "randtest1.gold",
-      # "randtest2.gold",
-      # "randtest3.gold",
+    # "randtest2.gold",
+    # "randtest3.gold",
     "rfctest1.gold",
     # "rfctest2.gold",
     # "rfctest3.gold",
