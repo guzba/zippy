@@ -6,7 +6,7 @@ const
   # maxUncompressedBlockSize = 65535
   # maxWindowSize = 32768
 
-  codeLengthOrder* = [
+  clclOrder* = [
     16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 

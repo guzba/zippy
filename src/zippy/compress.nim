@@ -250,7 +250,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
 
   var bitLensCodeLen = newSeq[uint8](clFreq.len)
   for i in 0 ..< bitLensCodeLen.len:
-    bitLensCodeLen[i] = clLengths[codeLengthOrder[i]]
+    bitLensCodeLen[i] = clLengths[clclOrder[i]]
 
   while bitLensCodeLen[bitLensCodeLen.high] == 0 and bitLensCodeLen.len > 4:
     bitLensCodeLen.setLen(bitLensCodeLen.len - 1)

@@ -181,11 +181,11 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
       hdist = b.readBits(5).int + 1
       hclen = b.readBits(4).int + 4
 
-    var codeLengths = newSeq[uint8](19)
+    var clCodeLengths = newSeq[uint8](19)
     for i in 0 ..< hclen.int:
-      codeLengths[codeLengthOrder[i]] = b.readBits(3).uint8
+      clCodeLengths[clclOrder[i]] = b.readBits(3).uint8
 
-    let h = initHuffman(codeLengths, 19)
+    let h = initHuffman(clCodeLengths, 19)
 
     var unpacked: seq[uint8]
     while unpacked.len < hlit + hdist:
