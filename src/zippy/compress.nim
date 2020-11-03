@@ -55,7 +55,7 @@ func quickSort(s: var seq[Coin], lo, hi: int) =
   quickSort(s, lo, pivot - 1)
   quickSort(s, pivot + 1, hi)
 
-func lengthLimitedHuffmanCodeLengths(
+func huffmanCodeLengths(
   frequencies: seq[uint64], minCodes, maxBitLen: int
 ): (int, seq[uint8], seq[uint16]) =
   # See https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
@@ -67,20 +67,20 @@ func lengthLimitedHuffmanCodeLengths(
 
   let numCodes = max(numSymbolsUsed, minCodes)
   var
-    depths = newSeq[uint8](frequencies.len)
+    lengths = newSeq[uint8](frequencies.len)
     codes = newSeq[uint16](frequencies.len)
 
   if numSymbolsUsed == 0:
-    depths[0] = 1
-    depths[1] = 1
+    lengths[0] = 1
+    lengths[1] = 1
   elif numSymbolsUsed == 1:
     for i, freq in frequencies:
       if freq != 0:
-        depths[i] = 1
+        lengths[i] = 1
         if i == 0:
-          depths[1] = 1
+          lengths[1] = 1
         else:
-          depths[0] = 1
+          lengths[0] = 1
         break
   else:
     func addSymbolCoins(coins: var seq[Coin], start: int) =
@@ -134,31 +134,31 @@ func lengthLimitedHuffmanCodeLengths(
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:
-        inc depths[coins[i].symbols[j]]
+        inc lengths[coins[i].symbols[j]]
 
-  var depthCounts: array[16, uint8]
-  for d in depths:
-    inc depthCounts[d]
+  var lengthCounts: array[16, uint8]
+  for l in lengths:
+    inc lengthCounts[l]
 
-  depthCounts[0] = 0
+  lengthCounts[0] = 0
 
   var nextCode: array[16, uint16]
   for i in 1 .. maxBitLen:
-    nextCode[i] = (nextCode[i - 1] + depthCounts[i - 1]) shl 1
+    nextCode[i] = (nextCode[i - 1] + lengthCounts[i - 1]) shl 1
 
-  template reverseCode(code: uint16, depth: uint8): uint16 =
+  template reverseCode(code: uint16, length: uint8): uint16 =
     (
       (bitReverseTable[code.uint8].uint16 shl 8) or
       (bitReverseTable[(code shr 8).uint8].uint16)
-    ) shr (16 - depth)
+    ) shr (16 - length)
 
   # Convert to canonical codes (+ reversed)
   for i in 0 ..< codes.len:
-    if depths[i] != 0:
-      codes[i] = reverseCode(nextCode[depths[i]], depths[i])
-      inc nextCode[depths[i]]
+    if lengths[i] != 0:
+      codes[i] = reverseCode(nextCode[lengths[i]], lengths[i])
+      inc nextCode[lengths[i]]
 
-  (numCodes, depths, codes)
+  (numCodes, lengths, codes)
 
 func compress*(src: seq[uint8]): seq[uint8] =
   ## Uncompresses src and returns the compressed data seq.
@@ -188,16 +188,14 @@ func compress*(src: seq[uint8]): seq[uint8] =
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   let
-    (numCodesLitLen, depthsLitLen, codesLitLen) = lengthLimitedHuffmanCodeLengths(freqLitLen, 257, 9)
-    (numCodesDist, depthsDist, codesDist) = lengthLimitedHuffmanCodeLengths(freqDist, 2, 6)
-    storedCodesLitLen = min(numCodesLitLen, maxLitLenCodes)
-    storedCodesDist = min(numCodesDist, maxDistCodes)
+    (numCodesLitLen, lengthsLitLen, codesLitLen) = huffmanCodeLengths(freqLitLen, 257, 9)
+    (numCodesDist, lengthsDist, codesDist) = huffmanCodeLengths(freqDist, 2, 6)
 
-  var bitLens = newSeq[uint8](storedCodesLitLen + storedCodesDist)
-  for i in 0 ..< storedCodesLitLen:
-    bitLens[i] = depthsLitLen[i]
-  for i in 0 ..< storedCodesDist:
-    bitLens[i + storedCodesLitLen] = depthsDist[i]
+  var bitLens = newSeqOfCap[uint8](numCodesLitLen + numCodesDist)
+  for i in 0 ..< numCodesLitLen:
+    bitLens.add(lengthsLitLen[i])
+  for i in 0 ..< numCodesDist:
+    bitLens.add(lengthsDist[i])
 
   var
     bitLensRle: seq[uint8]
@@ -247,7 +245,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
       inc j
     inc j
 
-  let (_, depthsCodeLen, codesCodeLen) = lengthLimitedHuffmanCodeLengths(freqCodeLen, freqCodeLen.len, 7)
+  let (_, depthsCodeLen, codesCodeLen) = huffmanCodeLengths(freqCodeLen, freqCodeLen.len, 7)
 
   var bitLensCodeLen = newSeq[uint8](freqCodeLen.len)
   for i in 0 ..< bitLensCodeLen.len:
@@ -260,8 +258,8 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.addBits(2, 2)
 
   let
-    hlit = (storedCodesLitLen - 257).uint8
-    hdist = storedCodesDist.uint8 - 1
+    hlit = (numCodesLitLen - 257).uint8
+    hdist = numCodesDist.uint8 - 1
     hclen = bitLensCodeLen.len.uint8 - 4
 
   b.addBits(hlit, 5)
@@ -292,12 +290,12 @@ func compress*(src: seq[uint8]): seq[uint8] =
 
   for i in 0 ..< encoded.len:
     let symbol = encoded[i]
-    b.addBits(codesLitLen[symbol], depthsLitLen[symbol].int)
+    b.addBits(codesLitLen[symbol], lengthsLitLen[symbol].int)
 
-  if depthsLitLen[256] == 0:
+  if lengthsLitLen[256] == 0:
     failCompress()
 
-  b.addBits(codesLitLen[256], depthsLitLen[256].int) # End of block
+  b.addBits(codesLitLen[256], lengthsLitLen[256].int) # End of block
 
   b.skipRemainingBitsInCurrentByte()
   b.data.setLen(b.data.len + 1)
