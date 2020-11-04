@@ -59,6 +59,22 @@ func huffmanCodeLengths(
     quickSort(s, lo, pivot - 1)
     quickSort(s, pivot + 1, hi)
 
+  func insertionSort(s: var seq[Coin], hi: int) =
+    for i in 1 .. hi:
+      var
+        j = i - 1
+        k = i
+      while j >= 0 and s[j].weight > s[k].weight:
+        swap(s[j + 1], s[j])
+        dec j
+        dec k
+
+  template sort(s: var seq[Coin], lo, hi: int) =
+    if hi - lo < 64:
+      insertionSort(s, hi)
+    else:
+      quickSort(s, lo, hi)
+
   var numSymbolsUsed: int
   for freq in frequencies:
     if freq > 0:
@@ -105,7 +121,7 @@ func huffmanCodeLengths(
 
     addSymbolCoins(coins, 0)
 
-    quickSort(coins, 0, numSymbolsUsed - 1)
+    sort(coins, 0, numSymbolsUsed - 1)
 
     var
       numCoins = numSymbolsUsed
@@ -131,7 +147,7 @@ func huffmanCodeLengths(
         addSymbolCoins(coins, numCoins)
         inc(numCoins, numSymbolsUsed)
 
-      quickSort(coins, 0, numCoins - 1)
+      sort(coins, 0, numCoins - 1)
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:
@@ -161,6 +177,9 @@ func huffmanCodeLengths(
 
   (numCodes, lengths, codes)
 
+func lz77Encode(src: seq[uint8]): seq[uint8] =
+  result = src
+
 func compress*(src: seq[uint8]): seq[uint8] =
   ## Uncompresses src and returns the compressed data seq.
 
@@ -176,8 +195,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.addBits(cmf, 8)
   b.addBits(fcheck, 8)
 
-  # No lz77 for now, just Huffman coding
-  let encoded = src
+  let encoded = lz77Encode(src)
 
   var
     freqLitLen = newSeq[uint64](286)
