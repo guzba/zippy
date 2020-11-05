@@ -137,7 +137,6 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var pos = dst.len
   while true:
     let symbol = decodeSymbol(b, literalHuffman)
-    # debugEcho "u: ", symbol, " ", if symbol <= 255: symbol.char else: 0.char
     if symbol <= 255:
       if pos >= dst.len:
         dst.setLen((pos + 1) * 2)

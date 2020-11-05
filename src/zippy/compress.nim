@@ -164,7 +164,7 @@ func huffmanCodeLengths(
 
 func findCodeIndex(a: openarray[uint16], value: uint16): uint16 =
   for i in 1 .. a.high:
-    if value < a[i]:
+    if value <= a[i]:
       return i.uint16 - 1
 
 func lz77Encode(src: seq[uint8]): (seq[uint16], seq[uint64]) =
@@ -370,7 +370,6 @@ func compress*(src: seq[uint8]): seq[uint8] =
     var i: int
     while i < encoded.len:
       let symbol = encoded[i]
-      # debugEcho "c: ", symbol, " ", llCodes[symbol], " ", if symbol <= 255: symbol.char else: 0.char
       b.addBits(llCodes[symbol], llLengths[symbol].int)
       inc i
       if symbol > 256:
@@ -386,7 +385,6 @@ func compress*(src: seq[uint8]): seq[uint8] =
         b.addBits(lengthExtra, lengthExtraBits)
         b.addBits(distCodes[distIndex], distLengths[distIndex].int)
         b.addBits(distExtra, distExtraBits)
-        # debugEcho "cd: ", distIndex, " ", distCodes[distIndex]
 
   if llLengths[256] == 0:
     failCompress()

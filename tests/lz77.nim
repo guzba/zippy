@@ -120,7 +120,7 @@ timeIt "lz77":
   for i in 0 ..< 1:
     for file in files:
       let
-        original = cast[seq[uint8]](readFile(&"data/{file}"))
+        original = cast[seq[uint8]](readFile(&"tests/data/{file}"))
         encoded = lz77Encode(original)
         decoded = lz77Decode(encoded)
       echo &"{file} original: {original.len} encoded: {encoded.len}"
