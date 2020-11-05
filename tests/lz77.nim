@@ -8,9 +8,7 @@ const
 func lz77Encode(src: seq[uint8]): seq[uint16] =
   result.setLen(src.len div 2)
 
-  var
-    pos: int
-    windowStart, matchStart, matchOffset, matchLen: int
+  var pos, windowStart, matchStart, matchOffset, matchLen: int
   for i, c in src:
     if pos + 3 >= result.len:
       result.setLen(result.len * 2)

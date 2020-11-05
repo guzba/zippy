@@ -5,6 +5,80 @@ const
   maxFixedLitLenCodes* = 288
   # maxUncompressedBlockSize = 65535
   # maxWindowSize = 32768
+  firstLengthCodeIndex* = 257
+
+  baseLengths* = [
+    3.uint16, 4, 5, 6, 7, 8, 9, 10, # 257 - 264
+    11, 13, 15, 17,                 # 265 - 268
+    19, 23, 27, 31,                 # 269 - 273
+    35, 43, 51, 59,                 # 274 - 276
+    67, 83, 99, 115,                # 278 - 280
+    131, 163, 195, 227,             # 281 - 284
+    258                             # 285
+  ]
+
+  baseLengthsExtraBits* = [
+    0.int8, 0, 0, 0, 0, 0, 0, 0,    # 257 - 264
+    1, 1, 1, 1,                     # 265 - 268
+    2, 2, 2, 2,                     # 269 - 273
+    3, 3, 3, 3,                     # 274 - 276
+    4, 4, 4, 4,                     # 278 - 280
+    5, 5, 5, 5,                     # 281 - 284
+    0                               # 285
+  ]
+
+  baseDistance* = [
+    1.uint16, 2, 3, 4,              # 0-3
+    5, 7,                           # 4-5
+    9, 13,                          # 6-7
+    17, 25,                         # 8-9
+    33, 49,                         # 10-11
+    65, 97,                         # 12-13
+    129, 193,                       # 14-15
+    257, 385,                       # 16-17
+    513, 769,                       # 18-19
+    1025, 1537,                     # 20-21
+    2049, 3073,                     # 22-23
+    4097, 6145,                     # 24-25
+    8193, 12289,                    # 26-27
+    16385, 24577                    # 28-29
+  ]
+
+  baseDistanceExtraBits* = [
+    0.int8, 0, 0, 0,                # 0-3
+    1, 1,                           # 4-5
+    2, 2,                           # 6-7
+    3, 3,                           # 8-9
+    4, 4,                           # 10-11
+    5, 5,                           # 12-13
+    6, 6,                           # 14-15
+    7, 7,                           # 16-17
+    8, 8,                           # 18-19
+    9, 9,                           # 20-21
+    10, 10,                         # 22-23
+    11, 11,                         # 24-25
+    12, 12,                         # 26-27
+    13, 13                          # 28-29
+  ]
+
+  fixedCodeLengths* = block:
+    var lengths = newSeq[uint8](maxFixedLitLenCodes)
+    for i in 0 ..< lengths.len:
+      if i <= 143:
+        lengths[i] = 8
+      elif i <= 255:
+        lengths[i] = 9
+      elif i <= 279:
+        lengths[i] = 7
+      else:
+        lengths[i] = 8
+    lengths
+
+  fixedDistanceLengths* = block:
+    var lengths = newSeq[uint8](maxDistCodes)
+    for i in 0 ..< lengths.len:
+      lengths[i] = 5
+    lengths
 
   clclOrder* = [
     16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
