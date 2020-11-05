@@ -1,11 +1,11 @@
 import strformat
 
 const
-  # windowSize = 16
+  windowSize = 32
   minMatchLen = 3
 
 func lz77Encode(src: seq[uint8]): seq[uint16] =
-  var matchStart, matchOffset, matchLen: int
+  var windowStart, matchStart, matchOffset, matchLen: int
   for i, c in src:
     template emit() =
       if matchLen >= minMatchLen:
@@ -18,10 +18,10 @@ func lz77Encode(src: seq[uint8]): seq[uint16] =
       else:
         for j in 0 ..< matchLen:
           # debugEcho src[0 ..< i][matchStart + j].char
-          result.add(src[0 ..< i][matchStart + j])
+          result.add(src[windowStart ..< i][matchStart + j])
 
     if matchLen > 0:
-      if src[0 ..< i][matchStart + matchLen] == c:
+      if src[windowStart ..< i][matchStart + matchLen] == c:
         inc matchLen
         if i == src.high:
           emit()
@@ -30,10 +30,11 @@ func lz77Encode(src: seq[uint8]): seq[uint16] =
         matchLen = 0
 
     if matchLen == 0:
-      let index = src[0 ..< i].find(c)
+      windowStart = max(i - windowSize, 0)
+      let index = src[windowStart ..< i].find(c)
       if index >= 0:
         matchStart = index
-        matchOffset = i - index
+        matchOffset = i - windowStart - index
         inc matchLen
         if i == src.high:
           emit()
@@ -49,7 +50,7 @@ func lz77Decode(encoded: seq[uint16]): seq[uint8] =
       let
         offset = encoded[i + 1].int
         length = encoded[i + 2].int
-      # debugEcho &"<{offset},{length}>"
+      debugEcho &"<{offset},{length}>"
       inc(i, 3)
 
       var
@@ -59,7 +60,7 @@ func lz77Decode(encoded: seq[uint16]): seq[uint8] =
       for j in 0 ..< length:
         result[pos + j] = result[copyPos + j]
     else:
-      # debugEcho encoded[i].char
+      debugEcho encoded[i].char
       result.add(encoded[i].uint8)
       inc i
 
@@ -75,5 +76,7 @@ let text = cast[seq[uint8]]("supercalifragilisticexpialidocious supercalifragili
 let encoded = lz77Encode(text)
 
 let decoded = lz77Decode(encoded)
+
+echo cast[string](decoded)
 
 assert decoded == text
