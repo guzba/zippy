@@ -164,8 +164,9 @@ func huffmanCodeLengths(
 
 func findCodeIndex(a: openarray[uint16], value: uint16): uint16 =
   for i in 1 .. a.high:
-    if value <= a[i]:
+    if value < a[i]:
       return i.uint16 - 1
+  a.high.uint16
 
 func lz77Encode(src: seq[uint8]): (seq[uint16], seq[uint64]) =
   var
