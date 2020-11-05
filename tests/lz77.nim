@@ -1,37 +1,56 @@
-import strformat
+import strformat, fidget/opengl/perf
 
 const
-  windowSize = 32
+  windowSize = 1024
   minMatchLen = 3
+  maxMatchLen = 258
 
 func lz77Encode(src: seq[uint8]): seq[uint16] =
-  var windowStart, matchStart, matchOffset, matchLen: int
+  result.setLen(src.len div 2)
+
+  var
+    pos: int
+    windowStart, matchStart, matchOffset, matchLen: int
   for i, c in src:
+    if pos + 3 >= result.len:
+      result.setLen(result.len * 2)
+
     template emit() =
       if matchLen >= minMatchLen:
         # debugEcho &"<{matchOffset},{matchLen}>"
-        result.add([
-          uint16.high,
-          matchOffset.uint16,
-          matchLen.uint16
-        ])
+        result[pos] = uint16.high
+        result[pos + 1] = matchOffset.uint16
+        result[pos + 2] = matchLen.uint16
+        inc(pos, 3)
       else:
         for j in 0 ..< matchLen:
-          # debugEcho src[0 ..< i][matchStart + j].char
-          result.add(src[windowStart ..< i][matchStart + j])
+          # debugEcho src[windowStart + matchStart + j].char
+          result[pos] = src[windowStart + matchStart + j]
+          inc pos
+      matchLen = 0
+
+    func find(
+      src: seq[uint8], value: uint8, start, stop: int
+    ): int {.inline.} =
+      result = -1
+      for j in start ..< stop:
+        if src[j] == value:
+          result = j - start
+          break
 
     if matchLen > 0:
-      if src[windowStart ..< i][matchStart + matchLen] == c:
+      if src[windowStart + matchStart + matchLen] == c:
         inc matchLen
-        if i == src.high:
+        if matchLen == maxMatchLen or i == src.high:
           emit()
+          # We've consumed this c so don't hit the matchLen == 0 block
+          continue
       else:
         emit()
-        matchLen = 0
 
     if matchLen == 0:
       windowStart = max(i - windowSize, 0)
-      let index = src[windowStart ..< i].find(c)
+      let index = src.find(c, windowStart, i)
       if index >= 0:
         matchStart = index
         matchOffset = i - windowStart - index
@@ -40,43 +59,71 @@ func lz77Encode(src: seq[uint8]): seq[uint16] =
           emit()
       else:
         # debugEcho c.char
-        result.add(c)
+        result[pos] = c
+        inc pos
 
+  result.setLen(pos)
 
 func lz77Decode(encoded: seq[uint16]): seq[uint8] =
-  var i: int
-  while i < encoded.len:
-    if encoded[i] == uint16.high:
+  result.setLen(encoded.len)
+
+  var ip, op: int
+  while ip < encoded.len:
+    if op >= result.len:
+      result.setLen(result.len * 2)
+
+    if encoded[ip] == uint16.high:
       let
-        offset = encoded[i + 1].int
-        length = encoded[i + 2].int
-      debugEcho &"<{offset},{length}>"
-      inc(i, 3)
+        offset = encoded[ip + 1].int
+        length = encoded[ip + 2].int
+      # debugEcho &"<{offset},{length}>"
+      inc(ip, 3)
 
-      var
-        pos = result.len
-        copyPos = result.len - offset
-      result.setLen(result.len + length)
+      var copyPos = op - offset
+      if op + length > result.len:
+        result.setLen(max(result.len * 2, result.len + length))
       for j in 0 ..< length:
-        result[pos + j] = result[copyPos + j]
+        result[op + j] = result[copyPos + j]
+      inc(op, length)
     else:
-      debugEcho encoded[i].char
-      result.add(encoded[i].uint8)
-      inc i
+      # debugEcho encoded[ip].char
+      result[op] = encoded[ip].uint8
+      inc ip
+      inc op
 
+  result.setLen(op)
 
+const files = [
+  "randtest1.gold",
+  "randtest2.gold",
+  "randtest3.gold",
+  "rfctest1.gold",
+  "rfctest2.gold",
+  "rfctest3.gold",
+  "tor-list.gold",
+  "zerotest1.gold",
+  "zerotest2.gold",
+  "zerotest3.gold",
+  "empty.gold",
+  "alice29.txt",
+  "asyoulik.txt",
+  "fireworks.jpg",
+  "geo.protodata",
+  "html",
+  "html_x_4",
+  "kppkn.gtb",
+  "lcet10.txt",
+  "paper-100k.pdf",
+  "plrabn12.txt",
+  "urls.10K"
+]
 
-# let text = cast[seq[uint8]]("SAM SAM")
-# let text = cast[seq[uint8]]("SAM SAMz")
-# let text = cast[seq[uint8]]("SAM SAM SAM SAM")
-# let text = cast[seq[uint8]]("SAM SAM SAM SAMz")
-# let text = cast[seq[uint8]]("ISAM YAM SAM")
-let text = cast[seq[uint8]]("supercalifragilisticexpialidocious supercalifragilisticexpialidocious")
-
-let encoded = lz77Encode(text)
-
-let decoded = lz77Decode(encoded)
-
-echo cast[string](decoded)
-
-assert decoded == text
+timeIt "lz77":
+  for i in 0 ..< 1:
+    for file in files:
+      let
+        original = cast[seq[uint8]](readFile(&"data/{file}"))
+        encoded = lz77Encode(original)
+        decoded = lz77Decode(encoded)
+      echo &"{file} original: {original.len} encoded: {encoded.len}"
+      doAssert original == decoded
