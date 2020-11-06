@@ -26,26 +26,29 @@ const
     "urls.10K"
   ]
 
-# block nimlang_zip: # Requires zlib1.dll
-#   echo "https://github.com/nim-lang/zip"
-#   for gold in golds:
-#     let original = readFile(&"tests/data/{gold}")
-#     doAssert zlib.uncompress(
-#       zippy.compress(original), stream = ZLIB_STREAM
-#     ) == original
-#     doassert zippy.uncompress(
-#       zlib.compress(original, stream = ZLIB_STREAM)
-#     ) == original
-#   echo "pass!"
+block nimlang_zip: # Requires zlib1.dll
+  echo "https://github.com/nim-lang/zip"
+  for gold in golds:
+    let original = readFile(&"tests/data/{gold}")
+    doAssert zlib.uncompress(
+      zippy.compress(original), stream = ZLIB_STREAM
+    ) == original
+    doassert zippy.uncompress(
+      zlib.compress(original, stream = ZLIB_STREAM)
+    ) == original
+  echo "pass!"
 
-# block treeform_miniz:
-#   echo "https://github.com/treeform/miniz"
-#   for gold in golds:
-#     let original = readFile(&"tests/data/{gold}")
-#     if gold != "tor-list.gold": # Something bad happens here in miniz
-#       doAssert miniz.uncompress(zippy.compress(original)) == original
-#     doAssert zippy.uncompress(miniz.compress(original)) == original
-#   echo "pass!"
+block treeform_miniz:
+  echo "https://github.com/treeform/miniz"
+  for gold in golds:
+    let original = readFile(&"tests/data/{gold}")
+    if gold == "tor-list.gold" or gold == "zerotest3.gold":
+      # Something bad happens here in miniz
+      discard
+    else:
+      doAssert miniz.uncompress(zippy.compress(original)) == original
+    doAssert zippy.uncompress(miniz.compress(original)) == original
+  echo "pass!"
 
 block jangko_nimPNG:
   echo "https://github.com/jangko/nimPNG"
