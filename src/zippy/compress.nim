@@ -19,13 +19,13 @@ template failCompress() =
   )
 
 func huffmanCodeLengths(
-  frequencies: seq[uint64], minCodes, maxBitLen: int
+  frequencies: seq[int], minCodes, maxBitLen: int
 ): (int, seq[uint8], seq[uint16]) =
   # See https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
 
   type Coin = object
     symbols: seq[uint16]
-    weight: uint64
+    weight: int
 
   func quickSort(s: var seq[Coin], lo, hi: int) =
     if lo >= hi:
@@ -168,10 +168,10 @@ func findCodeIndex(a: openarray[uint16], value: uint16): uint16 =
       return i.uint16 - 1
   a.high.uint16
 
-func lz77Encode(src: seq[uint8]): (seq[uint16], seq[uint64]) =
+func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int]) =
   var
     encoded = newSeq[uint16](src.len div 2)
-    freqDist = newSeq[uint64](30)
+    freqDist = newSeq[int](30)
 
   var pos, windowStart, matchStart, matchOffset, matchLen: int
   for i, c in src:
@@ -248,7 +248,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
 
   let (encoded, freqDist) = lz77Encode(src)
 
-  var freqLitLen = newSeq[uint64](286)
+  var freqLitLen = newSeq[int](286)
   block count_litlen_frequencies:
     var i: int
     while i < encoded.len:
@@ -311,7 +311,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
 
   b.data.setLen(b.data.len + (bitCount + 7) div 8)
 
-  var clFreq = newSeq[uint64](19)
+  var clFreq = newSeq[int](19)
   block count_cl_frequencies:
     var i: int
     while i < bitLensRle.len:
