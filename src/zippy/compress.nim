@@ -1,9 +1,17 @@
 import bitstreams, common, deques, zippyerror, bitops
 
 const
-  windowSize = 1024
   minMatchLen = 3
   maxMatchLen = 258
+
+  windowSize = 1 shl 12
+  goodMatchLen = 32
+  maxChainLen = 256
+
+  hashBits = 16
+  hashSize = 1 shl hashBits
+  hashMask = hashSize - 1
+  hashShift = (hashBits + minMatchLen - 1) div minMatchLen
 
   bitReverseTable = block:
     var result: array[256, uint8]
@@ -173,62 +181,105 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int]) =
     encoded = newSeq[uint16](src.len div 2)
     freqDist = newSeq[int](30)
 
-  var pos, windowStart, matchStart, matchOffset, matchLen: int
-  for i, c in src:
-    if pos + 4 >= encoded.len:
-    # if pos + matchLen >= encoded.len:
+  assert windowSize <= maxWindowSize
+  assert (windowSize and (windowSize - 1)) == 0
+  assert (hashSize and hashMask) == 0
+
+  if src.len <= minMatchLen:
+    for i in 0 ..< src.len:
+      encoded.add(src[i])
+    return (encoded, freqDist)
+
+  encoded.setLen(src.len div 2)
+
+  var
+    pos, windowPos, hash, op: int
+    head = newSeq[int](hashSize) # hash -> pos
+    chain = newSeq[int](windowSize) # pos a -> pos b
+
+  template updateHash(value: uint8) =
+    hash = ((hash shl hashShift) xor value.int) and hashMask
+
+  template updateChain() =
+    chain[windowPos] = head[hash]
+    head[hash] = windowPos
+
+  for i in 0 ..< minMatchLen - 1:
+    updateHash(src[i])
+
+  while pos < src.len:
+    if op + max(4, minMatchLen) > encoded.len:
       encoded.setLen(encoded.len * 2)
 
-    template emit() =
-      if matchLen >= minMatchLen:
-        let
-          lengthCode = findCodeIndex(baseLengths, matchLen.uint16)
-          distCode = findCodeIndex(baseDistance, matchOffset.uint16)
-        encoded[pos] = (lengthCode + firstLengthCodeIndex).uint16
-        encoded[pos + 1] = matchLen.uint16 - baseLengths[lengthCode]
-        encoded[pos + 2] = distCode
-        encoded[pos + 3] = matchOffset.uint16 - baseDistance[distCode]
-        inc(pos, 4)
-        inc freqDist[distCode]
-      else:
-        for j in 0 ..< matchLen:
-          encoded[pos] = src[windowStart + matchStart + j]
-          inc pos
-      matchLen = 0
+    if pos + minMatchLen > src.len:
+      encoded[op] = src[pos]
+      inc pos
+      inc op
+      continue
 
-    func find(
-      src: seq[uint8], value: uint8, start, stop: int
-    ): int {.inline.} =
-      result = -1
-      for j in start ..< stop:
-        if src[j] == value:
-          result = j - start
+    windowPos = pos and (windowSize - 1)
+
+    updateHash(src[pos + minMatchLen - 1])
+    updateChain()
+
+    var
+      hashPos = chain[windowPos]
+      stop = min(src.len, pos + maxMatchLen)
+      chainLen, prevOffset, longestMatchOffset, longestMatchLen: int
+    while true:
+      if chainLen >= maxChainLen:
+        break
+      inc chainLen
+
+      let offset =
+        if hashPos <= windowPos:
+          windowPos - hashPos
+        else:
+          windowPos - hashPos + windowSize
+
+      if offset <= 0 or offset < prevOffset:
+        break
+
+      prevOffset = offset
+
+      var matchLen: int
+      for i in 0 ..< stop - pos:
+        if src[pos - offset + i] != src[pos + i]:
           break
-
-    if matchLen > 0:
-      if src[windowStart + matchStart + matchLen] == c:
         inc matchLen
-        if matchLen == maxMatchLen or i == src.high:
-          emit()
-          # We've consumed this c so don't hit the matchLen == 0 block
-          continue
-      else:
-        emit()
 
-    if matchLen == 0:
-      windowStart = max(i - windowSize, 0)
-      let index = src.find(c, windowStart, i)
-      if index >= 0:
-        matchStart = index
-        matchOffset = i - windowStart - index
-        inc matchLen
-        if i == src.high:
-          emit()
-      else:
-        encoded[pos] = c
+      if matchLen > longestMatchLen:
+        longestMatchLen = matchLen
+        longestMatchOffset = offset
+
+      if longestMatchLen >= goodMatchLen or hashPos == chain[hashPos]:
+        break
+
+      hashPos = chain[hashPos]
+
+    if longestMatchLen > minMatchLen:
+      let
+        lengthCode = findCodeIndex(baseLengths, longestMatchLen.uint16)
+        distCode = findCodeIndex(baseDistance, longestMatchOffset.uint16)
+      encoded[op] = (lengthCode + firstLengthCodeIndex).uint16
+      encoded[op + 1] = longestMatchLen.uint16 - baseLengths[lengthCode]
+      encoded[op + 2] = distCode
+      encoded[op + 3] = longestMatchOffset.uint16 - baseDistance[distCode]
+      inc(op, 4)
+      inc freqDist[distCode]
+
+      for i in 1 ..< longestMatchLen:
         inc pos
+        windowPos = pos and (windowSize - 1)
+        if pos + minMatchLen < src.len:
+          updateHash(src[pos + minMatchLen - 1])
+          updateChain()
+    else:
+      encoded[op] = src[pos]
+      inc op
+    inc pos
 
-  encoded.setLen(pos)
+  encoded.setLen(op)
   (encoded, freqDist)
 
 func compress*(src: seq[uint8]): seq[uint8] =
