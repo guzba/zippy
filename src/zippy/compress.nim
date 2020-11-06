@@ -234,7 +234,7 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[uint64]) =
 func compress*(src: seq[uint8]): seq[uint8] =
   ## Uncompresses src and returns the compressed data seq.
 
-  var b = initBitStream()
+  var b = BitStream()
   b.data.setLen(5)
 
   const

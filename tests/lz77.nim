@@ -1,11 +1,14 @@
 import strformat, fidget/opengl/perf
 
 const
-  windowSize = 1024
+  windowSize = 32
   minMatchLen = 3
   maxMatchLen = 258
 
-func lz77Encode(src: seq[uint8]): seq[uint16] =
+var
+  totalMatch: int
+
+proc lz77Encode(src: seq[uint8]): seq[uint16] =
   result.setLen(src.len div 2)
 
   var pos, windowStart, matchStart, matchOffset, matchLen: int
@@ -20,6 +23,7 @@ func lz77Encode(src: seq[uint8]): seq[uint16] =
         result[pos + 1] = matchOffset.uint16
         result[pos + 2] = matchLen.uint16
         inc(pos, 3)
+        inc(totalMatch, matchLen)
       else:
         for j in 0 ..< matchLen:
           # debugEcho src[windowStart + matchStart + j].char
@@ -62,7 +66,7 @@ func lz77Encode(src: seq[uint8]): seq[uint16] =
 
   result.setLen(pos)
 
-func lz77Decode(encoded: seq[uint16]): seq[uint8] =
+proc lz77Decode(encoded: seq[uint16]): seq[uint8] =
   result.setLen(encoded.len)
 
   var ip, op: int
@@ -92,28 +96,28 @@ func lz77Decode(encoded: seq[uint16]): seq[uint8] =
   result.setLen(op)
 
 const files = [
-  "randtest1.gold",
-  "randtest2.gold",
-  "randtest3.gold",
+  # "randtest1.gold",
+  # "randtest2.gold",
+  # "randtest3.gold",
   "rfctest1.gold",
-  "rfctest2.gold",
-  "rfctest3.gold",
-  "tor-list.gold",
-  "zerotest1.gold",
-  "zerotest2.gold",
-  "zerotest3.gold",
-  "empty.gold",
-  "alice29.txt",
-  "asyoulik.txt",
-  "fireworks.jpg",
-  "geo.protodata",
-  "html",
-  "html_x_4",
-  "kppkn.gtb",
-  "lcet10.txt",
-  "paper-100k.pdf",
-  "plrabn12.txt",
-  "urls.10K"
+  # "rfctest2.gold",
+  # "rfctest3.gold",
+  # "tor-list.gold",
+  # "zerotest1.gold",
+  # "zerotest2.gold",
+  # "zerotest3.gold",
+  # "empty.gold",
+  # "alice29.txt",
+  # "asyoulik.txt",
+  # "fireworks.jpg",
+  # "geo.protodata",
+  # "html",
+  # "html_x_4",
+  # "kppkn.gtb",
+  # "lcet10.txt",
+  # "paper-100k.pdf",
+  # "plrabn12.txt",
+  # "urls.10K"
 ]
 
 timeIt "lz77":
@@ -124,4 +128,5 @@ timeIt "lz77":
         encoded = lz77Encode(original)
         decoded = lz77Decode(encoded)
       echo &"{file} original: {original.len} encoded: {encoded.len}"
+      echo totalMatch
       doAssert original == decoded

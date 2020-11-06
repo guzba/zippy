@@ -38,12 +38,12 @@ const
     "urls.10K"
   ]
 
-# for i, z in zs:
-#   let
-#     compressed = readFile(&"tests/data/{z}")
-#     gold = readFile(&"tests/data/{golds[i]}")
-#   echo &"{z} compressed: {z.len} gold: {gold.len}"
-#   doAssert uncompress(compressed) == gold
+for i, z in zs:
+  let
+    compressed = readFile(&"tests/data/{z}")
+    gold = readFile(&"tests/data/{golds[i]}")
+  echo &"{z} compressed: {z.len} gold: {gold.len}"
+  doAssert uncompress(compressed) == gold
 
 for gold in golds:
   let
@@ -53,21 +53,10 @@ for gold in golds:
   echo &"{gold} original: {original.len} compressed: {compressed.len}"
   doAssert original == uncompressed
 
-# block all_uint8:
-#   var original: seq[uint8]
-#   for i in 0.uint8 .. high(uint8):
-#     original.add(i)
-#   let compressed = compress(original)
-#   echo &"all_uint8 original: {original.len} compressed: {compressed.len}"
-#   doAssert original == uncompress(compressed)
-
-
-
-# let
-#   original = "SAM SAM"
-#   compressed = compress(original)
-#   uncompressed = uncompress(compressed)
-# echo &"original: {original.len} compressed: {compressed.len}"
-# echo uncompressed.len
-# echo uncompressed
-# doAssert original == uncompressed
+block all_uint8:
+  var original: seq[uint8]
+  for i in 0.uint8 .. high(uint8):
+    original.add(i)
+  let compressed = compress(original)
+  echo &"all_uint8 original: {original.len} compressed: {compressed.len}"
+  doAssert original == uncompress(compressed)

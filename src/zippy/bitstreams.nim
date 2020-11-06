@@ -24,9 +24,6 @@ template failEndOfBuffer*() =
 func initBitStream*(data: seq[uint8]): BitStream =
   result.data = data
 
-func initBitStream*(): BitStream =
-  result.data.setLen(1)
-
 func len*(b: BitStream): int =
   b.data.len
 
