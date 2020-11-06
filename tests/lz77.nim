@@ -57,26 +57,23 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
       inc pos
       continue
 
+    windowPos = pos and (windowSize - 1)
+
     updateHash(src[pos + minMatchLen - 1])
     updateChain()
-
-    windowPos = pos and (windowSize - 1)
 
     var
       hashPos = chain[pos]
       stop = min(src.len, pos + maxMatchLen)
-      chainLen, longestMatchOffset, longestMatchLen: int
+      chainLen, prevOffset, longestMatchOffset, longestMatchLen: int
     while true:
       if chainLen >= maxChainLen:
         break
       inc chainLen
 
-
-      # let offset = pos - hashPos
-      # if offset == 0:
-      #   break
-
-
+      let offset = pos - hashPos
+      if offset == 0:
+        break
 
       var matchLen: int
       for i in 0 ..< stop - pos:
