@@ -3,8 +3,8 @@ const
   maxLitLenCodes* = 286
   maxDistCodes* = 30
   maxFixedLitLenCodes* = 288
-  # maxUncompressedBlockSize = 65535
-  # maxWindowSize = 32768
+  maxWindowSize* = 32768
+  maxUncompressedBlockSize* = 65535
   firstLengthCodeIndex* = 257
 
   baseLengths* = [
