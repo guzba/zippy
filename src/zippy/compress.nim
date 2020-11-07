@@ -266,12 +266,11 @@ func lz77Encode(
         break
       inc chainLen
 
-      let offset = (
-        if hashPos <= windowPos:
-          windowPos - hashPos
-        else:
-          windowPos - hashPos + windowSize
-      ).int
+      var offset: int
+      if hashPos <= windowPos:
+        offset = (windowPos - hashPos).int
+      else:
+        offset = (windowPos - hashPos + windowSize).int
 
       if offset <= 0 or offset < prevOffset:
         break
