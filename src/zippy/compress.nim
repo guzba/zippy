@@ -4,9 +4,13 @@ const
   minMatchLen = 3
   maxMatchLen = 258
 
-  windowSize = 1 shl 12
+  # These are not the true max lengths, they trade off speed vs compression
+  maxLitLenCodeLength = 9
+  maxDistCodeLength = 6
+
+  windowSize = 1 shl 15
+  maxChainLen = 32
   goodMatchLen = 32
-  maxChainLen = 256
 
   hashBits = 16
   hashSize = 1 shl hashBits
@@ -185,15 +189,30 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int]) =
   assert (windowSize and (windowSize - 1)) == 0
   assert (hashSize and hashMask) == 0
 
+  var op: int
+
+  template addLiteral(length: int) =
+    encoded[op] = length.uint16
+    inc op
+
+  template addLookBack(offset, length: int) =
+    let distCode = findCodeIndex(baseDistance, offset.uint16)
+    inc freqDist[distCode]
+
+    encoded[op] = uint16.high
+    encoded[op + 1] = offset.uint16
+    encoded[op + 2] = length.uint16
+    inc(op, 3)
+
   if src.len <= minMatchLen:
-    for i in 0 ..< src.len:
-      encoded.add(src[i])
+    encoded.setLen(1)
+    addLiteral(src.len)
     return (encoded, freqDist)
 
   encoded.setLen(src.len div 2)
 
   var
-    pos, windowPos, hash, op: int
+    pos, windowPos, hash, literalLen: int
     head = newSeq[int](hashSize) # hash -> pos
     chain = newSeq[int](windowSize) # pos a -> pos b
 
@@ -208,14 +227,12 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int]) =
     updateHash(src[i])
 
   while pos < src.len:
-    if op + max(4, minMatchLen) > encoded.len:
+    if op + minMatchLen > encoded.len:
       encoded.setLen(encoded.len * 2)
 
     if pos + minMatchLen > src.len:
-      encoded[op] = src[pos]
-      inc pos
-      inc op
-      continue
+      addLiteral(literalLen + src.len - pos)
+      break
 
     windowPos = pos and (windowSize - 1)
 
@@ -258,16 +275,11 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int]) =
       hashPos = chain[hashPos]
 
     if longestMatchLen > minMatchLen:
-      let
-        lengthCode = findCodeIndex(baseLengths, longestMatchLen.uint16)
-        distCode = findCodeIndex(baseDistance, longestMatchOffset.uint16)
-      encoded[op] = (lengthCode + firstLengthCodeIndex).uint16
-      encoded[op + 1] = longestMatchLen.uint16 - baseLengths[lengthCode]
-      encoded[op + 2] = distCode
-      encoded[op + 3] = longestMatchOffset.uint16 - baseDistance[distCode]
-      inc(op, 4)
-      inc freqDist[distCode]
+      if literalLen > 0:
+        addLiteral(literalLen)
+        literalLen = 0
 
+      addLookBack(longestMatchOffset, longestMatchLen)
       for i in 1 ..< longestMatchLen:
         inc pos
         windowPos = pos and (windowSize - 1)
@@ -275,8 +287,10 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int]) =
           updateHash(src[pos + minMatchLen - 1])
           updateChain()
     else:
-      encoded[op] = src[pos]
-      inc op
+      inc literalLen
+      if literalLen == uint16.high.int - 1:
+        addLiteral(literalLen)
+        literalLen = 0
     inc pos
 
   encoded.setLen(op)
@@ -301,20 +315,31 @@ func compress*(src: seq[uint8]): seq[uint8] =
 
   var freqLitLen = newSeq[int](286)
   block count_litlen_frequencies:
-    var i: int
-    while i < encoded.len:
-      let symbol = encoded[i]
-      inc freqLitLen[symbol]
-      inc i
-      if symbol > 256:
-        # Skip encoded code and extras
-        inc(i, 3)
+    var srcPos, encPos: int
+    while encPos < encoded.len:
+      if encoded[encPos] == uint16.high:
+        let
+          length = encoded[encPos + 2]
+          lengthIndex = findCodeIndex(baseLengths, length)
+        inc freqLitLen[lengthIndex + firstLengthCodeIndex]
+        inc(encPos, 3)
+        inc(srcPos, length.int)
+      else:
+        let length = encoded[encPos]
+        inc encPos
+        for _ in 0 ..< length.int:
+          inc freqLitLen[src[srcPos]]
+          inc srcPos
 
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   let
-    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(freqLitLen, 257, 9)
-    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(freqDist, 2, 6)
+    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(
+      freqLitLen, 257, maxLitLenCodeLength
+    )
+    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(
+      freqDist, 2, maxDistCodeLength
+    )
 
   var bitLens = newSeqOfCap[uint8](llNumCodes + distNumCodes)
   for i in 0 ..< llNumCodes:
@@ -360,8 +385,6 @@ func compress*(src: seq[uint8]): seq[uint8] =
       inc i
       inc(bitCount, 7)
 
-  b.data.setLen(b.data.len + (bitCount + 7) div 8)
-
   var clFreq = newSeq[int](19)
   block count_cl_frequencies:
     var i: int
@@ -393,10 +416,11 @@ func compress*(src: seq[uint8]): seq[uint8] =
   b.addBits(hdist, 5)
   b.addBits(hclen, 4)
 
-  # TODO: Make these b.data.setLens better
-  b.data.setLen(b.data.len +
+  # TODO: Improve the b.data.setLens
+  b.data.setLen(
+    b.data.len +
     (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
-    ((encoded.len * 15 + 7) div 8) + 4 # encoded symbols + checksum
+    bitLensRle.len * 2
   )
 
   for i in 0.uint8 ..< hclen + 4:
@@ -419,24 +443,42 @@ func compress*(src: seq[uint8]): seq[uint8] =
         inc i
 
   block write_encoded_data:
-    var i: int
-    while i < encoded.len:
-      let symbol = encoded[i]
-      b.addBits(llCodes[symbol], llLengths[symbol].int)
-      inc i
-      if symbol > 256:
+    var srcPos, encPos: int
+    while encPos < encoded.len:
+      if encoded[encPos] == uint16.high:
         let
-          lengthIndex = (symbol - firstLengthCodeIndex).uint16
+          offset = encoded[encPos + 1]
+          length = encoded[encPos + 2]
+          lengthIndex = findCodeIndex(baseLengths, length)
+          distIndex = findCodeIndex(baseDistance, offset)
           lengthExtraBits = baseLengthsExtraBits[lengthIndex]
-          lengthExtra = encoded[i]
-          distIndex = encoded[i + 1]
+          lengthExtra = length - baseLengths[lengthIndex]
           distExtraBits = baseDistanceExtraBits[distIndex]
-          distExtra = encoded[i + 2]
-        inc(i, 3)
+          distExtra = offset - baseDistance[distIndex]
+        inc(encPos, 3)
+        inc(srcPos, length.int)
 
+        if b.data.len < b.bytePos + 6:
+          b.data.setLen(b.data.len * 2)
+
+        b.addBits(
+          llCodes[lengthIndex + firstLengthCodeIndex],
+          llLengths[lengthIndex + firstLengthCodeIndex].int
+        )
         b.addBits(lengthExtra, lengthExtraBits)
         b.addBits(distCodes[distIndex], distLengths[distIndex].int)
         b.addBits(distExtra, distExtraBits)
+      else:
+        let length = encoded[encPos].int
+        inc encPos
+
+        let worstCaseBytesNeeded = (length * maxLitLenCodeLength + 7) div 8
+        if b.data.len < b.bytePos + worstCaseBytesNeeded:
+          b.data.setLen(max(b.bytePos + worstCaseBytesNeeded, b.data.len * 2))
+
+        for j in 0 ..< length:
+          b.addBits(llCodes[src[srcPos]], llLengths[src[srcPos]].int)
+          inc srcPos
 
   if llLengths[256] == 0:
     failCompress()

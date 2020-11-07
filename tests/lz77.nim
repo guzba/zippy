@@ -3,10 +3,10 @@ import strformat, strutils, fidget/opengl/perf
 const
   minMatchLen = 3
 
-  windowSize = 1 shl 12
+  windowSize = 1 shl 15
   maxMatchLen = 258
+  maxChainLen = 32
   goodMatchLen = 32
-  maxChainLen = 256
 
   hashBits = 16
   hashSize = 1 shl hashBits
@@ -21,13 +21,12 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
   assert (windowSize and (windowSize - 1)) == 0
   assert (hashSize and hashMask) == 0
 
-  if src.len <= minMatchLen:
-    for i in 0 ..< src.len:
-      result.add(src[i])
-    return
-
-  result.setLen(src.len div 2)
   var op: int
+
+  template addLiteral(length: int) =
+    # debugEcho &"literal <{length}>"
+    result[op] = length.uint16
+    inc op
 
   template addLookBack(offset, length: int) =
     # debugEcho &"lookback <{offset},{length}>"
@@ -38,8 +37,15 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
 
     inc(totalMatch, length)
 
+  if src.len <= minMatchLen:
+    result.setLen(1)
+    addLiteral(src.len)
+    return
+
+  result.setLen(src.len div 2)
+
   var
-    pos, windowPos, hash: int
+    pos, windowPos, hash, literalLen: int
     head = newSeq[int](hashSize) # hash -> pos
     chain = newSeq[int](windowSize) # pos a -> pos b
 
@@ -58,10 +64,8 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
       result.setLen(result.len * 2)
 
     if pos + minMatchLen > src.len:
-      result[op] = src[pos]
-      inc pos
-      inc op
-      continue
+      addLiteral(literalLen + src.len - pos)
+      break
 
     windowPos = pos and (windowSize - 1)
 
@@ -104,6 +108,10 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
       hashPos = chain[hashPos]
 
     if longestMatchLen > minMatchLen:
+      if literalLen > 0:
+        addLiteral(literalLen)
+        literalLen = 0
+
       addLookBack(longestMatchOffset, longestMatchLen)
       for i in 1 ..< longestMatchLen:
         inc pos
@@ -112,8 +120,10 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
           updateHash(src[pos + minMatchLen - 1])
           updateChain()
     else:
-      result[op] = src[pos]
-      inc op
+      inc literalLen
+      if literalLen == uint16.high.int - 1:
+        addLiteral(literalLen)
+        literalLen = 0
     inc pos
 
   result.setLen(op)
@@ -130,7 +140,6 @@ proc lz77Decode2(src: seq[uint8], encoded: seq[uint16]): seq[uint8] =
       let
         offset = encoded[ip + 1].int
         length = encoded[ip + 2].int
-      # debugEcho &"lookback <{offset},{length}>"
       inc(ip, 3)
 
       var copyPos = op - offset
@@ -140,35 +149,40 @@ proc lz77Decode2(src: seq[uint8], encoded: seq[uint16]): seq[uint8] =
         result[op + j] = result[copyPos + j]
       inc(op, length)
     else:
-      result[op] = encoded[ip].uint8
+      let length = encoded[ip].int
       inc ip
-      inc op
+
+      if op + length > result.len:
+        result.setLen(max(result.len * 2, result.len + length))
+      for j in 0 ..< length:
+        result[op + j] = src[op + j]
+      inc(op, length)
 
   result.setLen(op)
 
 const files = [
-  # "randtest1.gold",
-  # "randtest2.gold",
-  # "randtest3.gold",
-  # "rfctest1.gold",
-  # "rfctest2.gold",
-  # "rfctest3.gold",
+  "randtest1.gold",
+  "randtest2.gold",
+  "randtest3.gold",
+  "rfctest1.gold",
+  "rfctest2.gold",
+  "rfctest3.gold",
   "tor-list.gold",
-  # "zerotest1.gold",
-  # "zerotest2.gold",
-  # "zerotest3.gold",
-  # "empty.gold",
-  # "alice29.txt",
-  # "asyoulik.txt",
-  # "fireworks.jpg",
-  # "geo.protodata",
-  # "html",
-  # "html_x_4",
-  # "kppkn.gtb",
-  # "lcet10.txt",
-  # "paper-100k.pdf",
-  # "plrabn12.txt",
-  # "urls.10K"
+  "zerotest1.gold",
+  "zerotest2.gold",
+  "zerotest3.gold",
+  "empty.gold",
+  "alice29.txt",
+  "asyoulik.txt",
+  "fireworks.jpg",
+  "geo.protodata",
+  "html",
+  "html_x_4",
+  "kppkn.gtb",
+  "lcet10.txt",
+  "paper-100k.pdf",
+  "plrabn12.txt",
+  "urls.10K"
 ]
 
 timeIt "lz77_2":
@@ -180,8 +194,8 @@ timeIt "lz77_2":
         decoded = lz77Decode2(original, encoded)
       echo &"{file} original: {original.len} encoded: {encoded.len}"
       echo "totalMatch: ", totalMatch
-      # echo "decoded: ", decoded.len
-      # assert original == decoded
+      echo "decoded: ", decoded.len
+      assert original == decoded
       # if original != decoded:
       #   for i in 0 ..< original.len:
       #     if original[i] != decoded[i]:

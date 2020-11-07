@@ -60,3 +60,10 @@ block all_uint8:
   let compressed = compress(original)
   echo &"all_uint8 original: {original.len} compressed: {compressed.len}"
   doAssert original == uncompress(compressed)
+
+# let
+#   original = cast[seq[uint8]]("zSAM SAM SAM a SAM SAM SAMz")
+#   encoded = compress(original)
+# echo &"original: {original.len} encoded: {encoded.len}"
+# echo cast[string](uncompress(encoded))
+# doAssert original == uncompress(encoded)
