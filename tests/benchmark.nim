@@ -61,18 +61,18 @@ block guzba_zippy_compress:
 #     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
 #     echo &"  {z}: {delta:.4f}s [{c}]"
 
-block treeform_miniz_compress:
-  echo "https://github.com/treeform/miniz compress"
-  for gold in golds:
-    let
-      uncompressed = readFile(&"tests/data/{gold}")
-      start = getMonoTime().ticks
-    var c: int
-    for i in 0 ..< iterations:
-      let compressed = miniz.compress(uncompressed, 1)
-      inc(c, compressed.len)
-    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
-    echo &"  {gold}: {delta:.4f}s [{c}]"
+# block treeform_miniz_compress:
+#   echo "https://github.com/treeform/miniz compress"
+#   for gold in golds:
+#     let
+#       uncompressed = readFile(&"tests/data/{gold}")
+#       start = getMonoTime().ticks
+#     var c: int
+#     for i in 0 ..< iterations:
+#       let compressed = miniz.compress(uncompressed, 1)
+#       inc(c, compressed.len)
+#     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+#     echo &"  {gold}: {delta:.4f}s [{c}]"
 
 # block nimlang_zip_uncompress: # Requires zlib1.dll
 #   echo "https://github.com/nim-lang/zip uncompress"
@@ -87,18 +87,18 @@ block treeform_miniz_compress:
 #     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
 #     echo &"  {z}: {delta:.4f}s [{c}]"
 
-block nimlang_zip_compress: # Requires zlib1.dll
-  echo "https://github.com/nim-lang/zip compress"
-  for gold in golds:
-    let
-      uncompressed = readFile(&"tests/data/{gold}")
-      start = getMonoTime().ticks
-    var c: int
-    for i in 0 ..< iterations:
-      let compressed = zlib.compress(uncompressed, stream = ZLIB_STREAM)
-      inc(c, compressed.len)
-    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
-    echo &"  {gold}: {delta:.4f}s [{c}]"
+# block nimlang_zip_compress: # Requires zlib1.dll
+#   echo "https://github.com/nim-lang/zip compress"
+#   for gold in golds:
+#     let
+#       uncompressed = readFile(&"tests/data/{gold}")
+#       start = getMonoTime().ticks
+#     var c: int
+#     for i in 0 ..< iterations:
+#       let compressed = zlib.compress(uncompressed, stream = ZLIB_STREAM)
+#       inc(c, compressed.len)
+#     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+#     echo &"  {gold}: {delta:.4f}s [{c}]"
 
 # block jangko_nimPNG_uncompress:
 #   echo "https://github.com/jangko/nimPNG uncompress"

@@ -98,6 +98,15 @@ func readBytes*(b: var BitStream, dst: pointer, len: int) =
   copyMem(dst, b.data[b.bytePos].addr, len)
   b.skipBits(len * 8)
 
+func addBytes*(b: var BitStream, src: pointer, len: int) =
+  assert b.bitPos == 0
+
+  if b.bytePos + len > b.data.len:
+    b.data.setLen(b.bytePos + len)
+
+  copyMem(b.data[b.bytePos].addr, src, len)
+  b.skipBits(len * 8)
+
 func addBit*(b: var BitStream, bit: uint8) =
   b.data[b.bytePos] = b.data[b.bytePos] or (bit shl b.bitPos)
   b.movePos(1)

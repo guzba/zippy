@@ -45,12 +45,13 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
   result.setLen(src.len div 2)
 
   var
-    pos, windowPos, hash, literalLen: int
-    head = newSeq[int](hashSize) # hash -> pos
-    chain = newSeq[int](windowSize) # pos a -> pos b
+    pos, literalLen: int
+    windowPos, hash: uint16
+    head = newSeq[uint16](hashSize) # hash -> pos
+    chain = newSeq[uint16](windowSize) # pos a -> pos b
 
   template updateHash(value: uint8) =
-    hash = ((hash shl hashShift) xor value.int) and hashMask
+    hash = ((hash shl hashShift) xor value) and hashMask
 
   template updateChain() =
     chain[windowPos] = head[hash]
@@ -67,7 +68,7 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
       addLiteral(literalLen + src.len - pos)
       break
 
-    windowPos = pos and (windowSize - 1)
+    windowPos = (pos and (windowSize - 1)).uint16
 
     updateHash(src[pos + minMatchLen - 1])
     updateChain()
@@ -81,11 +82,12 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
         break
       inc chainLen
 
-      let offset =
+      let offset = (
         if hashPos <= windowPos:
           windowPos - hashPos
         else:
           windowPos - hashPos + windowSize
+      ).int
 
       if offset <= 0 or offset < prevOffset:
         break
@@ -115,13 +117,13 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
       addLookBack(longestMatchOffset, longestMatchLen)
       for i in 1 ..< longestMatchLen:
         inc pos
-        windowPos = pos and (windowSize - 1)
+        windowPos = (pos and (windowSize - 1)).uint16
         if pos + minMatchLen < src.len:
           updateHash(src[pos + minMatchLen - 1])
           updateChain()
     else:
       inc literalLen
-      if literalLen == uint16.high.int - 1:
+      if literalLen == uint16.high.int shr 1:
         addLiteral(literalLen)
         literalLen = 0
     inc pos
