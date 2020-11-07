@@ -45,21 +45,21 @@ for i, z in zs:
   echo &"{z} compressed: {z.len} gold: {gold.len}"
   doAssert uncompress(compressed) == gold
 
-for gold in golds:
-  let
-    original = readFile(&"tests/data/{gold}")
-    compressed = compress(original)
-    uncompressed = uncompress(compressed)
-  echo &"{gold} original: {original.len} compressed: {compressed.len}"
-  doAssert original == uncompressed
+# for gold in golds:
+#   let
+#     original = readFile(&"tests/data/{gold}")
+#     compressed = compress(original)
+#     uncompressed = uncompress(compressed)
+#   echo &"{gold} original: {original.len} compressed: {compressed.len}"
+#   doAssert original == uncompressed
 
-block all_uint8:
-  var original: seq[uint8]
-  for i in 0.uint8 .. high(uint8):
-    original.add(i)
-  let compressed = compress(original)
-  echo &"all_uint8 original: {original.len} compressed: {compressed.len}"
-  doAssert original == uncompress(compressed)
+# block all_uint8:
+#   var original: seq[uint8]
+#   for i in 0.uint8 .. high(uint8):
+#     original.add(i)
+#   let compressed = compress(original)
+#   echo &"all_uint8 original: {original.len} compressed: {compressed.len}"
+#   doAssert original == uncompress(compressed)
 
 # let
 #   original = cast[seq[uint8]]("zSAM SAM SAM a SAM SAM SAMz")
