@@ -14,6 +14,10 @@ I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 
 
 **NOTE: This library is in active development. It is tested and should work well, but the API is not yet stable.**
 
+## Examples
+
+Simple examples using Zippy can be found in the [examples/](https://github.com/guzba/zippy/blob/master/examples) folder. This includes an [HTTP client](https://github.com/guzba/zippy/blob/master/examples/http_client.nim) and [HTTP server](https://github.com/guzba/zippy/blob/master/examples/http_server.nim) example for handing gzip'ed requests and responses.
+
 ## Performance
 
 Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well but it is not quite as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
