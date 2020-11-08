@@ -199,18 +199,22 @@ func inflate(src: seq[uint8], dst: var seq[uint8]) =
     else:
       raise newException(ZippyError, "Invalid block header")
 
+func inflate(src: seq[uint8]): seq[uint8] =
+  result = newSeqOfCap[uint8](src.len)
+  inflate(src, result)
+
 func uncompress*(src: seq[uint8]): seq[uint8] =
   ## Uncompresses src and returns the uncompressed data seq.
-  result = newSeqOfCap[uint8](src.len * 3)
+  result = newSeqOfCap[uint8](src.len)
 
   if src.len < 6:
     failUncompress()
 
   let checksum = (
-    src[src.len - 4].uint32 shl 24 or
-    src[src.len - 3].uint32 shl 16 or
-    src[src.len - 2].uint32 shl 8 or
-    src[src.len - 1].uint32
+    src[^4].uint32 shl 24 or
+    src[^3].uint32 shl 16 or
+    src[^2].uint32 shl 8 or
+    src[^1].uint32
   )
 
   let
@@ -236,5 +240,64 @@ func uncompress*(src: seq[uint8]): seq[uint8] =
 template uncompress*(src: string): string =
   ## Helper for when preferring to work with strings.
   cast[string](uncompress(cast[seq[uint8]](src)))
+
+func gzu*(src: seq[uint8]): seq[uint8] =
+  result = newSeqOfCap[uint8](src.len)
+
+  if src.len < 18:
+    failUncompress()
+
+  let
+    id1 = src[0]
+    id2 = src[1]
+    cm = src[2]
+    flg = src[3]
+    # mtime = src[4 .. 7]
+    # xfl = src[8]
+    # os = src[9]
+
+  if id1 != 31 or id2 != 139:
+    raise newException(ZippyError, "Failed gzip identification values check")
+  if cm != 8: # DEFLATE
+    raise newException(ZippyError, "Unsupported compression method")
+  if (flg and 0b11100000) > 0:
+    raise newException(ZippyError, "Reserved flag bits set")
+
+  let
+    # ftext = (flg and (1.uint8 shl 0)) > 0
+    fhcrc = (flg and (1.uint8 shl 1)) > 0
+    fextra = (flg and (1.uint8 shl 2)) > 0
+    fname = (flg and (1.uint8 shl 3)) > 0
+    fcomment = (flg and (1.uint8 shl 4)) > 0
+
+  var pos = 10
+
+  func nextZeroByte(s: seq[uint8], start: int): int =
+    for i in start ..< s.len:
+      if s[start + i] == 0:
+        return start + i
+    failUncompress()
+
+  if fextra:
+    raise newException(ZippyError, "Currently unsupported flags are set")
+
+  if fname:
+    pos = nextZeroByte(src, pos) + 1
+  if fcomment:
+    pos = nextZeroByte(src, pos) + 1
+  if fhcrc:
+    if pos + 2 >= src.len:
+      failUncompress()
+    # TODO: Need to verify this works with a test file
+    # let checksum = cast[ptr uint16](src[pos].unsafeAddr)[]
+    # if checksum != crc32(src[0 ..< pos]):
+    #   raise newException(ZippyError, "Header checksum verification failed")
+    inc(pos, 2)
+
+  inflate(src[pos ..< ^8], result)
+
+  let checksum = cast[ptr uint32](src[src.len - 8].unsafeAddr)[]
+  if checksum != crc32(result):
+    raise newException(ZippyError, "Checksum verification failed")
 
 {.pop.}

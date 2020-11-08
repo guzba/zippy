@@ -84,6 +84,20 @@ const
     16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
+  crcTable = block:
+    var
+      table: array[256, uint32]
+      c: uint32
+    for i in 0.uint8 .. high(uint8):
+      c = i
+      for j in 0.uint8 ..< 8.uint8:
+        if (c and 1) > 0:
+          c = 0xedb88320.uint32 xor (c shr 1)
+        else:
+          c = (c shr 1)
+      table[i] = c
+    table
+
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
 
@@ -135,3 +149,11 @@ func adler32*(data: seq[uint8]): uint32 =
   s2 = s2 mod 65521
 
   result = (s2 shl 16) or s1
+
+func crc32*(v: uint32, data: seq[uint8]): uint32 =
+  result = v
+  for i in 0 ..< data.len:
+    result = crcTable[(result xor data[i].uint32) and 0xff] xor (result shr 8)
+
+func crc32*(data: seq[uint8]): uint32 =
+  crc32(0xffffffff.uint32, data) xor 0xffffffff.uint32

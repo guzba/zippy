@@ -45,6 +45,12 @@ for i, z in zs:
   echo &"{z} compressed: {z.len} gold: {gold.len}"
   doAssert uncompress(compressed) == gold
 
+block fixed:
+  let
+    compressed = readFile(&"tests/data/fixed.z")
+    gold = readFile(&"tests/data/urls.10K")
+  doAssert uncompress(compressed) == gold
+
 for gold in golds:
   let
     original = readFile(&"tests/data/{gold}")
@@ -67,3 +73,10 @@ block all_uint8:
 # echo &"original: {original.len} encoded: {encoded.len}"
 # echo cast[string](uncompress(encoded))
 # doAssert original == uncompress(encoded)
+
+let
+  compressed = cast[seq[uint8]](readFile("tests/data/gzipfiletest.txt.gz"))
+  original = readFile("tests/data/gzipfiletest.txt")
+  uncompressed = cast[string](gzu(compressed))
+echo cast[string](uncompressed)
+assert original == uncompressed
