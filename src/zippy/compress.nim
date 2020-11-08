@@ -512,7 +512,6 @@ func deflate*(src: seq[uint8]): seq[uint8] =
 
 func compress*(src: seq[uint8]): seq[uint8] =
   ## Uncompresses src and returns the compressed data seq.
-  result.setLen(2)
 
   const
     cm = 8.uint8
@@ -520,6 +519,7 @@ func compress*(src: seq[uint8]): seq[uint8] =
     cmf = (cinfo shl 4) or cm
     fcheck = (31 - (cmf.uint32 * 256) mod 31).uint8
 
+  result.setLen(2)
   result[0] = cmf
   result[1] = fcheck
 

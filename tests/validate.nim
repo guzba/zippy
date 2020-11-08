@@ -43,7 +43,7 @@ block treeform_miniz:
   for gold in golds:
     let original = readFile(&"tests/data/{gold}")
     if gold == "tor-list.gold" or gold == "zerotest3.gold":
-      # Something bad happens here in miniz
+      # Something bad happens here with miniz
       discard
     else:
       doAssert miniz.uncompress(zippy.compress(original)) == original

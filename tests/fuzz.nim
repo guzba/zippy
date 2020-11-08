@@ -11,7 +11,6 @@ const files = [
   "rfctest3.z",
   "zerotest1.z",
   "zerotest2.z",
-  "zerotest3.z",
 ]
 
 for i in 0 ..< 10_000:
