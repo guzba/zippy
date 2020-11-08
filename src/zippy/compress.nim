@@ -189,23 +189,24 @@ func findCodeIndex(a: openarray[uint16], value: uint16): uint16 =
       return i.uint16 - 1
   a.high.uint16
 
-func lz77Encode(
-  src: seq[uint8], freqLitLen: var seq[int]
-): (seq[uint16], seq[int]) =
-  var
-    encoded = newSeq[uint16](src.len div 2)
-    freqDist = newSeq[int](baseDistance.len)
-
+func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
   assert windowSize <= maxWindowSize
   assert (windowSize and (windowSize - 1)) == 0
   assert (hashSize and hashMask) == 0
   assert hashBits <= 16 # Ensure uint16 works
 
-  var op: int
+  var
+    encoded = newSeq[uint16](src.len div 2)
+    freqLitLen = newSeq[int](286)
+    freqDist = newSeq[int](baseDistance.len)
+    op, literalsTotal: int
+
+  freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   template addLiteral(length: int) =
     encoded[op] = length.uint16
     inc op
+    inc(literalsTotal, length)
 
   template addLookBack(offset, length: int) =
     let
@@ -222,9 +223,11 @@ func lz77Encode(
     inc(op, 3)
 
   if src.len <= minMatchLen:
+    for c in src:
+      inc freqLitLen[c]
     encoded.setLen(1)
     addLiteral(src.len)
-    return (encoded, freqDist)
+    return (encoded, freqLitLen, freqDist, literalsTotal)
 
   encoded.setLen(src.len div 2)
 
@@ -249,6 +252,8 @@ func lz77Encode(
       encoded.setLen(encoded.len * 2)
 
     if pos + minMatchLen > src.len:
+      for c in src[src.len - pos .. src.high]:
+        inc freqLitLen[c]
       addLiteral(literalLen + src.len - pos)
       break
 
@@ -305,6 +310,7 @@ func lz77Encode(
           updateHash(src[pos + minMatchLen - 1])
           updateChain()
     else:
+      inc freqLitLen[src[pos]]
       inc literalLen
       if literalLen == uint16.high.int shr 1:
         addLiteral(literalLen)
@@ -312,38 +318,12 @@ func lz77Encode(
     inc pos
 
   encoded.setLen(op)
-  (encoded, freqDist)
+  (encoded, freqLitLen, freqDist, literalsTotal)
 
-func compress*(src: seq[uint8]): seq[uint8] =
-  ## Uncompresses src and returns the compressed data seq.
-  var b = BitStream()
-  b.data.setLen(5)
+func deflate*(src: seq[uint8]): seq[uint8] =
+  var b: BitStream
 
-  const
-    cm = 8.uint8
-    cinfo = 7.uint8
-    cmf = (cinfo shl 4) or cm
-    fcheck = (31 - (cmf.uint32 * 256) mod 31).uint8
-
-  b.addBits(cmf, 8)
-  b.addBits(fcheck, 8)
-
-  var freqLitLen = newSeq[int](286)
-  let (encoded, freqDist) = lz77Encode(src, freqLitLen)
-
-  var srcPos, encPos, literalsTotal: int
-  while encPos < encoded.len:
-    if (encoded[encPos] and (1 shl 15).uint16) != 0:
-      let length = encoded[encPos + 2]
-      inc(encPos, 3)
-      inc(srcPos, length.int)
-    else:
-      let length = encoded[encPos]
-      inc encPos
-      inc(literalsTotal, length.int)
-      for _ in 0 ..< length.int:
-        inc freqLitLen[src[srcPos]]
-        inc srcPos
+  let (encoded, freqLitLen, freqDist, literalsTotal) = lz77Encode(src)
 
   # If lz77 encoding returned almost all literal runs then write uncompressed.
   if literalsTotal >= (src.len.float32 * 0.98).int:
@@ -368,11 +348,9 @@ func compress*(src: seq[uint8]): seq[uint8] =
       if len > 0:
         b.addBytes(src[pos].unsafeAddr, len.int)
 
-    b.data.setLen(b.data.len + 5) # Leave room for the checksum
+    b.data.setLen(b.data.len)
   else:
     # Deflate using dynamic Huffman tree
-
-    freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
     let
       (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(
@@ -445,17 +423,10 @@ func compress*(src: seq[uint8]): seq[uint8] =
     while bitLensCodeLen[bitLensCodeLen.high] == 0 and bitLensCodeLen.len > 4:
       bitLensCodeLen.setLen(bitLensCodeLen.len - 1)
 
-    b.addBit(1)
-    b.addBits(2, 2)
-
     let
       hlit = (llNumCodes - 257).uint8
       hdist = distNumCodes.uint8 - 1
       hclen = bitLensCodeLen.len.uint8 - 4
-
-    b.addBits(hlit, 5)
-    b.addBits(hdist, 5)
-    b.addBits(hclen, 4)
 
     # TODO: Improve the b.data.setLens
     b.data.setLen(
@@ -463,6 +434,13 @@ func compress*(src: seq[uint8]): seq[uint8] =
       (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
       bitLensRle.len * 2
     )
+
+    b.addBit(1)
+    b.addBits(2, 2)
+
+    b.addBits(hlit, 5)
+    b.addBits(hdist, 5)
+    b.addBits(hclen, 4)
 
     for i in 0.uint8 ..< hclen + 4:
       b.addBits(bitLensCodeLen[i], 3)
@@ -529,14 +507,31 @@ func compress*(src: seq[uint8]): seq[uint8] =
 
     b.skipRemainingBitsInCurrentByte()
 
-  let checksum = cast[array[4, uint8]](adler32(src))
-  b.addBits(checksum[3], 8)
-  b.addBits(checksum[2], 8)
-  b.addBits(checksum[1], 8)
-  b.addBits(checksum[0], 8)
-
   b.data.setLen(b.bytePos)
   b.data
+
+func compress*(src: seq[uint8]): seq[uint8] =
+  ## Uncompresses src and returns the compressed data seq.
+  result.setLen(2)
+
+  const
+    cm = 8.uint8
+    cinfo = 7.uint8
+    cmf = (cinfo shl 4) or cm
+    fcheck = (31 - (cmf.uint32 * 256) mod 31).uint8
+
+  result[0] = cmf
+  result[1] = fcheck
+
+  result.add(deflate(src))
+
+  let checksum = cast[array[4, uint8]](adler32(src))
+  result.add([
+    checksum[3],
+    checksum[2],
+    checksum[1],
+    checksum[0]
+  ])
 
 template compress*(src: string): string =
   ## Helper for when preferring to work with strings.
