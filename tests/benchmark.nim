@@ -2,16 +2,16 @@ import miniz, nimPNG/nimz, std/monotimes, strformat, zip/zlib, zippy
 
 const
   zs = [
-    "rfctest3.z",
     "alice29.txt.z",
     "urls.10K.z",
+    "rfctest3.z",
     "randtest3.z"
   ]
   golds = [
-    "rfctest3.gold",
     "alice29.txt",
     "urls.10K",
-    "randtest3.z"
+    "rfctest3.gold",
+    "randtest3.gold"
   ]
   iterations = 1000
 
