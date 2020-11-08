@@ -178,8 +178,10 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
 
   dst.setLen(pos)
 
-func inflate(b: var BitStream, dst: var seq[uint8]) =
-  var finalBlock: bool
+func inflate(src: seq[uint8], dst: var seq[uint8]) =
+  var
+    b = initBitStream(src)
+    finalBlock: bool
   while not finalBlock:
     let
       bfinal = b.readBits(1)
@@ -211,10 +213,9 @@ func uncompress*(src: seq[uint8]): seq[uint8] =
     src[src.len - 1].uint32
   )
 
-  var b = initBitStream(src[0 ..< src.len - 4])
   let
-    cmf = b.readBits(8)
-    flg = b.readBits(8)
+    cmf = src[0]
+    flg = src[1]
     cm = cmf and 0b00001111
     cinfo = cmf shr 4
 
@@ -227,7 +228,7 @@ func uncompress*(src: seq[uint8]): seq[uint8] =
   if (flg and 0b00100000) != 0: # FDICT
     raise newException(ZippyError, "Preset dictionary is not yet supported")
 
-  inflate(b, result)
+  inflate(src[2 .. ^4], result)
 
   if checksum != adler32(result):
     raise newException(ZippyError, "Checksum verification failed")
