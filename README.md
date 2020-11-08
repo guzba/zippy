@@ -12,49 +12,56 @@ Zippy works well using Nim's relatively new --gc:arc and --gc:orc as well as the
 
 I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 1.4.0.
 
-### Performance
+**NOTE: This library is in active development. It is tested and should work well, but the API is not yet stable.**
 
-Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well but it is not as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
+## Performance
 
-`nim c --gc:arc -d:release -r .\tests\benchmark.nim` (1000 uncompresses, lower time is better)
+Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well but it is not quite as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
 
-**https://github.com/guzba/zippy** results:
+`nim c -d:release -r .\tests\benchmark.nim`
+
+### Compress
+
+Each file is compressed 1000 times.
+
+**https://github.com/guzba/zippy** compress results:
+File | Time | % Size Reduction
+--- | --- | ---:
+rfctest3 | 1.1809s | 70.91%
+alice29 | 6.3391s | 62.33%
+urls.10K | 20.1999s | 67.01%
+randtest3 | 0.1285s | 0%
+
+https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
+File | Time | % Size Reduction
+--- | --- | ---:
+rfctest3 | 0.8147s | 71.74%
+alice29.txt | 7.0150s | 64.23%
+urls.10K | 16.6361s | 68.29%
+randtest3 | 0.1545s | 0%
+
+### Uncompress
+
+Each file is uncompressed 1000 times.
+
+**https://github.com/guzba/zippy** uncompress results:
 File | Time
 --- | ---:
-randtest3.z | 0.0519s
-rfctest3.z | 0.3295s
-alice29.txt.z | 1.4704s
-urls.10K.z | 7.3240s
-fixed.z | 6.6955s
+rfctest3 | 0.2936s
+alice29 | 1.3988s
+urls.10K | 7.3736s
+randtest3 | 0.0398s
 
-https://github.com/treeform/miniz results:
+https://github.com/nim-lang/zip uncompress results: (Requires zlib1.dll)
 File | Time
 --- | ---:
-randtest3.z | 0.5803s
-rfctest3.z |0.5801s
-alice29.txt.z | 3.3442s
-urls.10K.z | 16.1209s
-fixed.z | 19.8003s
+rfctest3 | 0.1148s
+alice29 | 0.4929s
+urls.10K | 2.2334s
+randtest3 | 0.0053s
 
-https://github.com/nim-lang/nimPNG results:
-File | Time
---- | ---:
-randtest3.z | 0.1648s
-rfctest3.z | 0.5760s
-alice29.txt.z | 2.2471s
-urls.10K.z | 11.0067s
-fixed.z | 10.0772s
 
-https://github.com/nim-lang/zip results: (Requires zlib1.dll)
-File | Time
---- | ---:
-randtest3.z | 0.0061s
-rfctest3.z | 0.1285s
-alice29.txt.z | 0.4918s
-urls.10K.z | 2.2510s
-fixed.z | 2.1033s
-
-### Testing
+## Testing
 `nimble test`
 
 To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can do run the fuzzer any time by running `nim c -r tests/fuzz.nim`
