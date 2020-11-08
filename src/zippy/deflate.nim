@@ -234,7 +234,7 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
   var
     pos, literalLen: int
     windowPos, hash: uint16
-    head = newSeq[uint16](hashSize) # hash -> pos
+    head = newSeq[uint16](hashSize)    # hash -> pos
     chain = newSeq[uint16](windowSize) # pos a -> pos b
 
   template updateHash(value: uint8) =

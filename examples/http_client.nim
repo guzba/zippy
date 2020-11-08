@@ -1,7 +1,7 @@
-import httpclient, zippy, strformat
+import httpclient, strformat, zippy
 
 let client = newHttpClient()
-client.headers = newHttpHeaders({ "Accept-Encoding": "gzip" })
+client.headers = newHttpHeaders({"Accept-Encoding": "gzip"})
 
 let
   response = client.request("http://www.google.com")

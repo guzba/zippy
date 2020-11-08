@@ -1,4 +1,4 @@
-import strformat, strutils, fidget/opengl/perf
+import fidget/opengl/perf, strformat, strutils
 
 const
   minMatchLen = 3
@@ -47,7 +47,7 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
   var
     pos, literalLen: int
     windowPos, hash: uint16
-    head = newSeq[uint16](hashSize) # hash -> pos
+    head = newSeq[uint16](hashSize)    # hash -> pos
     chain = newSeq[uint16](windowSize) # pos a -> pos b
 
   template updateHash(value: uint8) =
@@ -82,12 +82,11 @@ proc lz77Encode2(src: seq[uint8]): seq[uint16] =
         break
       inc chainLen
 
-      let offset = (
-        if hashPos <= windowPos:
-          windowPos - hashPos
-        else:
-          windowPos - hashPos + windowSize
-      ).int
+      var offset: int
+      if hashPos <= windowPos:
+        offset = (windowPos - hashPos).int
+      else:
+        offset = (windowPos - hashPos + windowSize).int
 
       if offset <= 0 or offset < prevOffset:
         break
@@ -136,7 +135,7 @@ proc lz77Decode2(src: seq[uint8], encoded: seq[uint16]): seq[uint8] =
   var ip, op: int
   while ip < encoded.len:
     if op >= result.len:
-        result.setLen(result.len * 2)
+      result.setLen(result.len * 2)
 
     if encoded[ip] == uint16.high:
       let

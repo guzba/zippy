@@ -1,11 +1,11 @@
-import asynchttpserver, asyncdispatch, zippy
+import asyncdispatch, asynchttpserver, zippy
 
 let server = newAsyncHttpServer()
 
 proc cb(req: Request) {.async.} =
   if req.headers["Accept-Encoding"].contains("gzip"):
     # This client supports gzip, send compressed response
-    let headers = newHttpHeaders([("Content-Encoding","gzip")])
+    let headers = newHttpHeaders([("Content-Encoding", "gzip")])
     await req.respond(
       Http200,
       compress("gzip'ed response body", dfGzip),
