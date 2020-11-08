@@ -40,7 +40,7 @@ https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
 File | Time | % Size Reduction
 --- | --- | ---:
 rfctest3 | 0.8147s | 71.74%
-alice29.txt | 7.0150s | 64.23%
+alice29 | 7.0150s | 64.23%
 urls.10K | 16.6361s | 68.29%
 randtest3 | 0.1545s | 0%
 
