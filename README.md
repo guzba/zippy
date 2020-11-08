@@ -14,7 +14,7 @@ I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 
 
 ### Performance
 
-Benchmarks can be run comparing different Zip implementations. My benchmarking shows this library performs very well but it is not as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
+Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well but it is not as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
 
 `nim c --gc:arc -d:release -r .\tests\benchmark.nim` (1000 uncompresses, lower time is better)
 
@@ -59,22 +59,35 @@ fixed.z | 2.1033s
 
 To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can do run the fuzzer any time by running `nim c -r tests/fuzz.nim`
 
-### Credits
-
-This implementation has been greatly assisted by [zlib-inflate-simple](https://github.com/toomuchvoltage/zlib-inflate-simple) which is by far the smallest and most readable implementation I've found.
-
 # API: zippy
 
 ```nim
 import zippy
 ```
 
-## **func** uncompress
+## **type** CompressedDataFormat
 
-Uncompresses src into dst. This resizes dst as needed and starts writing at dst index 0.
+Supported compressed data formats
 
 ```nim
-func uncompress(src: seq[uint8]; dst: var seq[uint8]) {.raises: [ZippyError], tags: [].}
+CompressedDataFormat = enum
+ dfDetect, dfZlib, dfGzip, dfDeflate
+```
+
+## **func** compress
+
+Compresses src and returns the compressed data.
+
+```nim
+func compress(src: seq[uint8]; dataFormat = dfGzip): seq[uint8] {.raises: [ZippyError].}
+```
+
+## **template** compress
+
+Helper for when preferring to work with strings.
+
+```nim
+template compress(src: string; dataFormat = dfGzip): string
 ```
 
 ## **func** uncompress
@@ -82,7 +95,7 @@ func uncompress(src: seq[uint8]; dst: var seq[uint8]) {.raises: [ZippyError], ta
 Uncompresses src and returns the uncompressed data seq.
 
 ```nim
-func uncompress(src: seq[uint8]): seq[uint8] {.inline, raises: [ZippyError], tags: [].}
+func uncompress(src: seq[uint8]; dataFormat = dfDetect): seq[uint8] {.raises: [ZippyError].}
 ```
 
 ## **template** uncompress
@@ -90,5 +103,5 @@ func uncompress(src: seq[uint8]): seq[uint8] {.inline, raises: [ZippyError], tag
 Helper for when preferring to work with strings.
 
 ```nim
-template uncompress(src: string): string
+template uncompress(src: string; dataFormat = dfDetect): string
 ```
