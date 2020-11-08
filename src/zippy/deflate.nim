@@ -25,7 +25,7 @@ const
 
 {.push checks: off.}
 
-template failCompress() =
+template failCompress*() =
   raise newException(
     ZippyError, "Unexpected error while compressing"
   )
@@ -252,7 +252,7 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
       encoded.setLen(encoded.len * 2)
 
     if pos + minMatchLen > src.len:
-      for c in src[src.len - pos .. src.high]:
+      for c in src[pos ..< src.len]:
         inc freqLitLen[c]
       addLiteral(literalLen + src.len - pos)
       break
@@ -509,32 +509,5 @@ func deflate*(src: seq[uint8]): seq[uint8] =
 
   b.data.setLen(b.bytePos)
   b.data
-
-func compress*(src: seq[uint8]): seq[uint8] =
-  ## Uncompresses src and returns the compressed data seq.
-
-  const
-    cm = 8.uint8
-    cinfo = 7.uint8
-    cmf = (cinfo shl 4) or cm
-    fcheck = (31 - (cmf.uint32 * 256) mod 31).uint8
-
-  result.setLen(2)
-  result[0] = cmf
-  result[1] = fcheck
-
-  result.add(deflate(src))
-
-  let checksum = cast[array[4, uint8]](adler32(src))
-  result.add([
-    checksum[3],
-    checksum[2],
-    checksum[1],
-    checksum[0]
-  ])
-
-template compress*(src: string): string =
-  ## Helper for when preferring to work with strings.
-  cast[string](compress(cast[seq[uint8]](src)))
 
 {.pop.}

@@ -31,7 +31,7 @@ block nimlang_zip: # Requires zlib1.dll
   for gold in golds:
     let original = readFile(&"tests/data/{gold}")
     doAssert zlib.uncompress(
-      zippy.compress(original), stream = ZLIB_STREAM
+      zippy.compress(original, dfZlib), stream = ZLIB_STREAM
     ) == original
     doassert zippy.uncompress(
       zlib.compress(original, stream = ZLIB_STREAM)
@@ -46,7 +46,7 @@ block treeform_miniz:
       # Something bad happens here with miniz
       discard
     else:
-      doAssert miniz.uncompress(zippy.compress(original)) == original
+      doAssert miniz.uncompress(zippy.compress(original, dfZlib)) == original
     doAssert zippy.uncompress(miniz.compress(original)) == original
   echo "pass!"
 
@@ -55,7 +55,7 @@ block jangko_nimPNG:
   for gold in golds:
     let original = readFile(&"tests/data/{gold}")
     doAssert nimz.zlib_decompress(
-      nzInflateInit(zippy.compress(original))
+      nzInflateInit(zippy.compress(original, dfZlib))
     ) == original
     doAssert zippy.uncompress(
       zlib_compress(nzDeflateInit(original))

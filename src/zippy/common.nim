@@ -98,6 +98,8 @@ const
       table[i] = c
     table
 
+{.push checks: off.}
+
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
 
@@ -152,8 +154,10 @@ func adler32*(data: seq[uint8]): uint32 =
 
 func crc32*(v: uint32, data: seq[uint8]): uint32 =
   result = v
-  for i in 0 ..< data.len:
-    result = crcTable[(result xor data[i].uint32) and 0xff] xor (result shr 8)
+  for value in data:
+    result = crcTable[(result xor value.uint32) and 0xff] xor (result shr 8)
 
 func crc32*(data: seq[uint8]): uint32 =
   crc32(0xffffffff.uint32, data) xor 0xffffffff.uint32
+
+{.pop.}

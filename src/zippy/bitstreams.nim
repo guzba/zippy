@@ -18,6 +18,8 @@ type
     bytePos*, bitPos*: int
     data*: seq[uint8]
 
+{.push checks: off.}
+
 template failEndOfBuffer*() =
   raise newException(ZippyError, "Cannot read further, at end of buffer")
 
@@ -123,3 +125,5 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
     b.data[b.bytePos] = b.data[b.bytePos] or bitsToAdd
     dec(bitsRemaining, bitsAdded)
     b.movePos(bitsAdded)
+
+{.pop.}

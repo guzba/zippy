@@ -43,7 +43,7 @@ block guzba_zippy_compress:
       start = getMonoTime().ticks
     var c: int
     for i in 0 ..< iterations:
-      let compressed = zippy.compress(uncompressed)
+      let compressed = zippy.compress(uncompressed, dfZlib)
       inc(c, compressed.len)
     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
     echo &"  {gold}: {delta:.4f}s [{c}]"

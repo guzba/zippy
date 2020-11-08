@@ -1,4 +1,4 @@
-import strformat, ../src/zippy
+import strformat, zippy
 
 const
   zs = [
@@ -42,41 +42,44 @@ for i, z in zs:
   let
     compressed = readFile(&"tests/data/{z}")
     gold = readFile(&"tests/data/{golds[i]}")
-  echo &"{z} compressed: {z.len} gold: {gold.len}"
+  echo &"{z} compressed: {compressed.len} gold: {gold.len}"
   doAssert uncompress(compressed) == gold
 
 block fixed:
   let
-    compressed = readFile(&"tests/data/fixed.z")
-    gold = readFile(&"tests/data/urls.10K")
+    compressed = readFile("tests/data/fixed.z")
+    gold = readFile("tests/data/urls.10K")
+  echo &"fixed.z compressed: {compressed.len} gold: {gold.len}"
   doAssert uncompress(compressed) == gold
 
-for gold in golds:
+block gzip:
   let
-    original = readFile(&"tests/data/{gold}")
-    compressed = compress(original)
-    uncompressed = uncompress(compressed)
-  echo &"{gold} original: {original.len} compressed: {compressed.len}"
-  doAssert original == uncompressed
+    compressed = readFile("tests/data/gzipfiletest.txt.gz")
+    gold = readFile("tests/data/gzipfiletest.txt")
+  echo &"gzipfiletest.txt compressed: {compressed.len} gold: {gold.len}"
+  doAssert uncompress(compressed) == gold
 
-block all_uint8:
-  var original: seq[uint8]
-  for i in 0.uint8 .. high(uint8):
-    original.add(i)
-  let compressed = compress(original)
-  echo &"all_uint8 original: {original.len} compressed: {compressed.len}"
-  doAssert original == uncompress(compressed)
+for dataFormat in [dfDeflate, dfZlib, dfGzip]:
+  for gold in golds:
+    let
+      original = readFile(&"tests/data/{gold}")
+      compressed = compress(original, dataFormat)
+      uncompressed = uncompress(
+        compressed,
+        if dataFormat == dfDeflate: dfDeflate else: dfDetect
+      )
+    echo &"{dataFormat} {gold} original: {original.len} compressed: {compressed.len}"
+    doAssert original == uncompressed
 
-# let
-#   original = cast[seq[uint8]]("zSAM SAM SAM a SAM SAM SAMz")
-#   encoded = compress(original)
-# echo &"original: {original.len} encoded: {encoded.len}"
-# echo cast[string](uncompress(encoded))
-# doAssert original == uncompress(encoded)
-
-let
-  compressed = cast[seq[uint8]](readFile("tests/data/gzipfiletest.txt.gz"))
-  original = readFile("tests/data/gzipfiletest.txt")
-  uncompressed = cast[string](gzu(compressed))
-echo cast[string](uncompressed)
-assert original == uncompressed
+  block all_uint8:
+    var original: seq[uint8]
+    for i in 0.uint8 .. high(uint8):
+      original.add(i)
+    let
+      compressed = compress(original, dataFormat)
+      uncompressed = uncompress(
+        compressed,
+        if dataFormat == dfDeflate: dfDeflate else: dfDetect
+      )
+    echo &"{dataFormat} all_uint8 original: {original.len} compressed: {compressed.len}"
+    doAssert original == uncompressed
