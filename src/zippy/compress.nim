@@ -1,4 +1,4 @@
-import bitstreams, common, deques, zippyerror, bitops
+import bitops, bitstreams, common, zippyerror
 
 const
   minMatchLen = 3
@@ -23,7 +23,7 @@ const
       result[i] = reverseBits(i.uint8)
     result
 
-# {.push checks: off.}
+{.push checks: off.}
 
 template failCompress() =
   raise newException(
@@ -542,4 +542,4 @@ template compress*(src: string): string =
   ## Helper for when preferring to work with strings.
   cast[string](compress(cast[seq[uint8]](src)))
 
-# {.pop.}
+{.pop.}
