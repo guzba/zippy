@@ -20,7 +20,7 @@ Simple examples using Zippy can be found in the [examples/](https://github.com/g
 
 ## Performance
 
-Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well but it is not quite as fast as zlib itself (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
+Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well but it is not quite as fast as zlib at uncompressing just yet (not a surprise). Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
 
 `nim c -d:release -r .\tests\benchmark.nim`
 
