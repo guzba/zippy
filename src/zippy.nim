@@ -114,11 +114,11 @@ func uncompress(
 
     inflate(src[pos ..< ^8], dst)
 
-    let checksum = cast[ptr uint32](src[src.len - 8].unsafeAddr)[]
+    let checksum = read32(src[src.len - 8].unsafeAddr)
     if checksum != crc32(dst):
       raise newException(ZippyError, "Checksum verification failed")
 
-    let isize = cast[ptr uint32](src[src.len - 4].unsafeAddr)[]
+    let isize = read32(src[src.len - 4].unsafeAddr)
     if isize != dst.len.uint32:
       raise newException(ZippyError, "Size verification failed")
   of dfZlib:

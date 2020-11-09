@@ -1,4 +1,5 @@
-import miniz, nimPNG/nimz, std/monotimes, strformat, zip/zlib, zippy
+import std/monotimes, strformat, zip/zlib, zippy
+# import miniz, nimPNG/nimz,
 
 const
   zs = [

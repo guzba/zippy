@@ -101,6 +101,9 @@ const
 when defined(release):
   {.push checks: off.}
 
+template read32*(p: pointer): uint32 =
+  cast[ptr uint32](p)[]
+
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
 

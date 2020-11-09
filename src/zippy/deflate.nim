@@ -284,10 +284,15 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
       prevOffset = offset
 
       var matchLen: int
-      for i in 0 ..< stop - pos:
-        if src[pos - offset + i] != src[pos + i]:
-          break
-        inc matchLen
+      if (
+        (read32(src[pos - offset].unsafeAddr) xor read32(src[pos].unsafeAddr)
+      ) shl 8) == 0:
+        # The first 3 bytes match (the hash of them got us here so usually do)
+        inc(matchLen, 3)
+        for i in 3 ..< stop - pos:
+          if src[pos - offset + i] != src[pos + i]:
+            break
+          inc matchLen
 
       if matchLen > longestMatchLen:
         longestMatchLen = matchLen
