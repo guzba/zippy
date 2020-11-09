@@ -51,7 +51,7 @@ Each file is uncompressed 1000 times.
 **https://github.com/guzba/zippy** uncompress results:
 File | Time
 --- | ---:
-alice29 | 1.2959s
+alice29.txt | 1.2959s
 urls.10K | 7.2821s
 rfctest3.gold | 0.2837s
 randtest3.gold | 0.0378s
@@ -59,7 +59,7 @@ randtest3.gold | 0.0378s
 https://github.com/nim-lang/zip uncompress results: (Requires zlib1.dll)
 File | Time
 --- | ---:
-alice29 | 0.4929s
+alice29.txt | 0.4929s
 urls.10K | 2.2334s
 rfctest3.gold | 0.1148s
 randtest3.gold | 0.0053s
