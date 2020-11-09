@@ -79,8 +79,8 @@ block guzba_zippy_compress:
       inc(c, compressed.len)
     let
       delta = float64(getMonoTime().ticks - start) / 1000000000.0
-      reduction = 1 - (c.float32 / (uncompressed.len * iterations).float32)
-    echo &"  {gold}: {delta:.4f}s {(100 * reduction):0.2f}%"
+      reduction = 100 - (c / (uncompressed.len * iterations)) * 100
+    echo &"  {gold}: {delta:.4f}s {(reduction):0.2f}%"
 
 block nimlang_zip_compress: # Requires zlib1.dll
   echo "https://github.com/nim-lang/zip compress"
@@ -94,8 +94,8 @@ block nimlang_zip_compress: # Requires zlib1.dll
       inc(c, compressed.len)
     let
       delta = float64(getMonoTime().ticks - start) / 1000000000.0
-      reduction = 1 - (c.float32 / (uncompressed.len * iterations).float32)
-    echo &"  {gold}: {delta:.4f}s {(100 * reduction):0.2f}%"
+      reduction = 100 - (c / (uncompressed.len * iterations)) * 100
+    echo &"  {gold}: {delta:.4f}s {(reduction):0.2f}%"
 
 # block treeform_miniz_compress:
 #   echo "https://github.com/treeform/miniz compress"
@@ -109,8 +109,8 @@ block nimlang_zip_compress: # Requires zlib1.dll
 #       inc(c, compressed.len)
 #     let
 #       delta = float64(getMonoTime().ticks - start) / 1000000000.0
-#       reduction = 1 - (c.float32 / (uncompressed.len * iterations).float32)
-#     echo &"  {gold}: {delta:.4f}s {(100 * reduction):0.2f}%"
+#       reduction = 100 - (c / (uncompressed.len * iterations)) * 100
+#     echo &"  {gold}: {delta:.4f}s {(reduction):0.2f}%"
 
 # block jangko_nimPNG_compress:
 #   echo "https://github.com/jangko/nimPNG compress"
@@ -124,5 +124,5 @@ block nimlang_zip_compress: # Requires zlib1.dll
 #       inc(c, compressed.len)
 #     let
 #       delta = float64(getMonoTime().ticks - start) / 1000000000.0
-#       reduction = c.float32 / (uncompressed.len * iterations).float32
-#     echo &"  {gold}: {delta:.4f}s [{reduction:0.2f}]"
+#       reduction = 100 - (c / (uncompressed.len * iterations)) * 100
+#     echo &"  {gold}: {delta:.4f}s {reduction:0.2f}%"
