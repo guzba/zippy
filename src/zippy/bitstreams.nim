@@ -59,7 +59,9 @@ func read(b: var BitStream, bits: int): uint8 =
   else:
     let bitsNeeded = bits - bitsLeftInByte
     b.incPos()
-    result = result or (b.read(bitsNeeded) shl bitsLeftInByte)
+    result = result or
+      ((b.data[b.bytePos] and masks[bitsNeeded]) shl bitsLeftInByte)
+    b.movePos(bitsNeeded)
 
 func readBits*(b: var BitStream, bits: int): uint16 =
   assert bits <= 16
