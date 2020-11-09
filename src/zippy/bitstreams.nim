@@ -49,8 +49,7 @@ func read(b: var BitStream, bits: int): uint8 =
 
   b.checkBytePos()
 
-  result = b.data[b.bytePos]
-  result = result shr b.bitPos
+  result = b.data[b.bytePos] shr b.bitPos
 
   let bitsLeftInByte = 8 - b.bitPos
   if bitsLeftInByte >= bits:

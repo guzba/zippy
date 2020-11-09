@@ -49,6 +49,8 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       inc offsets[lengths[symbol]]
 
 func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
+  ## See https://github.com/madler/zlib/blob/master/contrib/puff/puff.c
+
   b.checkBytePos()
 
   var
