@@ -294,7 +294,7 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
         else:
           let
             zeroBits = countTrailingZeroBits(v)
-            matchingBytes = min(zeroBits div 8, bytesToCheck)
+            matchingBytes = min(zeroBits shr 3, bytesToCheck)
           inc(matchLen, matchingBytes)
           if matchingBytes < bytesToCheck:
             break
