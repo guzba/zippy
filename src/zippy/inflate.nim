@@ -23,10 +23,14 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   result.counts.setLen(maxCodeLength + 1)
   result.symbols.setLen(maxCodes)
 
-  for symbol in 0 ..< lengths.len:
-    inc result.counts[lengths[symbol]]
+  var max: uint8
+  for _, n in lengths:
+    if n == 0:
+        continue
+    inc result.counts[n]
+    max = max(max, n)
 
-  if result.counts[0] >= maxCodes.uint16:
+  if max == 0:
     failUncompress()
 
   var left = 1

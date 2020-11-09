@@ -36,6 +36,10 @@ func huffmanCodeLengths(
 ): (int, seq[uint8], seq[uint16]) =
   # See https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
 
+  # TODO: Revisit this with a better understanding of the Coin Collector algo.
+
+  assert maxBitLen <= maxCodeLength
+
   type Coin = object
     symbols: seq[uint16]
     weight: int
@@ -151,13 +155,13 @@ func huffmanCodeLengths(
       for j in 0 ..< coins[i].symbols.len:
         inc lengths[coins[i].symbols[j]]
 
-  var lengthCounts: array[16, uint8]
+  var lengthCounts: array[maxCodeLength + 1, uint8]
   for l in lengths:
     inc lengthCounts[l]
 
   lengthCounts[0] = 0
 
-  var nextCode: array[16, uint16]
+  var nextCode: array[maxCodeLength + 1, uint16]
   for i in 1 .. maxBitLen:
     nextCode[i] = (nextCode[i - 1] + lengthCounts[i - 1]) shl 1
 
