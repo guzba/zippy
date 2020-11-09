@@ -449,8 +449,7 @@ func deflate*(src: seq[uint8]): seq[uint8] =
   b.data.setLen(
     b.data.len +
     (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
-    bitLensRle.len * 2 +
-    encoded.len
+    bitLensRle.len * 2
   )
 
   b.addBit(1)
@@ -496,7 +495,7 @@ func deflate*(src: seq[uint8]): seq[uint8] =
         inc(encPos, 3)
         inc(srcPos, length.int)
 
-        if b.data.len < b.bytePos + 6:
+        if b.bytePos + 6 > b.data.len:
           b.data.setLen(b.data.len * 2)
 
         b.addBits(
@@ -511,7 +510,7 @@ func deflate*(src: seq[uint8]): seq[uint8] =
         inc encPos
 
         let worstCaseBytesNeeded = (length * maxLitLenCodeLength + 7) div 8
-        if b.data.len < b.bytePos + worstCaseBytesNeeded:
+        if b.bytePos + worstCaseBytesNeeded >= b.data.len:
           b.data.setLen(max(b.bytePos + worstCaseBytesNeeded, b.data.len * 2))
 
         for j in 0 ..< length:
