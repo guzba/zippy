@@ -41,7 +41,7 @@ func movePos(b: var BitStream, bits: int) {.inline.} =
   b.bitPos = b.bitPos and 7
 
 template checkBytePos*(b: BitStream) =
-  if b.data.len <= b.bytePos:
+  if b.bytePos >= b.data.len:
     failEndOfBuffer()
 
 func read(b: var BitStream, bits: int): uint8 =
@@ -58,9 +58,10 @@ func read(b: var BitStream, bits: int): uint8 =
   else:
     let bitsNeeded = bits - bitsLeftInByte
     b.incPos()
+    b.checkBytePos()
     result = result or
       ((b.data[b.bytePos] and masks[bitsNeeded]) shl bitsLeftInByte)
-    b.movePos(bitsNeeded)
+    inc(b.bitPos, bitsNeeded)
 
 func readBits*(b: var BitStream, bits: int): uint16 =
   assert bits <= 16
