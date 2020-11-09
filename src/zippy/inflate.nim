@@ -88,18 +88,6 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
 
   failUncompress()
 
-func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
-  b.skipRemainingBitsInCurrentByte()
-  let
-    len = b.readBits(16).int
-    nlen = b.readBits(16).int
-  if len + nlen != 65535:
-    failUncompress()
-  if len > 0:
-    let pos = dst.len
-    dst.setLen(pos + len) # Make room for the bytes to be copied to
-    b.readBytes(dst[pos].addr, len)
-
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
 
@@ -182,6 +170,18 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
       inc(pos, totalLength)
 
   dst.setLen(pos)
+
+func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
+  b.skipRemainingBitsInCurrentByte()
+  let
+    len = b.readBits(16).int
+    nlen = b.readBits(16).int
+  if len + nlen != 65535:
+    failUncompress()
+  if len > 0:
+    let pos = dst.len
+    dst.setLen(pos + len) # Make room for the bytes to be copied to
+    b.readBytes(dst[pos].addr, len)
 
 func inflate*(src: seq[uint8], dst: var seq[uint8]) =
   var

@@ -51,10 +51,10 @@ Each file is uncompressed 1000 times.
 **https://github.com/guzba/zippy** uncompress results:
 File | Time
 --- | ---:
-alice29 | 1.3988s
-urls.10K | 7.3736s
-rfctest3.gold | 0.2936s
-randtest3.gold | 0.0398s
+alice29 | 1.2741s
+urls.10K | 7.1576s
+rfctest3.gold | 0.2795s
+randtest3.gold | 0.0374s
 
 https://github.com/nim-lang/zip uncompress results: (Requires zlib1.dll)
 File | Time
