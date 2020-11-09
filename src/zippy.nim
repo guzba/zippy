@@ -107,18 +107,28 @@ func uncompress(
       if pos + 2 >= src.len:
         failUncompress()
       # TODO: Need to verify this works with a test file
-      # let checksum = cast[ptr uint16](src[pos].unsafeAddr)[]
+      # let checksum =
       # if checksum != crc32(src[0 ..< pos]):
       #   raise newException(ZippyError, "Header checksum verification failed")
       inc(pos, 2)
 
     inflate(src[pos ..< ^8], dst)
 
-    let checksum = read32(src[src.len - 8].unsafeAddr)
+    let checksum = (
+      src[^8].uint32 shl 0 or
+      src[^7].uint32 shl 8 or
+      src[^6].uint32 shl 16 or
+      src[^5].uint32 shl 24
+    )
     if checksum != crc32(dst):
       raise newException(ZippyError, "Checksum verification failed")
 
-    let isize = read32(src[src.len - 4].unsafeAddr)
+    let isize = (
+      src[^4].uint32 shl 0 or
+      src[^3].uint32 shl 8 or
+      src[^2].uint32 shl 16 or
+      src[^1].uint32 shl 24
+    )
     if isize != dst.len.uint32:
       raise newException(ZippyError, "Size verification failed")
   of dfZlib:
