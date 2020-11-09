@@ -449,7 +449,8 @@ func deflate*(src: seq[uint8]): seq[uint8] =
   b.data.setLen(
     b.data.len +
     (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
-    bitLensRle.len * 2
+    bitLensRle.len * 2 +
+    encoded.len
   )
 
   b.addBit(1)
