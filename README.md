@@ -33,7 +33,7 @@ File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 4.4424s | 62.33%
 urls.10K | 16.9259s | 67.01%
-rfctest3.gold | 1.0140s | 70.91%
+rfctest3.gold | 0.9765s | 70.91%
 randtest3.gold | 0.1285s | 0%
 
 https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
