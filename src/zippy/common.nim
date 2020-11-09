@@ -98,7 +98,8 @@ const
       table[i] = c
     table
 
-{.push checks: off.}
+when defined(release):
+  {.push checks: off.}
 
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
@@ -160,4 +161,5 @@ func crc32*(v: uint32, data: seq[uint8]): uint32 =
 func crc32*(data: seq[uint8]): uint32 =
   crc32(0xffffffff.uint32, data) xor 0xffffffff.uint32
 
-{.pop.}
+when defined(release):
+  {.pop.}

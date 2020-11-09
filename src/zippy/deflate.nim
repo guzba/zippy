@@ -23,7 +23,8 @@ const
       result[i] = reverseBits(i.uint8)
     result
 
-{.push checks: off.}
+when defined(release):
+  {.push checks: off.}
 
 template failCompress*() =
   raise newException(
@@ -511,4 +512,5 @@ func deflate*(src: seq[uint8]): seq[uint8] =
   b.data.setLen(b.bytePos)
   b.data
 
-{.pop.}
+when defined(release):
+  {.pop.}

@@ -5,7 +5,8 @@ type
     counts: seq[uint16]
     symbols: seq[uint16]
 
-{.push checks: off.}
+when defined(release):
+  {.push checks: off.}
 
 template failUncompress*() =
   raise newException(
@@ -205,4 +206,5 @@ func inflate*(src: seq[uint8]): seq[uint8] =
   result = newSeqOfCap[uint8](src.len)
   inflate(src, result)
 
-{.pop.}
+when defined(release):
+  {.pop.}
