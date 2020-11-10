@@ -26,8 +26,18 @@ func compress*(src: seq[uint8], dataFormat = dfGzip): seq[uint8] =
     result.add(deflated)
 
     let checksum = crc32(src)
-    result.add(cast[array[4, uint8]](checksum))
-    result.add(cast[array[4, uint8]](src.len.uint32))
+    result.add([
+      ((checksum shr 0) and 255).uint8,
+      ((checksum shr 8) and 255).uint8,
+      ((checksum shr 16) and 255).uint8,
+      ((checksum shr 24) and 255).uint8
+    ])
+    result.add([
+      ((src.len shr 0) and 255).uint8,
+      ((src.len shr 8) and 255).uint8,
+      ((src.len shr 16) and 255).uint8,
+      ((src.len shr 24) and 255).uint8
+    ])
   elif dataFormat == dfZlib:
     const
       cm = 8.uint8
@@ -41,19 +51,29 @@ func compress*(src: seq[uint8], dataFormat = dfGzip): seq[uint8] =
 
     result.add(deflated)
 
-    let checksum = cast[array[4, uint8]](adler32(src))
+    let checksum = adler32(src)
     result.add([
-      checksum[3],
-      checksum[2],
-      checksum[1],
-      checksum[0]
+      ((checksum shr 24) and 255).uint8,
+      ((checksum shr 16) and 255).uint8,
+      ((checksum shr 8) and 255).uint8,
+      ((checksum shr 0) and 255).uint8
     ])
   else:
     result = deflated
 
 template compress*(src: string, dataFormat = dfGzip): string =
   ## Helper for when preferring to work with strings.
-  cast[string](compress(cast[seq[uint8]](src), dataFormat))
+  when nimvm:
+    var tmp = newSeq[uint8](src.len)
+    for i, c in src:
+      tmp[i] = c.uint8
+    let compressed = compress(tmp)
+    var result = newStringOfCap(compressed.len)
+    for c in compressed:
+      result.add(c.char)
+    result
+  else:
+    cast[string](compress(cast[seq[uint8]](src), dataFormat))
 
 func uncompress(
   src: seq[uint8], dataFormat: CompressedDataFormat, dst: var seq[uint8]
@@ -194,4 +214,14 @@ func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
 
 template uncompress*(src: string, dataFormat = dfDetect): string =
   ## Helper for when preferring to work with strings.
-  cast[string](uncompress(cast[seq[uint8]](src), dataFormat))
+  when nimvm:
+    var tmp = newSeq[uint8](src.len)
+    for i, c in src:
+      tmp[i] = c.uint8
+    let uncompressed = uncompress(tmp)
+    var result = newStringOfCap(uncompressed.len)
+    for c in uncompressed:
+      result.add(c.char)
+    result
+  else:
+    cast[string](uncompress(cast[seq[uint8]](src), dataFormat))

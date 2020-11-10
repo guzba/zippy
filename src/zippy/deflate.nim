@@ -167,7 +167,7 @@ func huffmanCodeLengths(
 
   template reverseCode(code: uint16, length: uint8): uint16 =
     (
-      (bitReverseTable[code.uint8].uint16 shl 8) or
+      (bitReverseTable[(code and 255).uint8].uint16 shl 8) or
       (bitReverseTable[(code shr 8).uint8].uint16)
     ) shr (16 - length)
 
@@ -287,22 +287,29 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
 
       prevOffset = offset
 
-      var i, matchLen: int
-      while i < stop - pos:
-        let
-          bytesToCheck = min(8, stop - pos - i)
-          v = read64(src[pos - offset + i].unsafeAddr) xor
-            read64(src[pos + i].unsafeAddr)
-        if v == 0:
-          inc(matchLen, bytesToCheck)
-        else:
-          let
-            zeroBits = countTrailingZeroBits(v)
-            matchingBytes = min(zeroBits shr 3, bytesToCheck)
-          inc(matchLen, matchingBytes)
-          if matchingBytes < bytesToCheck:
+      var matchLen: int
+      when nimvm:
+        for i in 0 ..< stop - pos:
+          if src[pos - offset + i] != src[pos + i]:
             break
-        inc(i, bytesToCheck)
+          inc matchLen
+      else:
+        var i: int
+        while i < stop - pos:
+          let
+            bytesToCheck = min(8, stop - pos - i)
+            v = read64(src[pos - offset + i].unsafeAddr) xor
+              read64(src[pos + i].unsafeAddr)
+          if v == 0:
+            inc(matchLen, bytesToCheck)
+          else:
+            let
+              zeroBits = countTrailingZeroBits(v)
+              matchingBytes = min(zeroBits shr 3, bytesToCheck)
+            inc(matchLen, matchingBytes)
+            if matchingBytes < bytesToCheck:
+              break
+          inc(i, bytesToCheck)
 
       if matchLen > longestMatchLen:
         longestMatchLen = matchLen
@@ -362,7 +369,7 @@ func deflate*(src: seq[uint8]): seq[uint8] =
       b.addBits(len, 16)
       b.addBits(nlen, 16)
       if len > 0:
-        b.addBytes(src[pos].unsafeAddr, len.int)
+        b.addBytes(src, pos, len.int)
 
     b.data.setLen(b.bytePos)
     return b.data

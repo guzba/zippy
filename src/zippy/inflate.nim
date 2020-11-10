@@ -185,7 +185,7 @@ func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
   if len > 0:
     let pos = dst.len
     dst.setLen(pos + len) # Make room for the bytes to be copied to
-    b.readBytes(dst[pos].addr, len)
+    b.readBytes(dst, pos, len)
 
 func inflate*(src: seq[uint8], dst: var seq[uint8]) =
   var

@@ -94,22 +94,32 @@ func skipRemainingBitsInCurrentByte*(b: var BitStream) =
   if b.bitPos > 0:
     b.incPos()
 
-func readBytes*(b: var BitStream, dst: pointer, len: int) =
+func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   assert b.bitPos == 0
 
   if b.bytePos + len > b.data.len:
     failEndOfBuffer()
 
-  copyMem(dst, b.data[b.bytePos].addr, len)
+  when nimvm:
+    for i in 0 ..< len:
+      dst[start + i] = b.data[b.bytePos + i]
+  else:
+    copyMem(dst[start].addr, b.data[b.bytePos].addr, len)
+
   b.skipBits(len * 8)
 
-func addBytes*(b: var BitStream, src: pointer, len: int) =
+func addBytes*(b: var BitStream, src: seq[uint8], start, len: int) =
   assert b.bitPos == 0
 
   if b.bytePos + len > b.data.len:
     b.data.setLen(b.bytePos + len)
 
-  copyMem(b.data[b.bytePos].addr, src, len)
+  when nimvm:
+    for i in 0 ..< len:
+      b.data[b.bytePos + i] = src[start + i]
+  else:
+    copyMem(b.data[b.bytePos].addr, src[start].unsafeAddr, len)
+
   b.skipBits(len * 8)
 
 func addBit*(b: var BitStream, bit: uint8) =
@@ -124,8 +134,11 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
     let
       bitsLeftInByte = 8 - b.bitPos
       bitsAdded = min(bitsLeftInByte, bitsRemaining) # Can be 0 which is fine
-      bitsToAdd = ((value shr (bits - bitsRemaining)) shl b.bitPos).uint8
-    b.data[b.bytePos] = b.data[b.bytePos] or bitsToAdd
+      bitsToAdd = (value shr (bits - bitsRemaining)) shl b.bitPos
+    when nimvm:
+      b.data[b.bytePos] = b.data[b.bytePos] or (bitsToAdd and 255).uint8
+    else:
+      b.data[b.bytePos] = b.data[b.bytePos] or bitsToAdd.uint8
     dec(bitsRemaining, bitsAdded)
     b.movePos(bitsAdded)
 
