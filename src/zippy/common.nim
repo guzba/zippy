@@ -1,3 +1,5 @@
+import bitops
+
 const
   maxCodeLength* = 15               ## Maximum bits in a code
   maxLitLenCodes* = 286
@@ -84,6 +86,12 @@ const
     16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
+  bitReverseTable* = block:
+    var result: array[256, uint8]
+    for i in 0 ..< result.len:
+      result[i] = reverseBits(i.uint8)
+    result
+
   crcTable = block:
     var
       table: array[256, uint32]
@@ -106,6 +114,12 @@ template read32*(p: pointer): uint32 =
 
 template read64*(p: pointer): uint64 =
   cast[ptr uint64](p)[]
+
+template reverseUint16*(code: uint16, length: uint8): uint16 =
+  (
+    (bitReverseTable[(code and 255).uint8].uint16 shl 8) or
+    (bitReverseTable[(code shr 8).uint8].uint16)
+  ) shr (16 - length)
 
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c

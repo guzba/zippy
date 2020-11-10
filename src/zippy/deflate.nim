@@ -17,12 +17,6 @@ const
   hashMask = hashSize - 1
   hashShift = (hashBits + minMatchLen - 1) div minMatchLen
 
-  bitReverseTable = block:
-    var result: array[256, uint8]
-    for i in 0 ..< result.len:
-      result[i] = reverseBits(i.uint8)
-    result
-
 when defined(release):
   {.push checks: off.}
 
@@ -165,16 +159,10 @@ func huffmanCodeLengths(
   for i in 1 .. maxBitLen:
     nextCode[i] = (nextCode[i - 1] + lengthCounts[i - 1]) shl 1
 
-  template reverseCode(code: uint16, length: uint8): uint16 =
-    (
-      (bitReverseTable[(code and 255).uint8].uint16 shl 8) or
-      (bitReverseTable[(code shr 8).uint8].uint16)
-    ) shr (16 - length)
-
   # Convert to canonical codes (+ reversed)
   for i in 0 ..< codes.len:
     if lengths[i] != 0:
-      codes[i] = reverseCode(nextCode[lengths[i]], lengths[i])
+      codes[i] = reverseUint16(nextCode[lengths[i]], lengths[i])
       inc nextCode[lengths[i]]
 
   (numCodes, lengths, codes)
