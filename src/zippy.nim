@@ -64,6 +64,8 @@ func compress*(src: seq[uint8], dataFormat = dfGzip): seq[uint8] =
 template compress*(src: string, dataFormat = dfGzip): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
+    # This is unfortunately needed to convert to and from string -> seq[uint]
+    # since we cannot cast when nimvm.
     var tmp = newSeq[uint8](src.len)
     for i, c in src:
       tmp[i] = c.uint8
@@ -215,6 +217,8 @@ func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
 template uncompress*(src: string, dataFormat = dfDetect): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
+    # This is unfortunately needed to convert to and from string -> seq[uint]
+    # since we cannot cast when nimvm.
     var tmp = newSeq[uint8](src.len)
     for i, c in src:
       tmp[i] = c.uint8
