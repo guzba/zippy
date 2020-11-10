@@ -6,6 +6,8 @@ Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [Z
 
 The goal of this library is to be a pure Nim implementation that is small, performant and dependency-free.
 
+Zippy can also be used compile time. This is great for baking assets into executables in compressed form. [Check out an example here](https://github.com/guzba/zippy/blob/master/examples/compiletime.nim).
+
 To ensure Zippy is compatible with other implementations, `tests/validate.nim` can be run. This script verifies that data compressed by Zippy can be uncompressed by other implementations (and that other implementations can uncompress data compressed by Zippy).
 
 This library also works using both nim c and nim cpp, in addition to --cc:vcc on Windows.
