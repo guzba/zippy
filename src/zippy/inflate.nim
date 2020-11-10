@@ -4,6 +4,7 @@ type
   Huffman = object
     counts: seq[uint16]
     symbols: seq[uint16]
+    minCodeLength, maxCodeLength: int
 
 when defined(release):
   {.push checks: off.}
@@ -23,14 +24,15 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   result.counts.setLen(maxCodeLength + 1)
   result.symbols.setLen(maxCodes)
 
-  var max: uint8
+  result.minCodeLength = uint8.high.int
   for _, n in lengths:
     if n == 0:
         continue
     inc result.counts[n]
-    max = max(max, n)
+    result.minCodeLength = min(result.minCodeLength, n.int)
+    result.maxCodeLength = max(result.maxCodeLength, n.int)
 
-  if max == 0:
+  if result.maxCodeLength == 0:
     failUncompress()
 
   var left = 1
@@ -83,7 +85,7 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       inc len
 
     fastSkip(left)
-    left = (maxCodeLength + 1) - len
+    left = (h.maxCodeLength + 1) - len
     if left == 0:
       break
     b.checkBytePos()
