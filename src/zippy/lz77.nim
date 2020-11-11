@@ -23,11 +23,17 @@ func lz77Encode*(
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   template addLiteral(length: int) =
+    if op + 1 > encoded.len:
+      encoded.setLen(encoded.len * 2)
+
     encoded[op] = length.uint16
     inc op
     inc(literalsTotal, length)
 
   template addCopy(offset, length: int) =
+    if op + 3 > encoded.len:
+      encoded.setLen(encoded.len * 2)
+
     let
       lengthIndex = findCodeIndex(baseLengths, length.uint16)
       distIndex = findCodeIndex(baseDistance, offset.uint16)
@@ -67,9 +73,6 @@ func lz77Encode*(
     updateHash(src[i])
 
   while pos < src.len:
-    if op + 3 > encoded.len: # At least 3 bytes to add a copy
-      encoded.setLen(encoded.len * 2)
-
     if pos + minMatchLen > src.len:
       for c in src[pos ..< src.len]:
         inc freqLitLen[c]

@@ -23,7 +23,17 @@ for i in 0 ..< 10000:
       data[i + j] = v
     inc(i, runLength)
 
-  let
-    compressed = compress(data)
-    uncompressed = uncompress(compressed)
-  doAssert uncompressed == data
+  var shuffled = data # Copy
+  r.shuffle(shuffled)
+
+  for level in [1, -1]: # BestSpeed and Default
+    block: # data
+      let
+        compressed = compress(data)
+        uncompressed = uncompress(compressed)
+      doAssert uncompressed == data
+    block: # shuffled
+      let
+        compressed = compress(shuffled)
+        uncompressed = uncompress(compressed)
+      doAssert uncompressed == shuffled
