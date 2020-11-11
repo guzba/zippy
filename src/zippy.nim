@@ -14,7 +14,7 @@ type
     dfDetect, dfZlib, dfGzip, dfDeflate
 
 func compress*(
-  src: seq[uint8], level = DefaultCompression, dataFormat = dfGzip
+  src: seq[uint8], level = BestSpeed, dataFormat = dfGzip
 ): seq[uint8] =
   ## Compresses src and returns the compressed data.
 
@@ -71,7 +71,7 @@ func compress*(
     result = deflated
 
 template compress*(
-  src: string, level = DefaultCompression, dataFormat = dfGzip
+  src: string, level = BestSpeed, dataFormat = dfGzip
 ): string =
   ## Helper for when preferring to work with strings.
   when nimvm:

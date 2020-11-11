@@ -16,11 +16,6 @@ type
 when defined(release):
   {.push checks: off.}
 
-template failUncompress*() =
-  raise newException(
-    ZippyError, "Invalid buffer, unable to uncompress"
-  )
-
 func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
 

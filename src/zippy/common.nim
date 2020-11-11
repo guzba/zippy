@@ -1,6 +1,11 @@
-import bitops
+import bitops, zippy/zippyerror
+
+type
+  CompressionConfig* = object
+    good, lazy, nice, chain: int
 
 const
+  # DEFLATE RFC constants
   maxCodeLength* = 15               ## Maximum bits in a code
   maxLitLenCodes* = 286
   maxDistCodes* = 30
@@ -8,6 +13,12 @@ const
   maxWindowSize* = 32768
   maxUncompressedBlockSize* = 65535
   firstLengthCodeIndex* = 257
+  minMatchLen* = 3
+  maxMatchLen* = 258
+
+  # For run length encodings (lz77, snappy), he uint16 high bit is reserved
+  # to signal that a offset and length are encoded in the uint16.
+  maxLiteralLength* = uint16.high.int shr 1
 
   baseLengths* = [
     3.uint16, 4, 5, 6, 7, 8, 9, 10, # 257 - 264
@@ -106,6 +117,30 @@ const
       table[i] = c
     table
 
+  configurationTable* = [
+    ## See https://github.com/madler/zlib/blob/master/deflate.c#L134
+    CompressionConfig(), # No compression
+    CompressionConfig(), # Custom algorithm based on Snappy
+    CompressionConfig(good: 4, lazy: 0, nice: 16, chain: 8),
+    CompressionConfig(good: 4, lazy: 0, nice: 32, chain: 32),
+    CompressionConfig(good: 4, lazy: 4, nice: 16, chain: 16),
+    CompressionConfig(good: 8, lazy: 16, nice: 32, chain: 32),
+    CompressionConfig(good: 8, lazy: 16, nice: 128, chain: 128), # Default
+    CompressionConfig(good: 8, lazy: 32, nice: 256, chain: 256),
+    CompressionConfig(good: 32, lazy: 128, nice: 258, chain: 1024),
+    CompressionConfig(good: 32, lazy: 258, nice: 258, chain: 4096) # Max compression
+  ]
+
+template failUncompress*() =
+  raise newException(
+    ZippyError, "Invalid buffer, unable to uncompress"
+  )
+
+template failCompress*() =
+  raise newException(
+    ZippyError, "Unexpected error while compressing"
+  )
+
 when defined(release):
   {.push checks: off.}
 
@@ -136,6 +171,41 @@ template reverseUint16*(code: uint16, length: uint8): uint16 =
     (bitReverseTable[(code and 255).uint8].uint16 shl 8) or
     (bitReverseTable[(code shr 8).uint8].uint16)
   ) shr (16 - length)
+
+func findCodeIndex*(a: openarray[uint16], value: uint16): uint16 =
+  let mid = (1 + a.len) div 2
+  var l, r: int
+  if value < a[mid]:
+    l = 1
+    r = mid
+  else:
+    l = mid
+    r = a.high
+
+  for i in l .. r:
+    if value < a[i]:
+      return i.uint16 - 1
+  a.high.uint16
+
+func findMatchLength*(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
+  var
+    s1 = s1
+    s2 = s2
+  while s2 <= limit - 8:
+    let x = read64(src, s2) xor read64(src, s1 + result)
+    if x == 0:
+      inc(s2, 8)
+      inc(result, 8)
+    else:
+      let matchingBits = countTrailingZeroBits(x)
+      inc(result, matchingBits shr 3)
+      return
+  while s2 < limit:
+    if src[s2] == src[s1 + result]:
+      inc s2
+      inc result
+    else:
+      return
 
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
