@@ -80,7 +80,7 @@ template compress*(
     var tmp = newSeq[uint8](src.len)
     for i, c in src:
       tmp[i] = c.uint8
-    let compressed = compress(tmp)
+    let compressed = compress(tmp, level, dataFormat)
     var result = newStringOfCap(compressed.len)
     for c in compressed:
       result.add(c.char)

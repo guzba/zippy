@@ -33,6 +33,11 @@ block nimlang_zip: # Requires zlib1.dll
     doAssert zlib.uncompress(
       zippy.compress(original, dataFormat = dfZlib), stream = ZLIB_STREAM
     ) == original
+    doAssert zlib.uncompress(
+      zippy.compress(
+        original, level = BestSpeed, dataFormat = dfZlib
+      ), stream = ZLIB_STREAM
+    ) == original
     doassert zippy.uncompress(
       zlib.compress(original, stream = ZLIB_STREAM)
     ) == original
@@ -49,6 +54,9 @@ block treeform_miniz:
       doAssert miniz.uncompress(
         zippy.compress(original, dataFormat = dfZlib)
       ) == original
+      doAssert miniz.uncompress(
+        zippy.compress(original, level = BestSpeed, dataFormat = dfZlib)
+      ) == original
     doAssert zippy.uncompress(miniz.compress(original)) == original
   echo "pass!"
 
@@ -58,6 +66,11 @@ block jangko_nimPNG:
     let original = readFile(&"tests/data/{gold}")
     doAssert nimz.zlib_decompress(
       nzInflateInit(zippy.compress(original, dataFormat = dfZlib))
+    ) == original
+    doAssert nimz.zlib_decompress(
+      nzInflateInit(zippy.compress(
+        original, level = BestSpeed, dataFormat = dfZlib
+      ))
     ) == original
     doAssert zippy.uncompress(
       zlib_compress(nzDeflateInit(original))

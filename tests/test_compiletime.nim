@@ -1,11 +1,20 @@
 import strformat, zippy
 
 const
-  test1Path = "tests/data/rfctest1.gold"
-  test1 = block:
+  testPath = "tests/data/rfctest1.gold"
+
+  testDefault = block:
     let
-      original = readFile(test1Path)
+      original = readFile(testPath)
       compressed = compress(original)
+      uncompressed = uncompress(compressed)
+    doAssert uncompressed == original
+    compressed
+
+  testBestSpeed = block:
+    let
+      original = readFile(testPath)
+      compressed = compress(original, BestSpeed)
       uncompressed = uncompress(compressed)
     doAssert uncompressed == original
     compressed
@@ -18,5 +27,7 @@ const
     doAssert uncompressed == test2Seq
     compressed
 
-doAssert uncompress(test1) == readFile(test1Path)
+let original = readFile(testPath)
+doAssert uncompress(testDefault) == original
+# doAssert uncompress(testBestSpeed) = original
 doAssert uncompress(test2) == test2Seq
