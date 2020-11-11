@@ -5,12 +5,13 @@ const
   huffmanNumChunks  = 1 shl huffmanChunkBits
   huffmanCountMask  = 15
   huffmanValueShift = 4
+  huffmanMaxLinks = 1 shl (maxCodeLength - huffmanChunkBits)
 
 type
   Huffman = object
     minCodeLength, maxCodeLength: uint8
     chunks: array[huffmanNumChunks, uint16]
-    links: seq[seq[uint16]]
+    links: array[huffmanMaxLinks, array[huffmanMaxLinks, uint16]]
     linkMask: uint16
 
 when defined(release):
@@ -51,16 +52,16 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
     nextCode[i] = code
     code += counts[i]
 
-  if code != (1.uint16 shl result.maxCodeLength) and
-    not (code == 1 and result.maxCodeLength == 1):
-    failUncompress()
+  # if code != (1.uint16 shl result.maxCodeLength) and
+  #   not (code == 1 and result.maxCodeLength == 1):
+  #   debugEcho code, " ", result.maxCodeLength, " ", result.minCodeLength
+  #   failUncompress()
 
   if result.maxCodeLength > huffmanChunkBits:
     let numLinks = 1.uint16 shl (result.maxCodeLength - huffmanChunkBits)
     result.linkMask = numLinks - 1
 
     let link = nextCode[huffmanChunkBits + 1] shr 1
-    result.links.setLen(huffmanNumChunks - link)
     for i in link ..< huffmanNumChunks:
       let
         reverse = reverseUint16(i.uint16, huffmanChunkBits)
@@ -71,7 +72,6 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       result.chunks[reverse] = (
         (offset shl huffmanValueShift) or huffmanChunkBits + 1
       ).uint16
-      result.links[offset].setLen(numLinks)
 
   for i, n in lengths:
     if n == 0:
@@ -106,43 +106,47 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
             raise newException(ZippyError, "Overwriting chunk")
         result.links[value][offset] = chunk
 
-  when not defined(release):
-    for i, chunk in result.chunks:
-      if chunk == 0:
-        if code == 1 and i mod 2 == 1:
-          continue
-        raise newException(ZippyError, "Missing chunk")
+  # when not defined(release):
+  #   for i, chunk in result.chunks:
+  #     if chunk == 0:
+  #       if code == 1 and i mod 2 == 1:
+  #         continue
+  #       raise newException(ZippyError, "Missing chunk")
 
-    for i in 0 ..< result.links.len:
-      for _, chunk in result.links[i]:
-        if chunk == 0:
-          raise newException(ZippyError, "Missing chunk")
+  #   for i in 0 ..< result.links.len:
+  #     for _, chunk in result.links[i]:
+  #       if chunk == 0:
+  #         raise newException(ZippyError, "Missing chunk")
 
 func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
+  ## This is function is the most important for inflate performance.
+
+  b.checkBytePos()
 
   var
-    n = h.minCodeLength
-    bits: uint16
-    numBits: uint8
+    n = h.minCodeLength.int
+    bits = b.data[b.bytePos].uint16 shr b.bitPos
+    numBits = 8 - b.bitPos
+    bytePos = b.bytePos + 1
   while true:
-    var bitsRead: int
     if numBits < n:
-      bits = bits or (b.peekBits((n - numBits).int) shl numBits)
-      bitsRead = (n - numBits).int
-      numBits += n - numBits
+      if bytePos >= b.data.len:
+        failEndOfBuffer()
+      bits = bits or (b.data[bytePos].uint16 shl numBits)
+      inc bytePos
+      numBits += 8
     var chunk = h.chunks[bits and (huffmanNumChunks - 1)]
-    n = (chunk and huffmanCountMask).uint8
+    n = (chunk and huffmanCountMask).int
     if n > huffmanChunkBits:
       chunk = h.links[chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask]
-      n = (chunk and huffmanCountMask).uint8
+      n = (chunk and huffmanCountMask).int
     if n <= numBits:
       if n == 0:
         failUncompress()
-      b.skipBits(bitsRead - (numBits - n).int)
+      inc(b.bytePos, (n + b.bitPos) shr 3)
+      b.bitPos = (n + b.bitPos) and 7
       return (chunk shr huffmanValueShift).uint16
-    else:
-      b.skipBits(bitsRead)
 
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
