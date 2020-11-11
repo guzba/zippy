@@ -26,14 +26,26 @@ for i in 0 ..< 10000:
   var shuffled = data # Copy
   r.shuffle(shuffled)
 
+  template fuzz() =
+    try:
+      let
+        pos = rand(compressed.len - 1)
+        value = rand(255).uint8
+      compressed[pos] = value
+      doAssert uncompress(compressed).len > 0
+    except ZippyError:
+      discard
+
   for level in [1, -1]: # BestSpeed and Default
     block: # data
-      let
+      var
         compressed = compress(data)
         uncompressed = uncompress(compressed)
       doAssert uncompressed == data
+      fuzz()
     block: # shuffled
-      let
+      var
         compressed = compress(shuffled)
         uncompressed = uncompress(compressed)
       doAssert uncompressed == shuffled
+      fuzz()
