@@ -1,9 +1,9 @@
 import bitstreams, common, zippyerror
 
 const
-  huffmanChunkBits  = 9
-  huffmanNumChunks  = 1 shl huffmanChunkBits
-  huffmanCountMask  = 15
+  huffmanChunkBits = 9
+  huffmanNumChunks = 1 shl huffmanChunkBits
+  huffmanCountMask = 15
   huffmanValueShift = 4
 
 type
@@ -95,8 +95,8 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
         value = result.chunks[j] shr huffmanValueShift
         reverseShifted = reverse shr huffmanChunkBits
       when not defined(release):
-          if (result.chunks[j] and huffmanCountMask) != huffmanChunkBits + 1:
-            raise newException(ZippyError, "Not an indirect chunk")
+        if (result.chunks[j] and huffmanCountMask) != huffmanChunkBits + 1:
+          raise newException(ZippyError, "Not an indirect chunk")
       for offset in countup(
         reverseShifted.int,
         result.links[value].high,
@@ -141,7 +141,9 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       chunk = h.chunks[bits and (huffmanNumChunks - 1)]
       n = (chunk and huffmanCountMask).int
     if n > huffmanChunkBits:
-      chunk = h.links[chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask]
+      chunk = h.links[
+        chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask
+      ]
       n = (chunk and huffmanCountMask).int
     if n <= numBits:
       if n == 0:

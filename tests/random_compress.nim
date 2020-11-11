@@ -1,4 +1,4 @@
-import random, zippy, times
+import random, times, zippy
 
 # Generate random blobs of data containing runs of random lengths. Ensure
 # we can always compress this blob and that uncompressing the compressed
