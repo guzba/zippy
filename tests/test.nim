@@ -63,7 +63,7 @@ for dataFormat in [dfDeflate, dfZlib, dfGzip]:
   for gold in golds:
     let
       original = readFile(&"tests/data/{gold}")
-      compressed = compress(original, dataFormat)
+      compressed = compress(original, dataFormat = dataFormat)
       uncompressed = uncompress(
         compressed,
         if dataFormat == dfDeflate: dfDeflate else: dfDetect
@@ -76,7 +76,7 @@ for dataFormat in [dfDeflate, dfZlib, dfGzip]:
     for i in 0.uint8 .. high(uint8):
       original.add(i)
     let
-      compressed = compress(original, dataFormat)
+      compressed = compress(original, dataFormat = dataFormat)
       uncompressed = uncompress(
         compressed,
         if dataFormat == dfDeflate: dfDeflate else: dfDetect

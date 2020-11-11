@@ -109,11 +109,27 @@ const
 when defined(release):
   {.push checks: off.}
 
-template read32*(p: pointer): uint32 =
-  cast[ptr uint32](p)[]
+template read32*(s: seq[uint8], pos: int): uint32 =
+  when nimvm:
+    (s[pos + 0].uint32 shl 0) or
+    (s[pos + 1].uint32 shl 8) or
+    (s[pos + 2].uint32 shl 16) or
+    (s[pos + 3].uint32 shl 24)
+  else:
+    cast[ptr uint32](s[pos].unsafeAddr)[]
 
-template read64*(p: pointer): uint64 =
-  cast[ptr uint64](p)[]
+template read64*(s: seq[uint8], pos: int): uint64 =
+  when nimvm:
+    (s[pos + 0].uint64 shl 0) or
+    (s[pos + 1].uint64 shl 8) or
+    (s[pos + 2].uint64 shl 16) or
+    (s[pos + 3].uint64 shl 24) or
+    (s[pos + 4].uint64 shl 32) or
+    (s[pos + 5].uint64 shl 40) or
+    (s[pos + 6].uint64 shl 48) or
+    (s[pos + 7].uint64 shl 56)
+  else:
+    cast[ptr uint64](s[pos].unsafeAddr)[]
 
 template reverseUint16*(code: uint16, length: uint8): uint16 =
   (

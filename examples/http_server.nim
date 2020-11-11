@@ -8,7 +8,7 @@ proc cb(req: Request) {.async.} =
     let headers = newHttpHeaders([("Content-Encoding", "gzip")])
     await req.respond(
       Http200,
-      compress("gzip'ed response body", dfGzip),
+      compress("gzip'ed response body", BestSpeed, dfGzip),
       headers
     )
   else:

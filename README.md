@@ -26,7 +26,7 @@ Benchmarks can be run comparing different deflate implementations. My benchmarki
 
 `nim c -d:release -r .\tests\benchmark.nim`
 
-### Compress
+### Compress at default compression level
 
 Each file is compressed 1000 times.
 
@@ -78,6 +78,41 @@ To prevent Zippy from causing a crash or otherwise misbehaving on bad input data
 import zippy
 ```
 
+## **const** NoCompression
+
+
+```nim
+NoCompression = 0
+```
+
+## **const** BestSpeed
+
+
+```nim
+BestSpeed = 1
+```
+
+## **const** BestCompression
+
+
+```nim
+BestCompression = 9
+```
+
+## **const** DefaultCompression
+
+
+```nim
+DefaultCompression = -1
+```
+
+## **const** HuffmanOnly
+
+
+```nim
+HuffmanOnly = -2
+```
+
 ## **type** CompressedDataFormat
 
 Supported compressed data formats
@@ -92,7 +127,8 @@ CompressedDataFormat = enum
 Compresses src and returns the compressed data.
 
 ```nim
-func compress(src: seq[uint8]; dataFormat = dfGzip): seq[uint8] {.raises: [ZippyError].}
+func compress(src: seq[uint8]; level = DefaultCompression; dataFormat = dfGzip): seq[
+ uint8] {.raises: [ZippyError, ValueError].}
 ```
 
 ## **template** compress
@@ -100,7 +136,7 @@ func compress(src: seq[uint8]; dataFormat = dfGzip): seq[uint8] {.raises: [Zippy
 Helper for when preferring to work with strings.
 
 ```nim
-template compress(src: string; dataFormat = dfGzip): string
+template compress(src: string; level = DefaultCompression; dataFormat = dfGzip): string
 ```
 
 ## **func** uncompress

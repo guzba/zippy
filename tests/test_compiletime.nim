@@ -5,7 +5,7 @@ const
   test1 = block:
     let
       original = readFile(test1Path)
-      compressed = compress(original, dfGzip)
+      compressed = compress(original)
       uncompressed = uncompress(compressed)
     doAssert uncompressed == original
     compressed
@@ -13,7 +13,7 @@ const
   test2Seq = @[0.uint8, 8, 8, 8, 3, 8, 3, 3, 1, 1]
   test2 = block:
     let
-      compressed = compress(test2Seq, dfGzip)
+      compressed = compress(test2Seq)
       uncompressed = uncompress(compressed)
     doAssert uncompressed == test2Seq
     compressed

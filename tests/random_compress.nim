@@ -24,6 +24,6 @@ for i in 0 ..< 10000:
     inc(i, runLength)
 
   let
-    compressed = compress(data, dfGzip)
+    compressed = compress(data)
     uncompressed = uncompress(compressed)
   doAssert uncompressed == data

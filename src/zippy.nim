@@ -2,11 +2,20 @@ import zippy/common, zippy/deflate, zippy/inflate, zippy/zippyerror
 
 export zippyerror
 
+const
+  NoCompression* = 0
+  BestSpeed* = 1
+  BestCompression* = 9
+  DefaultCompression* = -1
+  HuffmanOnly* = -2
+
 type
   CompressedDataFormat* = enum ## Supported compressed data formats
     dfDetect, dfZlib, dfGzip, dfDeflate
 
-func compress*(src: seq[uint8], dataFormat = dfGzip): seq[uint8] =
+func compress*(
+  src: seq[uint8], level = DefaultCompression, dataFormat = dfGzip
+): seq[uint8] =
   ## Compresses src and returns the compressed data.
 
   if dataFormat == dfDetect:
@@ -15,7 +24,7 @@ func compress*(src: seq[uint8], dataFormat = dfGzip): seq[uint8] =
       "A data format must be specified to compress"
     )
 
-  let deflated = deflate(src)
+  let deflated = deflate(src, level)
 
   if dataFormat == dfGzip:
     result.setLen(10)
@@ -61,7 +70,9 @@ func compress*(src: seq[uint8], dataFormat = dfGzip): seq[uint8] =
   else:
     result = deflated
 
-template compress*(src: string, dataFormat = dfGzip): string =
+template compress*(
+  src: string, level = DefaultCompression, dataFormat = dfGzip
+): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
     # This is unfortunately needed to convert to and from string -> seq[uint]
@@ -75,7 +86,7 @@ template compress*(src: string, dataFormat = dfGzip): string =
       result.add(c.char)
     result
   else:
-    cast[string](compress(cast[seq[uint8]](src), dataFormat))
+    cast[string](compress(cast[seq[uint8]](src), level, dataFormat))
 
 func uncompress(
   src: seq[uint8], dataFormat: CompressedDataFormat, dst: var seq[uint8]
@@ -136,22 +147,12 @@ func uncompress(
 
     inflate(src[pos ..< ^8], dst)
 
-    let checksum = (
-      src[^8].uint32 shl 0 or
-      src[^7].uint32 shl 8 or
-      src[^6].uint32 shl 16 or
-      src[^5].uint32 shl 24
-    )
+    let checksum = read32(src, src.len - 8)
     if checksum != crc32(dst):
       raise newException(ZippyError, "Checksum verification failed")
 
-    let isize = (
-      src[^4].uint32 shl 0 or
-      src[^3].uint32 shl 8 or
-      src[^2].uint32 shl 16 or
-      src[^1].uint32 shl 24
-    )
-    if isize != dst.len.uint32:
+    let isize = read32(src, src.len - 4)
+    if isize != (dst.len mod (1 shl 32)).uint32:
       raise newException(ZippyError, "Size verification failed")
   of dfZlib:
     if src.len < 6:

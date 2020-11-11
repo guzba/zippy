@@ -1,4 +1,4 @@
-import bitops, bitstreams, common, zippyerror
+import bitops, bitstreams, common, strformat, zippyerror
 
 const
   minMatchLen = 3
@@ -8,14 +8,34 @@ const
   maxLitLenCodeLength = 9
   maxDistCodeLength = 6
 
+  # The uint16 high bit is reserved to signal that a offset and length are
+  # encoded in the uint16.
+  maxLiteralLength = uint16.high.int shr 1
+
   windowSize = 1 shl 15
-  maxChainLen = 32
-  goodMatchLen = 32
 
   hashBits = 16
   hashSize = 1 shl hashBits
   hashMask = hashSize - 1
   hashShift = (hashBits + minMatchLen - 1) div minMatchLen
+
+type
+  CompressionConfig = object
+    good, lazy, nice, chain: int
+
+const
+  configurationTable = [
+    CompressionConfig(), # No compression
+    CompressionConfig(), # Custom algorithm based on Snappy
+    CompressionConfig(good: 4, lazy: 0, nice: 16, chain: 8),
+    CompressionConfig(good: 4, lazy: 0, nice: 32, chain: 32),
+    CompressionConfig(good: 4, lazy: 4, nice: 16, chain: 16),
+    CompressionConfig(good: 8, lazy: 16, nice: 32, chain: 32),
+    CompressionConfig(good: 8, lazy: 16, nice: 128, chain: 128), # Default
+    CompressionConfig(good: 8, lazy: 32, nice: 256, chain: 256),
+    CompressionConfig(good: 32, lazy: 128, nice: 258, chain: 1024),
+    CompressionConfig(good: 32, lazy: 258, nice: 258, chain: 4096) # Max compression
+  ]
 
 when defined(release):
   {.push checks: off.}
@@ -182,7 +202,29 @@ func findCodeIndex(a: openarray[uint16], value: uint16): uint16 =
       return i.uint16 - 1
   a.high.uint16
 
-func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
+func findMatchLength(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
+  var
+    s1 = s1
+    s2 = s2
+  while s2 <= limit - 8:
+    let x = read64(src, s2) xor read64(src, s1 + result)
+    if x == 0:
+      inc(s2, 8)
+      inc(result, 8)
+    else:
+      let matchingBits = countTrailingZeroBits(x)
+      inc(result, matchingBits shr 3)
+      return
+  while s2 < limit:
+    if src[s2] == src[s1 + result]:
+      inc s2
+      inc result
+    else:
+      return
+
+func lz77Encode(
+  src: seq[uint8], config: CompressionConfig
+): (seq[uint16], seq[int], seq[int], int) =
   assert windowSize <= maxWindowSize
   assert (windowSize and (windowSize - 1)) == 0
   assert (hashSize and hashMask) == 0
@@ -258,12 +300,9 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
     var
       hashPos = chain[windowPos]
       stop = min(src.len, pos + maxMatchLen)
-      chainLen, prevOffset, longestMatchOffset, longestMatchLen: int
-    while true:
-      if chainLen >= maxChainLen:
-        break
-      inc chainLen
-
+      tries = 32
+      prevOffset, longestMatchOffset, longestMatchLen: int
+    for i in countdown(tries, 1):
       var offset: int
       if hashPos <= windowPos:
         offset = (windowPos - hashPos).int
@@ -275,40 +314,12 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
 
       prevOffset = offset
 
-      var
-        matchLen: int
-        i: int
-      while i < stop - pos:
-        var useFastPath: bool
-        when nimvm:
-          useFastPath = false
-        else:
-          # Can we look at the next 8 bytes?
-          useFastPath = stop - pos - i > 8
-        if useFastPath:
-          let v = read64(src[pos - offset + i].unsafeAddr) xor
-              read64(src[pos + i].unsafeAddr)
-          if v == 0:
-            inc(matchLen, 8)
-          else:
-            let
-              zeroBits = countTrailingZeroBits(v)
-              matchingBytes = min(zeroBits shr 3, 8)
-            inc(matchLen, matchingBytes)
-            if matchingBytes < 8:
-              break
-          inc(i, 8)
-        else:
-          if src[pos - offset + i] != src[pos + i]:
-            break
-          inc matchLen
-          inc i
-
+      let matchLen = findMatchLength(src, pos - offset, pos, stop)
       if matchLen > longestMatchLen:
         longestMatchLen = matchLen
         longestMatchOffset = offset
 
-      if longestMatchLen >= goodMatchLen or hashPos == chain[hashPos]:
+      if longestMatchLen >= 32 or hashPos == chain[hashPos]:
         break
 
       hashPos = chain[hashPos]
@@ -328,7 +339,7 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
     else:
       inc freqLitLen[src[pos]]
       inc literalLen
-      if literalLen == uint16.high.int shr 1:
+      if literalLen == maxLiteralLength:
         addLiteral(literalLen)
         literalLen = 0
     inc pos
@@ -336,36 +347,75 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
   encoded.setLen(op)
   (encoded, freqLitLen, freqDist, literalsTotal)
 
-func deflate*(src: seq[uint8]): seq[uint8] =
-  var b: BitStream
+func snappyEncode(
+  src: seq[uint8]
+): (seq[uint16], seq[int], seq[int], int) =
+  discard
 
-  let (encoded, freqLitLen, freqDist, literalsTotal) = lz77Encode(src)
+func huffmanOnlyEncode(
+  src: seq[uint8]
+): (seq[uint16], seq[int], seq[int], int) =
+  var
+    encoded = newSeq[uint16]()
+    freqLitLen = newSeq[int](286)
+    freqDist = newSeq[int](baseDistance.len)
+
+  freqLitLen[256] = 1 # Alway 1 end-of-block symbol
+
+  for i, c in src:
+    inc freqLitLen[c]
+
+  for i in 0 ..< src.len div maxLiteralLength:
+    encoded.add(maxLiteralLength.uint16)
+
+  encoded.add((src.len mod maxLiteralLength).uint16)
+
+  (encoded, freqLitLen, freqDist, 0)
+
+func deflateNoCompression(src: seq[uint8]): seq[uint8] =
+  let blockCount = max(
+    (src.len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
+    1
+  )
+
+  var b: BitStream
+  for i in 0 ..< blockCount:
+    b.data.setLen(b.data.len + 6)
+
+    let finalBlock = i == blockCount - 1
+    b.addBits(finalBlock.uint8, 8)
+
+    let
+      pos = i * maxUncompressedBlockSize
+      len = min(src.len - pos, maxUncompressedBlockSize).uint16
+      nlen = (maxUncompressedBlockSize - len).uint16
+
+    b.addBits(len, 16)
+    b.addBits(nlen, 16)
+    if len > 0:
+      b.addBytes(src, pos, len.int)
+
+  b.data.setLen(b.bytePos)
+  b.data
+
+func deflate*(src: seq[uint8], level = -1): seq[uint8] =
+  if level < -2 or level > 9:
+    raise newException(ZippyError, &"Invalid compression level {level}")
+
+  if level == 0:
+    return deflateNoCompression(src)
+
+  let (encoded, freqLitLen, freqDist, literalsTotal) = block:
+    if level == -2:
+      huffmanOnlyEncode(src)
+    elif level == 1:
+      snappyEncode(src)
+    else:
+      lz77Encode(src, configurationTable[if level == -1: 6 else: level])
 
   # If lz77 encoding returned almost all literal runs then write uncompressed.
   if literalsTotal >= (src.len.float32 * 0.98).int:
-    let blockCount = max(
-      (src.len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
-      1
-    )
-
-    for i in 0 ..< blockCount:
-      b.data.setLen(b.data.len + 6)
-
-      let finalBlock = i == blockCount - 1
-      b.addBits(finalBlock.uint8, 8)
-
-      let
-        pos = i * maxUncompressedBlockSize
-        len = min(src.len - pos, maxUncompressedBlockSize).uint16
-        nlen = (maxUncompressedBlockSize - len).uint16
-
-      b.addBits(len, 16)
-      b.addBits(nlen, 16)
-      if len > 0:
-        b.addBytes(src, pos, len.int)
-
-    b.data.setLen(b.bytePos)
-    return b.data
+    return deflateNoCompression(src)
 
   # Deflate using dynamic Huffman tree
 
@@ -445,6 +495,7 @@ func deflate*(src: seq[uint8]): seq[uint8] =
     hdist = distNumCodes.uint8 - 1
     hclen = bitLensCodeLen.len.uint8 - 4
 
+  var b: BitStream
   # TODO: Improve the b.data.setLens
   b.data.setLen(
     b.data.len +

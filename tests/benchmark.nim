@@ -77,7 +77,7 @@ block guzba_zippy_compress:
       start = getMonoTime().ticks
     var c: int
     for i in 0 ..< iterations:
-      let compressed = zippy.compress(uncompressed, dfZlib)
+      let compressed = zippy.compress(uncompressed, dataFormat = dfZlib)
       inc(c, compressed.len)
     let
       delta = float64(getMonoTime().ticks - start) / 1000000000.0
