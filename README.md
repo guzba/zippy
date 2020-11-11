@@ -64,6 +64,20 @@ urls.10K | 7.3260s | 63.93%
 rfctest3.gold | 0.3270s | 67.53%
 randtest3.gold | 0.1189s | 0%
 
+Each file is compressed 1000 times at the best compression level.
+
+**https://github.com/guzba/zippy** compress results:
+
+(In-progress)
+
+https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
+File | Time | % Size Reduction
+--- | --- | ---:
+alice29.txt | 10.0080s | 64.38%
+urls.10K | 30.6367s | 68.82%
+rfctest3.gold | 2.6664s | 71.77%
+randtest3.gold | 0.1557s | 0%
+
 ### Uncompress
 
 Each file is uncompressed 1000 times.

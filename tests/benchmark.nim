@@ -158,3 +158,35 @@ block nimlang_zip_compress: # Requires zlib1.dll
       delta = float64(getMonoTime().ticks - start) / 1000000000.0
       reduction = 100 - (c / (uncompressed.len * iterations)) * 100
     echo &"  {gold}: {delta:.4f}s {(reduction):0.2f}%"
+
+block guzba_zippy_compress:
+  echo "https://github.com/guzba/zippy compress [best compression]"
+  for gold in golds:
+    let
+      uncompressed = readFile(&"tests/data/{gold}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let compressed = zippy.compress(uncompressed, BestCompression, dfZlib)
+      inc(c, compressed.len)
+    let
+      delta = float64(getMonoTime().ticks - start) / 1000000000.0
+      reduction = 100 - (c / (uncompressed.len * iterations)) * 100
+    echo &"  {gold}: {delta:.4f}s {(reduction):0.2f}%"
+
+block nimlang_zip_compress: # Requires zlib1.dll
+  echo "https://github.com/nim-lang/zip compress [best compression]"
+  for gold in golds:
+    let
+      uncompressed = readFile(&"tests/data/{gold}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let compressed = zlib.compress(
+        uncompressed, Z_BEST_COMPRESSION, ZLIB_STREAM
+      )
+      inc(c, compressed.len)
+    let
+      delta = float64(getMonoTime().ticks - start) / 1000000000.0
+      reduction = 100 - (c / (uncompressed.len * iterations)) * 100
+    echo &"  {gold}: {delta:.4f}s {(reduction):0.2f}%"
