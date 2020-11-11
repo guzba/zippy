@@ -209,6 +209,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
     elif level == 1:
       snappyEncode(src)
     else:
+      # -1 or [2, 9]
       lz77Encode(src, configurationTable[if level == -1: 6 else: level])
 
   # If lz77 encoding returned almost all literal runs then write uncompressed.

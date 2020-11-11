@@ -27,7 +27,7 @@ func lz77Encode*(
     inc op
     inc(literalsTotal, length)
 
-  template addLookBack(offset, length: int) =
+  template addCopy(offset, length: int) =
     let
       lengthIndex = findCodeIndex(baseLengths, length.uint16)
       distIndex = findCodeIndex(baseDistance, offset.uint16)
@@ -84,9 +84,8 @@ func lz77Encode*(
     var
       hashPos = chain[windowPos]
       limit = min(src.len, pos + maxMatchLen)
-      tries = 32
       prevOffset, longestMatchOffset, longestMatchLen: int
-    for i in countdown(tries, 1):
+    for i in 0 ..< 32: # maxChainLen
       var offset: int
       if hashPos <= windowPos:
         offset = (windowPos - hashPos).int
@@ -113,7 +112,7 @@ func lz77Encode*(
         addLiteral(literalLen)
         literalLen = 0
 
-      addLookBack(longestMatchOffset, longestMatchLen)
+      addCopy(longestMatchOffset, longestMatchLen)
       for i in 1 ..< longestMatchLen:
         inc pos
         windowPos = (pos and (windowSize - 1)).uint16

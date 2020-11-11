@@ -4,66 +4,23 @@ import zippy/common
 ## This is much faster but does not compress as well. Perfect for BestSpeed.
 ## See https://github.com/guzba/supersnappy
 
-func emitLiteral(
-  dst: var seq[uint16],
-  src: seq[uint8],
-  op: var int,
-  ip: int,
-  len: int,
-  freqLitLen: var seq[int],
-  literalsTotal: var int
-) =
-  if op + len > dst.len:
-    dst.setLen(dst.len * 2)
-
-  dst[op] = len.uint16
-  inc op
-  inc(literalsTotal, len)
-
-  for i in 0 ..< len:
-    inc freqLitLen[src[ip + i]]
-
-func emitCopy(
-  dst: var seq[uint16],
-  op: var int,
-  offset: int,
-  len: int,
-  freqLitLen, freqDist: var seq[int]
-) =
-  if op + len > dst.len:
-    dst.setLen(dst.len * 2)
-
-  let
-    lengthIndex = findCodeIndex(baseLengths, len.uint16)
-    distIndex = findCodeIndex(baseDistance, offset.uint16)
-  inc freqLitLen[lengthIndex + firstLengthCodeIndex]
-  inc freqDist[distIndex]
-
-  # The length and dist indices are packed into this value with the highest
-  # bit set as a flag to indicate this starts a run.
-  dst[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
-  dst[op + 1] = offset.uint16
-  dst[op + 2] = len.uint16
-  inc(op, 3)
-
 func encodeFragment(
-  dst: var seq[uint16],
+  encoded: var seq[uint16],
   src: seq[uint8],
   op: var int,
-  start: int,
-  len: int,
+  start, bytesToRead: int,
   compressTable: var seq[uint16],
   freqLitLen, freqDist: var seq[int],
   literalsTotal: var int
 ) =
-  let ipEnd = start + len
+  let ipEnd = start + bytesToRead
   var
     ip = start
     nextEmit = ip
     tableSize = 256
     shift = 24
 
-  while tableSize < compressTable.len and tableSize < len:
+  while tableSize < compressTable.len and tableSize < bytesToRead:
     tableSize = tableSize shl 1
     dec shift
 
@@ -73,26 +30,46 @@ func encodeFragment(
   else:
     zeroMem(compressTable[0].addr, tableSize * sizeof(uint16))
 
+  template addLiteral(start, length: int) =
+    if op + 1 > encoded.len:
+      encoded.setLen(encoded.len * 2)
+
+    encoded[op] = length.uint16
+    inc op
+    inc(literalsTotal, length)
+
+    for i in 0 ..< length:
+      inc freqLitLen[src[start + i]]
+
+  template addCopy(offset: int, length: int) =
+    if op + 3 > encoded.len:
+      encoded.setLen(encoded.len * 2)
+
+    let
+      lengthIndex = findCodeIndex(baseLengths, length.uint16)
+      distIndex = findCodeIndex(baseDistance, offset.uint16)
+    inc freqLitLen[lengthIndex + firstLengthCodeIndex]
+    inc freqDist[distIndex]
+
+    # The length and dist indices are packed into this value with the highest
+    # bit set as a flag to indicate this starts a run.
+    encoded[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
+    encoded[op + 1] = offset.uint16
+    encoded[op + 2] = length.uint16
+    inc(op, 3)
+
+  template emitRemainder() =
+    if nextEmit < ipEnd:
+      addLiteral(nextEmit, ipEnd - nextEmit)
+
   template hash(v: uint32): uint32 =
     (v * 0x1e35a7bd) shr shift
 
   template uint32AtOffset(v: uint64, offset: int): uint32 =
     ((v shr (8 * offset)) and 0xffffffff.uint32).uint32
 
-  template emitRemainder() =
-    if nextEmit < ipEnd:
-      emitLiteral(
-        dst,
-        src,
-        op,
-        nextEmit,
-        ipEnd - nextEmit,
-        freqLitLen,
-        literalsTotal
-      )
-
-  if len >= 15:
-    let ipLimit = start + len - 15
+  if bytesToRead >= 15:
+    let ipLimit = start + bytesToRead - 15
     inc ip
 
     var nextHash = hash(read32(src, ip))
@@ -118,15 +95,7 @@ func encodeFragment(
         if read32(src, ip) == read32(src, candidate):
           break
 
-      emitLiteral(
-        dst,
-        src,
-        op,
-        nextEmit,
-        ip - nextEmit,
-        freqLitLen,
-        literalsTotal
-      )
+      addLiteral(nextEmit, ip - nextEmit)
 
       var
         inputBytes: uint64
@@ -137,7 +106,7 @@ func encodeFragment(
           matched = 4 + findMatchLength(src, candidate + 4, ip + 4, limit)
           offset = ip - candidate
         inc(ip, matched)
-        emitCopy(dst, op, offset, matched, freqLitLen, freqDist)
+        addCopy(offset, matched)
 
         let insertTail = ip - 1
         nextEmit = ip
