@@ -34,7 +34,7 @@ func incPos(b: var BitStream) {.inline.} =
   inc b.bytePos
   b.bitPos = 0
 
-func movePos(b: var BitStream, bits: int) {.inline.} =
+func movePos*(b: var BitStream, bits: int) {.inline.} =
   assert b.bitPos + bits <= 8
   inc(b.bitPos, bits)
   inc(b.bytePos, b.bitPos shr 3)

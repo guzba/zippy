@@ -9,9 +9,9 @@ const
 type
   Huffman = object
     minCodeLength, maxCodeLength: uint8
-    chunks: array[huffmanNumChunks, uint32]
-    links: seq[seq[uint32]]
-    linkMask: uint32
+    chunks: array[huffmanNumChunks, uint16]
+    links: seq[seq[uint16]]
+    linkMask: uint16
 
 when defined(release):
   {.push checks: off.}
@@ -22,6 +22,8 @@ template failUncompress*() =
   )
 
 func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
+  ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
+
   var
     counts: array[maxCodeLength + 1, uint16]
     numCodes: int
@@ -54,7 +56,7 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
     failUncompress()
 
   if result.maxCodeLength > huffmanChunkBits:
-    let numLinks = 1.uint32 shl (result.maxCodeLength - huffmanChunkBits)
+    let numLinks = 1.uint16 shl (result.maxCodeLength - huffmanChunkBits)
     result.linkMask = numLinks - 1
 
     let link = nextCode[huffmanChunkBits + 1] shr 1
@@ -63,9 +65,12 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       let
         reverse = reverseUint16(i.uint16, huffmanChunkBits)
         offset = i - link
+      when not defined(release):
+        if result.chunks[reverse] != 0:
+          raise newException(ZippyError, "Overwriting chunk")
       result.chunks[reverse] = (
         (offset shl huffmanValueShift) or huffmanChunkBits + 1
-      ).uint32
+      ).uint16
       result.links[offset].setLen(numLinks)
 
   for i, n in lengths:
@@ -74,28 +79,70 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
 
     let
       code = nextCode[n]
-      chunk = i.uint32 shl huffmanValueShift or n
+      chunk = (i.uint16 shl huffmanValueShift) or n
       reverse = reverseUint16(code, n)
     inc nextCode[n]
     if n <= huffmanChunkBits:
       for offset in countup(reverse.int, result.chunks.high, 1 shl n):
+        when not defined(release):
+          if result.chunks[offset] != 0:
+            raise newException(ZippyError, "Overwriting chunk")
         result.chunks[offset] = chunk
     else:
       let
         j = reverse and (huffmanNumChunks - 1)
         value = result.chunks[j] shr huffmanValueShift
         reverseShifted = reverse shr huffmanChunkBits
+      when not defined(release):
+          if (result.chunks[j] and huffmanCountMask) != huffmanChunkBits + 1:
+            raise newException(ZippyError, "Not an indirect chunk")
       for offset in countup(
         reverseShifted.int,
         result.links[value].high,
         1 shl (n - huffmanChunkBits)
       ):
+        when not defined(release):
+          if result.links[value][offset] != 0:
+            raise newException(ZippyError, "Overwriting chunk")
         result.links[value][offset] = chunk
 
-  # debugEcho result.minCodeLength, " ", result.maxCodeLength, " ", result.chunks, " ", result.links, " ", result.linkMask
+  when not defined(release):
+    for i, chunk in result.chunks:
+      if chunk == 0:
+        if code == 1 and i mod 2 == 1:
+          continue
+        raise newException(ZippyError, "Missing chunk")
+
+    for i in 0 ..< result.links.len:
+      for _, chunk in result.links[i]:
+        if chunk == 0:
+          raise newException(ZippyError, "Missing chunk")
 
 func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
-  discard
+  ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
+
+  var
+    n = h.minCodeLength
+    bits: uint16
+    numBits: uint8
+  while true:
+    var bitsRead: int
+    if numBits < n:
+      bits = bits or (b.peekBits((n - numBits).int) shl numBits)
+      bitsRead = (n - numBits).int
+      numBits += n - numBits
+    var chunk = h.chunks[bits and (huffmanNumChunks - 1)]
+    n = (chunk and huffmanCountMask).uint8
+    if n > huffmanChunkBits:
+      chunk = h.links[chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask]
+      n = (chunk and huffmanCountMask).uint8
+    if n <= numBits:
+      if n == 0:
+        failUncompress()
+      b.skipBits(bitsRead - (numBits - n).int)
+      return (chunk shr huffmanValueShift).uint16
+    else:
+      b.skipBits(bitsRead)
 
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
