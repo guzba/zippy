@@ -33,9 +33,9 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** compress results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 4.3920s | 62.33%
-urls.10K | 16.4125s | 67.01%
-rfctest3.gold | 0.9690s | 70.91%
+alice29.txt | 4.2674s | 62.33%
+urls.10K | 15.9781s | 67.01%
+rfctest3.gold | 0.9443s | 70.91%
 randtest3.gold | 0.1285s | 0%
 
 https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)

@@ -130,7 +130,8 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
   assert bits <= 16
 
   var bitsRemaining = bits
-  for i in 0 ..< 3: # 16 bits cannot spread out across more than 3 bytes
+
+  template add() =
     let
       bitsLeftInByte = 8 - b.bitPos
       bitsAdded = min(bitsLeftInByte, bitsRemaining) # Can be 0 which is fine
@@ -138,6 +139,11 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
     b.data[b.bytePos] = b.data[b.bytePos] or (bitsToAdd and 255).uint8
     dec(bitsRemaining, bitsAdded)
     b.movePos(bitsAdded)
+
+  # 16 bits cannot spread out across more than 3 bytes
+  add()
+  add()
+  add()
 
 when defined(release):
   {.pop.}
