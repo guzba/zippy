@@ -26,17 +26,17 @@ Benchmarks can be run comparing different deflate implementations. My benchmarki
 
 `nim c -d:release -r .\tests\benchmark.nim`
 
-### Compress at default compression level
+### Compress
 
-Each file is compressed 1000 times.
+Each file is compressed 1000 times at the default compression level.
 
 **https://github.com/guzba/zippy** compress results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 4.2674s | 62.33%
-urls.10K | 15.9781s | 67.01%
-rfctest3.gold | 0.9443s | 70.91%
-randtest3.gold | 0.1285s | 0%
+alice29.txt | 4.7218s | 62.33%
+urls.10K | 17.8483s | 67.01%
+rfctest3.gold | 1.0323s | 70.91%
+randtest3.gold | 0.1635s | 0%
 
 https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
 File | Time | % Size Reduction
@@ -45,6 +45,24 @@ alice29.txt | 7.0150s | 64.23%
 urls.10K | 16.6361s | 68.29%
 rfctest3.gold | 0.8147s | 71.74%
 randtest3.gold | 0.1545s | 0%
+
+Each file is compressed 1000 times at the fastest compression level.
+
+**https://github.com/guzba/zippy** compress results:
+File | Time | % Size Reduction
+--- | --- | ---:
+alice29.txt | 2.3123s | 55.13%
+urls.10K | 7.1137s | 60.92%
+rfctest3.gold | 0.6386s | 66.23%
+randtest3.gold | 0.0630s | 0%
+
+https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
+File | Time | % Size Reduction
+--- | --- | ---:
+alice29.txt | 1.7779s | 57.17%
+urls.10K | 7.3260s | 63.93%
+rfctest3.gold | 0.3270s | 67.53%
+randtest3.gold | 0.1189s | 0%
 
 ### Uncompress
 
