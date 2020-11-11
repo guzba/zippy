@@ -54,7 +54,7 @@ func lz77Encode*(
     addLiteral(src.len)
     return (encoded, freqLitLen, freqDist, literalsTotal)
 
-  encoded.setLen(src.len div 2)
+  encoded.setLen(4096)
 
   var
     pos, literalLen: int

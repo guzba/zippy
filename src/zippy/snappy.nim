@@ -134,7 +134,7 @@ func snappyEncode*(
   src: seq[uint8]
 ): (seq[uint16], seq[int], seq[int], int) =
   var
-    encoded = newSeq[uint16](src.len div 2)
+    encoded = newSeq[uint16](4096)
     freqLitLen = newSeq[int](286)
     freqDist = newSeq[int](baseDistance.len)
     literalsTotal: int
