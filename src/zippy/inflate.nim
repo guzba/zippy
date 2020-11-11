@@ -5,13 +5,12 @@ const
   huffmanNumChunks  = 1 shl huffmanChunkBits
   huffmanCountMask  = 15
   huffmanValueShift = 4
-  huffmanMaxLinks = 1 shl (maxCodeLength - huffmanChunkBits)
 
 type
   Huffman = object
     minCodeLength, maxCodeLength: uint8
     chunks: array[huffmanNumChunks, uint16]
-    links: array[huffmanMaxLinks, array[huffmanMaxLinks, uint16]]
+    links: seq[seq[uint16]]
     linkMask: uint16
 
 when defined(release):
@@ -62,6 +61,7 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
     result.linkMask = numLinks - 1
 
     let link = nextCode[huffmanChunkBits + 1] shr 1
+    result.links.setLen(huffmanNumChunks - link)
     for i in link ..< huffmanNumChunks:
       let
         reverse = reverseUint16(i.uint16, huffmanChunkBits)
@@ -72,6 +72,7 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       result.chunks[reverse] = (
         (offset shl huffmanValueShift) or huffmanChunkBits + 1
       ).uint16
+      result.links[offset].setLen(numLinks)
 
   for i, n in lengths:
     if n == 0:
@@ -125,10 +126,11 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   b.checkBytePos()
 
   var
-    n = h.minCodeLength.int
     bits = b.data[b.bytePos].uint16 shr b.bitPos
     numBits = 8 - b.bitPos
     bytePos = b.bytePos + 1
+    chunk = h.chunks[bits and (huffmanNumChunks - 1)]
+    n = (chunk and huffmanCountMask).int
   while true:
     if numBits < n:
       if bytePos >= b.data.len:
@@ -136,8 +138,8 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       bits = bits or (b.data[bytePos].uint16 shl numBits)
       inc bytePos
       numBits += 8
-    var chunk = h.chunks[bits and (huffmanNumChunks - 1)]
-    n = (chunk and huffmanCountMask).int
+      chunk = h.chunks[bits and (huffmanNumChunks - 1)]
+      n = (chunk and huffmanCountMask).int
     if n > huffmanChunkBits:
       chunk = h.links[chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask]
       n = (chunk and huffmanCountMask).int

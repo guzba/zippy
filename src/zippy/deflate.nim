@@ -275,29 +275,34 @@ func lz77Encode(src: seq[uint8]): (seq[uint16], seq[int], seq[int], int) =
 
       prevOffset = offset
 
-      var matchLen: int
-      when nimvm:
-        for i in 0 ..< stop - pos:
-          if src[pos - offset + i] != src[pos + i]:
-            break
-          inc matchLen
-      else:
-        var i: int
-        while i < stop - pos:
-          let
-            bytesToCheck = min(8, stop - pos - i)
-            v = read64(src[pos - offset + i].unsafeAddr) xor
+      var
+        matchLen: int
+        i: int
+      while i < stop - pos:
+        var useFastPath: bool
+        when nimvm:
+          useFastPath = false
+        else:
+          # Can we look at the next 8 bytes?
+          useFastPath = stop - pos - i > 8
+        if useFastPath:
+          let v = read64(src[pos - offset + i].unsafeAddr) xor
               read64(src[pos + i].unsafeAddr)
           if v == 0:
-            inc(matchLen, bytesToCheck)
+            inc(matchLen, 8)
           else:
             let
               zeroBits = countTrailingZeroBits(v)
-              matchingBytes = min(zeroBits shr 3, bytesToCheck)
+              matchingBytes = min(zeroBits shr 3, 8)
             inc(matchLen, matchingBytes)
-            if matchingBytes < bytesToCheck:
+            if matchingBytes < 8:
               break
-          inc(i, bytesToCheck)
+          inc(i, 8)
+        else:
+          if src[pos - offset + i] != src[pos + i]:
+            break
+          inc matchLen
+          inc i
 
       if matchLen > longestMatchLen:
         longestMatchLen = matchLen

@@ -1,17 +1,18 @@
-import random, zippy
-
-randomize()
+import random, zippy, times
 
 # Generate random blobs of data containing runs of random lengths. Ensure
 # we can always compress this blob and that uncompressing the compressed
 # data matches the original blob.
 
+let seed = epochTime().int
+var r = initRand(seed)
+
 for i in 0 ..< 10000:
-  echo i
+  echo "Test ", i, " (seed ", seed, ")"
 
   var
     data: seq[uint8]
-    length = rand(100000)
+    length = r.rand(100000)
     i: int
   data.setLen(length)
   while i < length:

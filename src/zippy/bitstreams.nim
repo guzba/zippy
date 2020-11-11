@@ -135,10 +135,7 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
       bitsLeftInByte = 8 - b.bitPos
       bitsAdded = min(bitsLeftInByte, bitsRemaining) # Can be 0 which is fine
       bitsToAdd = (value shr (bits - bitsRemaining)) shl b.bitPos
-    when nimvm:
-      b.data[b.bytePos] = b.data[b.bytePos] or (bitsToAdd and 255).uint8
-    else:
-      b.data[b.bytePos] = b.data[b.bytePos] or bitsToAdd.uint8
+    b.data[b.bytePos] = b.data[b.bytePos] or (bitsToAdd and 255).uint8
     dec(bitsRemaining, bitsAdded)
     b.movePos(bitsAdded)
 
