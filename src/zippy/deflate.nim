@@ -31,15 +31,18 @@ func huffmanCodeLengths(
     quickSort(s, lo, pivot - 1)
     quickSort(s, pivot + 1, hi)
 
-  var numSymbolsUsed: int
-  for freq in frequencies:
+  var
+    highestSymbol: int
+    numSymbolsUsed: int
+  for symbol, freq in frequencies:
     if freq > 0:
+      highestSymbol = symbol
       inc numSymbolsUsed
 
-  let numCodes = frequencies.len # max(numSymbolsUsed, minCodes)
   var
-    lengths = newSeq[uint8](frequencies.len)
-    codes = newSeq[uint16](frequencies.len)
+    numCodes = max(highestSymbol + 1, 2)
+    lengths = newSeq[uint8](numCodes)
+    codes = newSeq[uint16](numCodes)
 
   if numSymbolsUsed == 0:
     lengths[0] = 1
@@ -129,6 +132,12 @@ func huffmanCodeLengths(
     if lengths[i] != 0:
       codes[i] = reverseUint16(nextCode[lengths[i]], lengths[i])
       inc nextCode[lengths[i]]
+
+  numCodes = max(numCodes, minCodes)
+  if lengths.len < numCodes:
+    lengths.setLen(numCodes)
+  if codes.len < numCodes:
+    codes.setLen(numCodes)
 
   (numCodes, lengths, codes)
 
