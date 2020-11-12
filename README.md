@@ -28,7 +28,7 @@ Benchmarks can be run comparing different deflate implementations. My benchmarki
 
 ### Compress
 
-Each file is compressed 1000 times at the default compression level.
+Each file is compressed 1000 times at the default compression level:
 
 **https://github.com/guzba/zippy** compress results:
 File | Time | % Size Reduction
@@ -46,7 +46,7 @@ urls.10K | 16.6361s | 68.29%
 rfctest3.gold | 0.8147s | 71.74%
 randtest3.gold | 0.1545s | 0%
 
-Each file is compressed 1000 times at the fastest compression level.
+Each file is compressed 1000 times at the fastest compression level:
 
 **https://github.com/guzba/zippy** compress results:
 File | Time | % Size Reduction
@@ -64,7 +64,7 @@ urls.10K | 7.3260s | 63.93%
 rfctest3.gold | 0.3270s | 67.53%
 randtest3.gold | 0.1189s | 0%
 
-Each file is compressed 1000 times at the best compression level.
+Each file is compressed 1000 times at the best compression level:
 
 **https://github.com/guzba/zippy** compress results:
 
@@ -80,7 +80,7 @@ randtest3.gold | 0.1557s | 0%
 
 ### Uncompress
 
-Each file is uncompressed 1000 times.
+Each file is uncompressed 1000 times:
 
 **https://github.com/guzba/zippy** uncompress results:
 File | Time
