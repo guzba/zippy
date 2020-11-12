@@ -15,6 +15,7 @@ func huffmanCodeLengths(
     weight: int
 
   func quickSort(a: var seq[Coin], lo, hi: int) =
+    ## Assumes a.len and lo, hi are <= uint16.high
     var
       stack: array[32, uint32]
       top = 0
