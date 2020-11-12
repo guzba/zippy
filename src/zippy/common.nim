@@ -16,7 +16,7 @@ const
   minMatchLen* = 3
   maxMatchLen* = 258
 
-  # For run length encodings (lz77, snappy), he uint16 high bit is reserved
+  # For run length encodings (lz77, snappy), the uint16 high bit is reserved
   # to signal that a offset and length are encoded in the uint16.
   maxLiteralLength* = uint16.high.int shr 1
 
@@ -172,7 +172,7 @@ template reverseUint16*(code: uint16, length: uint8): uint16 =
     (bitReverseTable[(code shr 8).uint8].uint16)
   ) shr (16 - length)
 
-func findCodeIndex*(a: openarray[uint16], value: uint16): uint16 =
+func findCodeIndex*(a: openarray[uint16], value: uint16): uint16 {.inline.} =
   let mid = (1 + a.len) div 2
   var l, r: int
   if value < a[mid]:

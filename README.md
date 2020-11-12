@@ -52,8 +52,8 @@ Each file is compressed 1000 times at the fastest compression level.
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 2.3123s | 55.13%
-urls.10K | 7.1137s | 60.92%
-rfctest3.gold | 0.6386s | 66.23%
+urls.10K | 6.9566s | 60.92%
+rfctest3.gold | 0.6286s | 66.23%
 randtest3.gold | 0.0630s | 0%
 
 https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
