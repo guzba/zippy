@@ -1,5 +1,5 @@
 packageName   = "zippy"
-version       = "0.3.0"
+version       = "0.3.1"
 author        = "Ryan Oldenburg"
 description   = "In-progress pure Nim implementation of deflate and zlib."
 license       = "MIT"

@@ -1,4 +1,4 @@
-import random, times, zippy
+import random, times, zippy, zip/zlib
 
 # Generate random blobs of data containing runs of random lengths. Ensure
 # we can always compress this blob and that uncompressing the compressed
@@ -42,10 +42,18 @@ for i in 0 ..< 10000:
         compressed = compress(data)
         uncompressed = uncompress(compressed)
       doAssert uncompressed == data
+      doAssert zlib.uncompress(
+        cast[string](compressed),
+        stream = GZIP_STREAM
+      ) == cast[string](data)
       fuzz()
     block: # shuffled
       var
         compressed = compress(shuffled)
         uncompressed = uncompress(compressed)
       doAssert uncompressed == shuffled
+      doAssert zlib.uncompress(
+        cast[string](compressed),
+        stream = GZIP_STREAM
+      ) == cast[string](shuffled)
       fuzz()

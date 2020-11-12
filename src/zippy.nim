@@ -145,6 +145,9 @@ func uncompress(
       #   raise newException(ZippyError, "Header checksum verification failed")
       inc(pos, 2)
 
+    if pos + 8 >= src.len:
+      failUncompress()
+
     inflate(src[pos ..< ^8], dst)
 
     let checksum = read32(src, src.len - 8)
