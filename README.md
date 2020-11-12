@@ -35,10 +35,10 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 4.1749s | 62.33%
-urls.10K | 16.3202s | 67.01%
-rfctest3.gold | 0.9264s | 70.91%
-randtest3.gold | 0.1621s | 0%
+alice29.txt | 4.3357s | 62.53%
+urls.10K | 15.8984s | 67.57%
+rfctest3.gold | 0.9038s | 70.96%
+randtest3.gold | 0.1568s | 0%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
@@ -53,9 +53,9 @@ randtest3.gold | 0.1545s | 0%
 **https://github.com/guzba/zippy** results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 1.6806s | 55.13%
-urls.10K | 5.5647s | 60.92%
-rfctest3.gold | 0.5463s | 66.23%
+alice29.txt | 1.6575s | 55.32%
+urls.10K | 5.4517s | 61.70%
+rfctest3.gold | 0.5362s | 66.31%
 randtest3.gold | 0.0646s | 0%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
