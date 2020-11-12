@@ -17,8 +17,8 @@ for i in 0 ..< 10000:
   data.setLen(length)
   while i < length:
     let
-      v = rand(255).uint8
-      runLength = min(rand(255), length - i)
+      v = r.rand(255).uint8
+      runLength = min(r.rand(255), length - i)
     for j in 0 ..< runLength:
       data[i + j] = v
     inc(i, runLength)
@@ -29,8 +29,8 @@ for i in 0 ..< 10000:
   template fuzz() =
     try:
       let
-        pos = rand(compressed.len - 1)
-        value = rand(255).uint8
+        pos = r.rand(compressed.len - 1)
+        value = r.rand(255).uint8
       compressed[pos] = value
       doAssert uncompress(compressed).len > 0
     except ZippyError:
