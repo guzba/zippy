@@ -1,4 +1,4 @@
-import bitstreams, common, zippy/lz77, zippy/snappy, strformat, zippyerror
+import bitstreams, common, zippy/lz77, zippy/snappy, zippyerror
 
 const
   # These are not the true max lengths, they trade off speed vs compression
@@ -198,7 +198,7 @@ func deflateNoCompression(src: seq[uint8]): seq[uint8] =
 
 func deflate*(src: seq[uint8], level = -1): seq[uint8] =
   if level < -2 or level > 9:
-    raise newException(ZippyError, &"Invalid compression level {level}")
+    raise newException(ZippyError, "Invalid compression level " & $level)
 
   if level == 0:
     return deflateNoCompression(src)

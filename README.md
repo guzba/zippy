@@ -162,7 +162,7 @@ Compresses src and returns the compressed data.
 
 ```nim
 func compress(src: seq[uint8]; level = DefaultCompression; dataFormat = dfGzip): seq[
- uint8] {.raises: [ZippyError, ValueError].}
+ uint8] {.raises: [ZippyError].}
 ```
 
 ## **template** compress
