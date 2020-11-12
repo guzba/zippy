@@ -2,7 +2,7 @@ import bitops, zippy/zippyerror
 
 type
   CompressionConfig* = object
-    good, lazy, nice, chain: int
+    good*, lazy*, nice*, chain*: int
 
 const
   # DEFLATE RFC constants
@@ -120,9 +120,9 @@ const
   configurationTable* = [
     ## See https://github.com/madler/zlib/blob/master/deflate.c#L134
     CompressionConfig(), # No compression
-    CompressionConfig(), # Custom algorithm based on Snappy
-    CompressionConfig(good: 4, lazy: 0, nice: 16, chain: 8),
-    CompressionConfig(good: 4, lazy: 0, nice: 32, chain: 32),
+    CompressionConfig(good: 4, lazy: 4, nice: 8, chain: 4),
+    CompressionConfig(good: 4, lazy: 5, nice: 16, chain: 8),
+    CompressionConfig(good: 4, lazy: 6, nice: 32, chain: 32),
     CompressionConfig(good: 4, lazy: 4, nice: 16, chain: 16),
     CompressionConfig(good: 8, lazy: 16, nice: 32, chain: 32),
     CompressionConfig(good: 8, lazy: 16, nice: 128, chain: 128), # Default
