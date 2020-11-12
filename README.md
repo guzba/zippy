@@ -28,9 +28,11 @@ Benchmarks can be run comparing different deflate implementations. My benchmarki
 
 ### Compress
 
-Each file is compressed 1000 times at the default compression level:
+Each file is compressed 1000 times.
 
-**https://github.com/guzba/zippy** compress results:
+#### Default compression
+
+**https://github.com/guzba/zippy** results:
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 4.1749s | 62.33%
@@ -38,7 +40,7 @@ urls.10K | 16.3202s | 67.01%
 rfctest3.gold | 0.9264s | 70.91%
 randtest3.gold | 0.1621s | 0%
 
-https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
+https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 7.0150s | 64.23%
@@ -46,9 +48,9 @@ urls.10K | 16.6361s | 68.29%
 rfctest3.gold | 0.8147s | 71.74%
 randtest3.gold | 0.1545s | 0%
 
-Each file is compressed 1000 times at the fastest compression level:
+#### Fastest compression
 
-**https://github.com/guzba/zippy** compress results:
+**https://github.com/guzba/zippy** results:
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 1.6806s | 55.13%
@@ -56,7 +58,7 @@ urls.10K | 5.5647s | 60.92%
 rfctest3.gold | 0.5463s | 66.23%
 randtest3.gold | 0.0646s | 0%
 
-https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
+https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 1.7779s | 57.17%
@@ -64,13 +66,13 @@ urls.10K | 7.3260s | 63.93%
 rfctest3.gold | 0.3270s | 67.53%
 randtest3.gold | 0.1189s | 0%
 
-Each file is compressed 1000 times at the best compression level:
+#### Best compression
 
-**https://github.com/guzba/zippy** compress results:
+**https://github.com/guzba/zippy** results:
 
 (In-progress)
 
-https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
+https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 10.0080s | 64.38%
@@ -82,7 +84,7 @@ randtest3.gold | 0.1557s | 0%
 
 Each file is uncompressed 1000 times:
 
-**https://github.com/guzba/zippy** uncompress results:
+**https://github.com/guzba/zippy** results:
 File | Time
 --- | ---:
 alice29.txt | 0.9706s
@@ -90,7 +92,7 @@ urls.10K | 4.7821s
 rfctest3.gold | 0.2142s
 randtest3.gold | 0.0378s
 
-https://github.com/nim-lang/zip uncompress results: (Requires zlib1.dll)
+https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time
 --- | ---:
 alice29.txt | 0.4929s
