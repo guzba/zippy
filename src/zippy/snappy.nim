@@ -46,8 +46,8 @@ func encodeFragment(
       encoded.setLen(encoded.len * 2)
 
     let
-      lengthIndex = findCodeIndex(baseLengths, length.uint16)
-      distIndex = findCodeIndex(baseDistance, offset.uint16)
+      lengthIndex = baseLengthIndices[length - minMatchLen].uint16
+      distIndex = distanceCodeIndex((offset - 1).uint16)
     inc freqLitLen[lengthIndex + firstLengthCodeIndex]
     inc freqDist[distIndex]
 
@@ -136,7 +136,7 @@ func snappyEncode*(
   var
     encoded = newSeq[uint16](4096)
     freqLitLen = newSeq[int](286)
-    freqDist = newSeq[int](baseDistance.len)
+    freqDist = newSeq[int](baseDistances.len)
     literalsTotal: int
 
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol

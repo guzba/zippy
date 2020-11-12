@@ -143,7 +143,8 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
   # 16 bits cannot spread out across more than 3 bytes
   add()
   add()
-  add()
+  if bitsRemaining > 0:
+    add()
 
 when defined(release):
   {.pop.}

@@ -17,7 +17,7 @@ func lz77Encode*(
   var
     encoded = newSeq[uint16](src.len div 2)
     freqLitLen = newSeq[int](286)
-    freqDist = newSeq[int](baseDistance.len)
+    freqDist = newSeq[int](baseDistances.len)
     op, literalsTotal: int
 
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
@@ -35,8 +35,8 @@ func lz77Encode*(
       encoded.setLen(encoded.len * 2)
 
     let
-      lengthIndex = findCodeIndex(baseLengths, length.uint16)
-      distIndex = findCodeIndex(baseDistance, offset.uint16)
+      lengthIndex = baseLengthIndices[length - minMatchLen].uint16
+      distIndex = distanceCodeIndex((offset - 1).uint16)
     inc freqLitLen[lengthIndex + firstLengthCodeIndex]
     inc freqDist[distIndex]
 

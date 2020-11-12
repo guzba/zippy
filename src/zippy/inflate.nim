@@ -209,12 +209,12 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
         ).int
         distIndex = decodeSymbol(b, distanceHuffman)
 
-      if distIndex >= baseDistance.len:
+      if distIndex >= baseDistances.len:
         failUncompress()
 
       let
         totalDist = (
-          baseDistance[distIndex] +
+          baseDistances[distIndex] +
           b.readBits(baseDistanceExtraBits[distIndex])
         ).int
 

@@ -156,7 +156,7 @@ func huffmanOnlyEncode(
   var
     encoded = newSeq[uint16]()
     freqLitLen = newSeq[int](286)
-    freqDist = newSeq[int](baseDistance.len)
+    freqDist = newSeq[int](baseDistances.len)
 
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
@@ -212,7 +212,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
       # -1 or [2, 9]
       lz77Encode(src, configurationTable[if level == -1: 6 else: level])
 
-  # If lz77 encoding returned almost all literal runs then write uncompressed.
+  # If encoding returned almost all literals then write uncompressed.
   if literalsTotal >= (src.len.float32 * 0.98).int:
     return deflateNoCompression(src)
 
@@ -341,7 +341,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
           lengthExtraBits = baseLengthsExtraBits[lengthIndex]
           lengthExtra = length - baseLengths[lengthIndex]
           distExtraBits = baseDistanceExtraBits[distIndex]
-          distExtra = offset - baseDistance[distIndex]
+          distExtra = offset - baseDistances[distIndex]
         inc(encPos, 3)
         inc(srcPos, length.int)
 

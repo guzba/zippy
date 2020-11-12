@@ -33,10 +33,10 @@ Each file is compressed 1000 times at the default compression level.
 **https://github.com/guzba/zippy** compress results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 4.7218s | 62.33%
-urls.10K | 17.8483s | 67.01%
-rfctest3.gold | 1.0323s | 70.91%
-randtest3.gold | 0.1635s | 0%
+alice29.txt | 4.1749s | 62.33%
+urls.10K | 16.3202s | 67.01%
+rfctest3.gold | 0.9264s | 70.91%
+randtest3.gold | 0.1621s | 0%
 
 https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
 File | Time | % Size Reduction
@@ -51,10 +51,10 @@ Each file is compressed 1000 times at the fastest compression level.
 **https://github.com/guzba/zippy** compress results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 2.3123s | 55.13%
-urls.10K | 6.9566s | 60.92%
-rfctest3.gold | 0.6286s | 66.23%
-randtest3.gold | 0.0630s | 0%
+alice29.txt | 1.6806s | 55.13%
+urls.10K | 5.5647s | 60.92%
+rfctest3.gold | 0.5463s | 66.23%
+randtest3.gold | 0.0646s | 0%
 
 https://github.com/nim-lang/zip compress results: (Requires zlib1.dll)
 File | Time | % Size Reduction
