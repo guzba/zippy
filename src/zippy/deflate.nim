@@ -39,7 +39,7 @@ func huffmanCodeLengths(
         elif a[r].weight > p:
           dec r
         else:
-          swap a[l], a[r]
+          swap(a[l], a[r])
           inc l
           dec r
 

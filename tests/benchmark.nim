@@ -17,58 +17,6 @@ const
   ]
   iterations = 1000
 
-block guzba_zippy_uncompress:
-  echo "https://github.com/guzba/zippy uncompress"
-  for z in zs:
-    let
-      compressed = readFile(&"tests/data/{z}")
-      start = getMonoTime().ticks
-    var c: int
-    for i in 0 ..< iterations:
-      let uncompressed = zippy.uncompress(compressed)
-      inc(c, uncompressed.len)
-    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
-    echo &"  {z}: {delta:.4f}s [{c}]"
-
-block nimlang_zip_uncompress: # Requires zlib1.dll
-  echo "https://github.com/nim-lang/zip uncompress"
-  for z in zs:
-    let
-      compressed = readFile(&"tests/data/{z}")
-      start = getMonoTime().ticks
-    var c: int
-    for i in 0 ..< iterations:
-      let uncompressed = zlib.uncompress(compressed, stream = ZLIB_STREAM)
-      inc(c, uncompressed.len)
-    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
-    echo &"  {z}: {delta:.4f}s [{c}]"
-
-# block treeform_miniz_uncompress:
-#   echo "https://github.com/treeform/miniz uncompress"
-#   for z in zs:
-#     let
-#       compressed = readFile(&"tests/data/{z}")
-#       start = getMonoTime().ticks
-#     var c: int
-#     for i in 0 ..< iterations:
-#       let uncompressed = miniz.uncompress(compressed)
-#       inc(c, uncompressed.len)
-#     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
-#     echo &"  {z}: {delta:.4f}s [{c}]"
-
-# block jangko_nimPNG_uncompress:
-#   echo "https://github.com/jangko/nimPNG uncompress"
-#   for z in zs:
-#     let
-#       compressed = readFile(&"tests/data/{z}")
-#       start = getMonoTime().ticks
-#     var c: int
-#     for i in 0 ..< iterations:
-#       let uncompressed = zlib_decompress(nzInflateInit(compressed))
-#       inc(c, uncompressed.len)
-#     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
-#     echo &"  {z}: {delta:.4f}s [{c}]"
-
 block guzba_zippy_compress:
   echo "https://github.com/guzba/zippy compress [default]"
   for gold in golds:
@@ -190,3 +138,55 @@ block nimlang_zip_compress: # Requires zlib1.dll
       delta = float64(getMonoTime().ticks - start) / 1000000000.0
       reduction = 100 - (c / (uncompressed.len * iterations)) * 100
     echo &"  {gold}: {delta:.4f}s {(reduction):0.2f}%"
+
+block guzba_zippy_uncompress:
+  echo "https://github.com/guzba/zippy uncompress"
+  for z in zs:
+    let
+      compressed = readFile(&"tests/data/{z}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let uncompressed = zippy.uncompress(compressed)
+      inc(c, uncompressed.len)
+    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+    echo &"  {z}: {delta:.4f}s [{c}]"
+
+block nimlang_zip_uncompress: # Requires zlib1.dll
+  echo "https://github.com/nim-lang/zip uncompress"
+  for z in zs:
+    let
+      compressed = readFile(&"tests/data/{z}")
+      start = getMonoTime().ticks
+    var c: int
+    for i in 0 ..< iterations:
+      let uncompressed = zlib.uncompress(compressed, stream = ZLIB_STREAM)
+      inc(c, uncompressed.len)
+    let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+    echo &"  {z}: {delta:.4f}s [{c}]"
+
+# block treeform_miniz_uncompress:
+#   echo "https://github.com/treeform/miniz uncompress"
+#   for z in zs:
+#     let
+#       compressed = readFile(&"tests/data/{z}")
+#       start = getMonoTime().ticks
+#     var c: int
+#     for i in 0 ..< iterations:
+#       let uncompressed = miniz.uncompress(compressed)
+#       inc(c, uncompressed.len)
+#     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+#     echo &"  {z}: {delta:.4f}s [{c}]"
+
+# block jangko_nimPNG_uncompress:
+#   echo "https://github.com/jangko/nimPNG uncompress"
+#   for z in zs:
+#     let
+#       compressed = readFile(&"tests/data/{z}")
+#       start = getMonoTime().ticks
+#     var c: int
+#     for i in 0 ..< iterations:
+#       let uncompressed = zlib_decompress(nzInflateInit(compressed))
+#       inc(c, uncompressed.len)
+#     let delta = float64(getMonoTime().ticks - start) / 1000000000.0
+#     echo &"  {z}: {delta:.4f}s [{c}]"

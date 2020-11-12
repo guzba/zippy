@@ -1,4 +1,4 @@
-import random
+import algorithm, random
 
 randomize()
 
@@ -49,37 +49,37 @@ proc quickSort_2(a: var seq[int], inl, inr: int) =
   quickSort2(a, inl, r)
   quickSort2(a, l, inr)
 
-proc quickSort_3(a: var seq[int], lo, hi: int) =
-  var
-    piv, i, l, r: int
-    b: array[32, int]
-    e: array[32, int]
+# proc quickSort_3(a: var seq[int], lo, hi: int) =
+#   var
+#     piv, i, l, r: int
+#     b: array[64, int]
+#     e: array[64, int]
 
-  b[0] = lo
-  e[0] = hi + 1
-  while i >= 0:
-    l = b[i]
-    r = e[i] - 1
-    if l < r:
-      piv = a[l];
-      while l < r:
-        while a[r] >= piv and l < r:
-          dec r
-        if l < r:
-          a[l] = a[r]
-          inc l
-        while a[l] <= piv and l < r:
-          inc l
-        if l < r:
-          a[r]=a[l]
-          dec r
-      a[l]=piv
-      b[i+1]=l+1
-      e[i+1]=e[i]
-      e[i]=l
-      inc i
-    else:
-      dec i
+#   b[0] = lo
+#   e[0] = hi + 1
+#   while i >= 0:
+#     l = b[i]
+#     r = e[i] - 1
+#     if l < r:
+#       piv = a[l];
+#       while l < r:
+#         while a[r] >= piv and l < r:
+#           dec r
+#         if l < r:
+#           a[l] = a[r]
+#           inc l
+#         while a[l] <= piv and l < r:
+#           inc l
+#         if l < r:
+#           a[r]=a[l]
+#           dec r
+#       a[l]=piv
+#       b[i+1]=l+1
+#       e[i+1]=e[i]
+#       e[i]=l
+#       inc i
+#     else:
+#       dec i
 
 proc quickSort_4(a: var seq[int], lo, hi: int) =
   var
@@ -124,41 +124,55 @@ var
   n2 = numbers
   n3 = numbers
   n4 = numbers
-quickSort_1(n1, 0, numbers.high)
-quickSort_2(n2, 0, numbers.high)
-quickSort_3(n3, 0, numbers.high)
-quickSort_4(n4, 0, numbers.high)
+  n5 = numbers
+insertionSort(n1, numbers.high)
+quickSort_1(n2, 0, numbers.high)
+quickSort_2(n3, 0, numbers.high)
+# quickSort_3(n4, 0, numbers.high)
+quickSort_4(n5, 0, numbers.high)
 
-assert n1 == n2
-assert n2 == n3
-assert n3 == n4
+assert n2 == n1
+assert n3 == n1
+# assert n4 == n1
+assert n5 == n1
 
 import fidget/opengl/perf
 
+template makeUnsorted(): seq[int] =
+  var unsorted = newSeq[int](600)
+  for i in 0 ..< 300:
+    unsorted[i] = rand(500)
+  sort(unsorted)
+  for i in 0 ..< 300:
+    unsorted[i + 300] = rand(1000)
+  unsorted
+
+timeIt "default sort":
+  for i in 0 ..< 10000:
+    var unsorted = makeUnsorted()
+    sort(unsorted)
+
+timeIt "insertionSort":
+  for i in 0 ..< 10000:
+    var unsorted = makeUnsorted()
+    insertionSort(unsorted, unsorted.high)
+
 timeIt "quickSort_1":
-  for i in 0 ..< 20000:
-    var unsorted = newSeq[int](600)
-    for i in 0 ..< unsorted.len:
-      unsorted[i] = rand(1000)
+  for i in 0 ..< 10000:
+    var unsorted = makeUnsorted()
     quickSort_1(unsorted, 0, unsorted.high)
 
 timeIt "quickSort_2":
-  for i in 0 ..< 20000:
-    var unsorted = newSeq[int](600)
-    for i in 0 ..< unsorted.len:
-      unsorted[i] = rand(1000)
+  for i in 0 ..< 10000:
+    var unsorted = makeUnsorted()
     quickSort_2(unsorted, 0, unsorted.high)
 
-timeIt "quickSort_3":
-  for i in 0 ..< 20000:
-    var unsorted = newSeq[int](600)
-    for i in 0 ..< unsorted.len:
-      unsorted[i] = rand(1000)
-    quickSort_3(unsorted, 0, unsorted.high)
+# timeIt "quickSort_3":
+#   for i in 0 ..< 10000:
+#     var unsorted = makeUnsorted()
+#     quickSort_3(unsorted, 0, unsorted.high)
 
 timeIt "quickSort_4":
-  for i in 0 ..< 20000:
-    var unsorted = newSeq[int](600)
-    for i in 0 ..< unsorted.len:
-      unsorted[i] = rand(1000)
+  for i in 0 ..< 10000:
+    var unsorted = makeUnsorted()
     quickSort_4(unsorted, 0, unsorted.high)
