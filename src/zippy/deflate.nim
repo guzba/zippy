@@ -14,22 +14,37 @@ func huffmanCodeLengths(
     symbols: seq[uint16]
     weight: int
 
-  func quickSort(s: var seq[Coin], lo, hi: int) =
-    if lo >= hi:
-      return
-
+  func quickSort(a: var seq[Coin], lo, hi: int) =
     var
-      pivot = lo
-      swapPos = lo + 1
-    for i in lo + 1 .. hi:
-      if s[i].weight < s[pivot].weight:
-        swap(s[i], s[swapPos])
-        swap(s[pivot], s[swapPos])
-        inc pivot
-        inc swapPos
+      stack: array[32, uint32]
+      top = 0
+    stack[0] = (hi.uint32 shl 16) or lo.uint32
 
-    quickSort(s, lo, pivot - 1)
-    quickSort(s, pivot + 1, hi)
+    while top >= 0:
+      var
+        inr = stack[top] shr 16
+        inl = stack[top] and 0xffff.uint32
+      dec top
+      var
+        r = if inr >= 0: inr else: a.high.uint32
+        l = inl
+      let n = r - l + 1
+      if n < 2:
+        continue
+      let p = a[l + 3 * n div 4].weight
+      while l <= r:
+        if a[l].weight < p:
+          inc l
+        elif a[r].weight > p:
+          dec r
+        else:
+          swap a[l], a[r]
+          inc l
+          dec r
+
+      stack[top + 1] = (r shl 16) or inl
+      stack[top + 2] = (inr shl 16) or l
+      inc(top, 2)
 
   var
     highestSymbol: int

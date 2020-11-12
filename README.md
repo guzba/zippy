@@ -35,15 +35,15 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 4.3357s | 62.53%
-urls.10K | 15.8984s | 67.57%
-rfctest3.gold | 0.9038s | 70.96%
-randtest3.gold | 0.1568s | 0%
+alice29.txt | 4.1943s | 62.53%
+urls.10K | 15.8416s | 67.57%
+rfctest3.gold | 0.8854s | 70.96%
+randtest3.gold | 0.1572s | 0%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 7.0150s | 64.23%
+alice29.txt | 6.8945s | 64.23%
 urls.10K | 16.6361s | 68.29%
 rfctest3.gold | 0.8147s | 71.74%
 randtest3.gold | 0.1545s | 0%
@@ -55,7 +55,7 @@ File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 1.6575s | 55.32%
 urls.10K | 5.4517s | 61.70%
-rfctest3.gold | 0.5122s | 66.31%
+rfctest3.gold | 0.5094s | 66.31%
 randtest3.gold | 0.0646s | 0%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
@@ -75,7 +75,7 @@ randtest3.gold | 0.1189s | 0%
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 10.0080s | 64.38%
+alice29.txt | 9.9680s | 64.38%
 urls.10K | 30.6367s | 68.82%
 rfctest3.gold | 2.6664s | 71.77%
 randtest3.gold | 0.1557s | 0%
