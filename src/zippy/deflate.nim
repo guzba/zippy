@@ -6,9 +6,9 @@ when defined(release):
 func huffmanCodeLengths(
   frequencies: seq[int], minCodes: int
 ): (int, seq[uint8], seq[uint16]) =
-  # See https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
-
-  # TODO: Revisit this with a better understanding of the Coin Collector algo.
+  ## https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
+  ## https://en.wikipedia.org/wiki/Package-merge_algorithm#Reduction_of_length-limited_Huffman_coding_to_the_coin_collector%27s_problem
+  ## https://en.wikipedia.org/wiki/Canonical_Huffman_code
 
   type Coin = object
     symbols: seq[uint16]
@@ -30,22 +30,6 @@ func huffmanCodeLengths(
 
     quickSort(s, lo, pivot - 1)
     quickSort(s, pivot + 1, hi)
-
-  func insertionSort(s: var seq[Coin], hi: int) =
-    for i in 1 .. hi:
-      var
-        j = i - 1
-        k = i
-      while j >= 0 and s[j].weight > s[k].weight:
-        swap(s[j + 1], s[j])
-        dec j
-        dec k
-
-  template sort(s: var seq[Coin], lo, hi: int) =
-    if hi - lo < 64:
-      insertionSort(s, hi)
-    else:
-      quickSort(s, lo, hi)
 
   var numSymbolsUsed: int
   for freq in frequencies:
@@ -93,7 +77,7 @@ func huffmanCodeLengths(
 
     addSymbolCoins(coins, 0)
 
-    sort(coins, 0, numSymbolsUsed - 1)
+    quickSort(coins, 0, numSymbolsUsed - 1)
 
     var
       numCoins = numSymbolsUsed
@@ -122,7 +106,7 @@ func huffmanCodeLengths(
       addSymbolCoins(coins, numCoins)
       inc(numCoins, numSymbolsUsed)
 
-      sort(coins, 0, numCoins - 1)
+      quickSort(coins, 0, numCoins - 1)
 
       lastTime = numCoins == numCoinsPrev
 
