@@ -125,8 +125,8 @@ func uncompress(
 
     func nextZeroByte(s: seq[uint8], start: int): int =
       for i in start ..< s.len:
-        if s[start + i] == 0:
-          return start + i
+        if s[i] == 0:
+          return i
       failUncompress()
 
     if fextra:

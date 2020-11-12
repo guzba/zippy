@@ -1,21 +1,14 @@
 import bitstreams, common, zippy/lz77, zippy/snappy, zippyerror
 
-const
-  # These are not the true max lengths, they trade off speed vs compression
-  maxLitLenCodeLength = 9
-  maxDistCodeLength = 6
-
 when defined(release):
   {.push checks: off.}
 
 func huffmanCodeLengths(
-  frequencies: seq[int], minCodes, maxBitLen: int
+  frequencies: seq[int], minCodes: int
 ): (int, seq[uint8], seq[uint16]) =
   # See https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
 
   # TODO: Revisit this with a better understanding of the Coin Collector algo.
-
-  assert maxBitLen <= maxCodeLength
 
   type Coin = object
     symbols: seq[uint16]
@@ -105,7 +98,8 @@ func huffmanCodeLengths(
     var
       numCoins = numSymbolsUsed
       numCoinsPrev = 0
-    for bitLen in 1 .. maxBitLen:
+      lastTime: bool
+    while true:
       swap(prevCoins, coins)
       swap(numCoinsPrev, numCoins)
 
@@ -122,11 +116,15 @@ func huffmanCodeLengths(
         coins[numCoins].weight += prevCoins[i + 1].weight
         inc numCoins
 
-      if bitLen < maxBitLen:
-        addSymbolCoins(coins, numCoins)
-        inc(numCoins, numSymbolsUsed)
+      if lastTime:
+        break
+
+      addSymbolCoins(coins, numCoins)
+      inc(numCoins, numSymbolsUsed)
 
       sort(coins, 0, numCoins - 1)
+
+      lastTime = numCoins == numCoinsPrev
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:
@@ -139,7 +137,7 @@ func huffmanCodeLengths(
   lengthCounts[0] = 0
 
   var nextCode: array[maxCodeLength + 1, uint16]
-  for i in 1 .. maxBitLen:
+  for i in 1 .. maxCodeLength:
     nextCode[i] = (nextCode[i - 1] + lengthCounts[i - 1]) shl 1
 
   # Convert to canonical codes (+ reversed)
@@ -219,12 +217,8 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
   # Deflate using dynamic Huffman tree
 
   let
-    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(
-      freqLitLen, 257, maxLitLenCodeLength
-    )
-    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(
-      freqDist, 2, maxDistCodeLength
-    )
+    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(freqLitLen, 257)
+    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(freqDist, 2)
 
   var bitLens = newSeqOfCap[uint8](llNumCodes + distNumCodes)
   for i in 0 ..< llNumCodes:
@@ -280,7 +274,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         inc i
       inc i
 
-  let (_, clLengths, clCodes) = huffmanCodeLengths(clFreq, clFreq.len, 7)
+  let (_, clLengths, clCodes) = huffmanCodeLengths(clFreq, clFreq.len)
 
   var bitLensCodeLen = newSeq[uint8](clFreq.len)
   for i in 0 ..< bitLensCodeLen.len:
@@ -359,7 +353,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         let length = encoded[encPos].int
         inc encPos
 
-        let worstCaseBytesNeeded = (length * maxLitLenCodeLength + 7) div 8
+        let worstCaseBytesNeeded = (length * maxCodeLength + 7) div 8
         if b.bytePos + worstCaseBytesNeeded >= b.data.len:
           b.data.setLen(max(b.bytePos + worstCaseBytesNeeded, b.data.len * 2))
 
