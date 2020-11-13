@@ -1,4 +1,4 @@
-import zippy/common, zippy/deflate, zippy/inflate, zippy/zippyerror
+import zippy/common, zippy/crc, zippy/deflate, zippy/inflate, zippy/zippyerror
 
 export zippyerror
 
@@ -75,16 +75,7 @@ template compress*(
 ): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
-    # This is unfortunately needed to convert to and from string -> seq[uint]
-    # since we cannot cast when nimvm.
-    var tmp = newSeq[uint8](src.len)
-    for i, c in src:
-      tmp[i] = c.uint8
-    let compressed = compress(tmp, level, dataFormat)
-    var result = newStringOfCap(compressed.len)
-    for c in compressed:
-      result.add(c.char)
-    result
+    vmSeq2Str(compress(vmStr2Seq(src), level, dataFormat))
   else:
     cast[string](compress(cast[seq[uint8]](src), level, dataFormat))
 
@@ -221,15 +212,6 @@ func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
 template uncompress*(src: string, dataFormat = dfDetect): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
-    # This is unfortunately needed to convert to and from string -> seq[uint]
-    # since we cannot cast when nimvm.
-    var tmp = newSeq[uint8](src.len)
-    for i, c in src:
-      tmp[i] = c.uint8
-    let uncompressed = uncompress(tmp)
-    var result = newStringOfCap(uncompressed.len)
-    for c in uncompressed:
-      result.add(c.char)
-    result
+    vmSeq2Str(uncompress(vmStr2Seq(src)))
   else:
     cast[string](uncompress(cast[seq[uint8]](src), dataFormat))
