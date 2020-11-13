@@ -1,4 +1,4 @@
-import algorithm, random
+import algorithm, fidget/opengl/perf, random
 
 randomize()
 
@@ -61,7 +61,7 @@ proc quickSort_3(a: var seq[int], lo, hi: int) =
     l = b[i]
     r = e[i] - 1
     if l < r:
-      piv = a[l];
+      piv = a[l]
       while l < r:
         while a[r] >= piv and l < r:
           dec r
@@ -71,12 +71,12 @@ proc quickSort_3(a: var seq[int], lo, hi: int) =
         while a[l] <= piv and l < r:
           inc l
         if l < r:
-          a[r]=a[l]
+          a[r] = a[l]
           dec r
-      a[l]=piv
-      b[i+1]=l+1
-      e[i+1]=e[i]
-      e[i]=l
+      a[l] = piv
+      b[i+1] = l+1
+      e[i+1] = e[i]
+      e[i] = l
       inc i
     else:
       dec i
@@ -286,8 +286,6 @@ assert n07 == n00
 assert n08 == n00
 assert n09 == n00
 assert n10 == n00
-
-import fidget/opengl/perf
 
 let
   first = @[
