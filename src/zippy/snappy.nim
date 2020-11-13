@@ -34,19 +34,19 @@ func encodeFragment(
     if op + 1 > encoded.len:
       encoded.setLen(encoded.len * 2)
 
+    for i in 0 ..< length:
+      inc freqLitLen[src[start + i]]
+
     encoded[op] = length.uint16
     inc op
     inc(literalsTotal, length)
-
-    for i in 0 ..< length:
-      inc freqLitLen[src[start + i]]
 
   template addCopy(offset: int, length: int) =
     if op + 3 > encoded.len:
       encoded.setLen(encoded.len * 2)
 
     let
-      lengthIndex = baseLengthIndices[length - minMatchLen].uint16
+      lengthIndex = baseLengthIndices[length - baseMatchLen].uint16
       distIndex = distanceCodeIndex((offset - 1).uint16)
     inc freqLitLen[lengthIndex + firstLengthCodeIndex]
     inc freqDist[distIndex]

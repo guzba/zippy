@@ -7,13 +7,17 @@ const
     "alice29.txt.z",
     "urls.10K.z",
     "rfctest3.z",
-    "randtest3.z"
+    "randtest3.z",
+    "paper-100k.pdf.z",
+    "geo.protodata.z"
   ]
   golds = [
     "alice29.txt",
     "urls.10K",
     "rfctest3.gold",
-    "randtest3.gold"
+    "randtest3.gold",
+    "paper-100k.pdf",
+    "geo.protodata"
   ]
   iterations = 1000
 

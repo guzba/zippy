@@ -13,12 +13,27 @@ const
   maxWindowSize* = 32768
   maxUncompressedBlockSize* = 65535
   firstLengthCodeIndex* = 257
-  minMatchLen* = 3
+  baseMatchLen* = 3
+  minMatchLen* = 4
   maxMatchLen* = 258
 
   # For run length encodings (lz77, snappy), the uint16 high bit is reserved
   # to signal that a offset and length are encoded in the uint16.
   maxLiteralLength* = uint16.high.int shr 1
+
+  configurationTable* = [
+    ## See https://github.com/madler/zlib/blob/master/deflate.c#L134
+    CompressionConfig(), # No compression
+    CompressionConfig(good: 4, lazy: 4, nice: 8, chain: 4),
+    CompressionConfig(good: 4, lazy: 5, nice: 16, chain: 8),
+    CompressionConfig(good: 4, lazy: 6, nice: 32, chain: 32),
+    CompressionConfig(good: 4, lazy: 4, nice: 16, chain: 16),
+    CompressionConfig(good: 8, lazy: 16, nice: 32, chain: 32),
+    CompressionConfig(good: 8, lazy: 16, nice: 128, chain: 128), # Default
+    CompressionConfig(good: 8, lazy: 32, nice: 256, chain: 256),
+    CompressionConfig(good: 32, lazy: 128, nice: 258, chain: 1024),
+    CompressionConfig(good: 32, lazy: 258, nice: 258, chain: 4096) # Max compression
+  ]
 
   baseLengths* = [
     3.uint16, 4, 5, 6, 7, 8, 9, 10, # 257 - 264
@@ -145,20 +160,6 @@ const
           c = (c shr 1)
       table[i] = c
     table
-
-  configurationTable* = [
-    ## See https://github.com/madler/zlib/blob/master/deflate.c#L134
-    CompressionConfig(), # No compression
-    CompressionConfig(good: 4, lazy: 4, nice: 8, chain: 4),
-    CompressionConfig(good: 4, lazy: 5, nice: 16, chain: 8),
-    CompressionConfig(good: 4, lazy: 6, nice: 32, chain: 32),
-    CompressionConfig(good: 4, lazy: 4, nice: 16, chain: 16),
-    CompressionConfig(good: 8, lazy: 16, nice: 32, chain: 32),
-    CompressionConfig(good: 8, lazy: 16, nice: 128, chain: 128), # Default
-    CompressionConfig(good: 8, lazy: 32, nice: 256, chain: 256),
-    CompressionConfig(good: 32, lazy: 128, nice: 258, chain: 1024),
-    CompressionConfig(good: 32, lazy: 258, nice: 258, chain: 4096) # Max compression
-  ]
 
 template failUncompress*() =
   raise newException(

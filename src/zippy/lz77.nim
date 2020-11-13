@@ -1,19 +1,12 @@
 import common
 
 const
-  hashBits = 16
+  hashBits = 17
   hashSize = 1 shl hashBits
-  hashMask = hashSize - 1
-  hashShift = (hashBits + minMatchLen - 1) div minMatchLen
 
 func lz77Encode*(
   src: seq[uint8], config: CompressionConfig
 ): (seq[uint16], seq[int], seq[int], int) =
-  assert (hashSize and hashMask) == 0
-  assert hashBits <= 16 # Ensure uint16 works
-
-  const windowSize = maxWindowSize
-
   var
     encoded = newSeq[uint16](src.len div 2)
     freqLitLen = newSeq[int](286)
@@ -22,9 +15,12 @@ func lz77Encode*(
 
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
-  template addLiteral(length: int) =
+  template addLiteral(start, length: int) =
     if op + 1 > encoded.len:
       encoded.setLen(encoded.len * 2)
+
+    for i in 0 ..< length:
+      inc freqLitLen[src[start + i]]
 
     encoded[op] = length.uint16
     inc op
@@ -35,7 +31,7 @@ func lz77Encode*(
       encoded.setLen(encoded.len * 2)
 
     let
-      lengthIndex = baseLengthIndices[length - minMatchLen].uint16
+      lengthIndex = baseLengthIndices[length - baseMatchLen].uint16
       distIndex = distanceCodeIndex((offset - 1).uint16)
     inc freqLitLen[lengthIndex + firstLengthCodeIndex]
     inc freqDist[distIndex]
@@ -51,49 +47,47 @@ func lz77Encode*(
     for c in src:
       inc freqLitLen[c]
     encoded.setLen(1)
-    addLiteral(src.len)
+    addLiteral(0, src.len)
     return (encoded, freqLitLen, freqDist, literalsTotal)
 
   encoded.setLen(4096)
 
   var
-    pos, literalLen: int
-    windowPos, hash: uint16
-    head = newSeq[uint16](hashSize)    # hash -> pos
-    chain = newSeq[uint16](windowSize) # pos a -> pos b
+    pos, hash, literalLen: int
+    windowPos: uint16
+    head = newSeq[uint16](hashSize)       # hash -> pos
+    chain = newSeq[uint16](maxWindowSize) # pos a -> pos b
 
-  template updateHash(value: uint8) =
-    hash = ((hash shl hashShift) xor value) and hashMask
+  template hash4(start: int): int =
+    (read32(src, start) * 0x1e35a7bd).int shr (32 - hashBits)
 
   template updateChain() =
     chain[windowPos] = head[hash]
     head[hash] = windowPos
 
-  for i in 0 ..< minMatchLen - 1:
-    updateHash(src[i])
-
   while pos < src.len:
     if pos + minMatchLen > src.len:
-      for c in src[pos ..< src.len]:
-        inc freqLitLen[c]
-      addLiteral(literalLen + src.len - pos)
+      addLiteral(pos - literalLen, src.len - pos + literalLen)
       break
 
-    windowPos = (pos and (windowSize - 1)).uint16
+    windowPos = (pos and (maxWindowSize - 1)).uint16
 
-    updateHash(src[pos + minMatchLen - 1])
+    hash = hash4(pos)
     updateChain()
 
     var
       hashPos = chain[windowPos]
       limit = min(src.len, pos + maxMatchLen)
+      tries = config.chain
       prevOffset, longestMatchOffset, longestMatchLen: int
-    for i in 0 ..< 32: # maxChainLen
+    while tries > 0:
+      dec tries
+
       var offset: int
       if hashPos <= windowPos:
         offset = (windowPos - hashPos).int
       else:
-        offset = (windowPos - hashPos + windowSize).int
+        offset = (windowPos - hashPos + maxWindowSize).int
 
       if offset <= 0 or offset < prevOffset:
         break
@@ -102,31 +96,32 @@ func lz77Encode*(
 
       let matchLen = findMatchLength(src, pos - offset, pos, limit)
       if matchLen > longestMatchLen:
+        if matchLen >= config.good:
+          tries = tries shr 2
         longestMatchLen = matchLen
         longestMatchOffset = offset
 
-      if longestMatchLen >= 32 or hashPos == chain[hashPos]:
+      if longestMatchLen >= config.nice or hashPos == chain[hashPos]:
         break
 
       hashPos = chain[hashPos]
 
     if longestMatchLen > minMatchLen:
       if literalLen > 0:
-        addLiteral(literalLen)
+        addLiteral(pos - literalLen, literalLen)
         literalLen = 0
 
       addCopy(longestMatchOffset, longestMatchLen)
       for i in 1 ..< longestMatchLen:
         inc pos
-        windowPos = (pos and (windowSize - 1)).uint16
+        windowPos = (pos and (maxWindowSize - 1)).uint16
         if pos + minMatchLen < src.len:
-          updateHash(src[pos + minMatchLen - 1])
+          hash = hash4(pos)
           updateChain()
     else:
-      inc freqLitLen[src[pos]]
       inc literalLen
       if literalLen == maxLiteralLength:
-        addLiteral(literalLen)
+        addLiteral(pos + 1 - literalLen, literalLen)
         literalLen = 0
     inc pos
 

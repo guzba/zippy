@@ -35,10 +35,12 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** results:
 File | Time | % Size Reduction
 --- | --- | ---:
-alice29.txt | 4.1240s | 62.53%
-urls.10K | 15.8416s | 67.57%
-rfctest3.gold | 0.8854s | 70.96%
+alice29.txt | 3.8033s | 63.32%
+urls.10K | 20.1375s | 67.49%
+rfctest3.gold | 0.8436s | 70.73%
 randtest3.gold | 0.1572s | 0%
+paper-100k.pdf | 2.3882s | 19.94%
+geo.protodata | 1.7566s | 86.92%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
@@ -47,6 +49,8 @@ alice29.txt | 6.8945s | 64.23%
 urls.10K | 16.3272s | 68.29%
 rfctest3.gold | 0.8147s | 71.74%
 randtest3.gold | 0.1545s | 0%
+paper-100k.pdf | 1.8938s | 20.59%
+geo.protodata | 1.0743s | 87.24%
 
 #### Fastest compression
 
@@ -57,6 +61,8 @@ alice29.txt | 1.6575s | 55.32%
 urls.10K | 5.3862s | 61.70%
 rfctest3.gold | 0.5094s | 66.31%
 randtest3.gold | 0.0646s | 0%
+paper-100k.pdf | 1.3229s | 18.44%
+geo.protodata | 1.0837s | 80.42%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
@@ -65,12 +71,20 @@ alice29.txt | 1.7779s | 57.17%
 urls.10K | 7.3260s | 63.93%
 rfctest3.gold | 0.3270s | 67.53%
 randtest3.gold | 0.1189s | 0%
+paper-100k.pdf | 1.6632s | 20.22%
+geo.protodata | 0.4888s | 84.12%
 
 #### Best compression
 
 **https://github.com/guzba/zippy** results:
-
-(In-progress)
+File | Time | % Size Reduction
+--- | --- | ---:
+alice29.txt | 4.5244s | 63.49%
+urls.10K | 29.1812s | 67.67%
+rfctest3.gold | 1.4090s | 70.82%
+randtest3.gold | 0.1660s | 0%
+paper-100k.pdf | 2.4495s | 20.01%
+geo.protodata | 1.8597s | 87.06%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
@@ -79,6 +93,8 @@ alice29.txt | 9.9680s | 64.38%
 urls.10K | 30.6367s | 68.82%
 rfctest3.gold | 2.6664s | 71.77%
 randtest3.gold | 0.1557s | 0%
+paper-100k.pdf | 2.0688s | 20.64%
+geo.protodata | 1.4266s | 87.37%
 
 ### Uncompress
 
@@ -91,6 +107,8 @@ alice29.txt | 0.9706s
 urls.10K | 4.7821s
 rfctest3.gold | 0.2142s
 randtest3.gold | 0.0378s
+paper-100k.pdf | 0.6590s
+geo.protodata | 0.2915s
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time
@@ -99,7 +117,8 @@ alice29.txt | 0.4929s
 urls.10K | 2.2334s
 rfctest3.gold | 0.1148s
 randtest3.gold | 0.0053s
-
+paper-100k.pdf | 0.3139s
+geo.protodata | 0.1957s
 
 ## Testing
 `nimble test`
