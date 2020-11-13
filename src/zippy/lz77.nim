@@ -43,7 +43,7 @@ func lz77Encode*(
     encoded[op + 2] = length.uint16
     inc(op, 3)
 
-  if src.len <= minMatchLen:
+  if minMatchLen >= src.len:
     for c in src:
       inc freqLitLen[c]
     encoded.setLen(1)
@@ -66,7 +66,7 @@ func lz77Encode*(
     head[hash] = windowPos
 
   while pos < src.len:
-    if pos + minMatchLen > src.len:
+    if pos + minMatchLen >= src.len:
       addLiteral(pos - literalLen, src.len - pos + literalLen)
       break
 

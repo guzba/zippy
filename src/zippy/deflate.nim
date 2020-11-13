@@ -17,17 +17,15 @@ func huffmanCodeLengths(
   func quickSort(a: var seq[Coin], lo, hi: int) =
     ## Assumes a.len and lo, hi are <= uint16.high
     var
-      stack: array[32, uint32]
+      stack: array[32, (uint16, uint16)]
       top = 0
-    stack[0] = (hi.uint32 shl 16) or lo.uint32
+    stack[0] = (lo.uint16, hi.uint16)
 
     while top >= 0:
-      var
-        inr = stack[top] shr 16
-        inl = stack[top] and 0xffff.uint32
+      var (inl, inr) = stack[top]
       dec top
       var
-        r = if inr >= 0: inr else: a.high.uint32
+        r = if inr >= 0: inr else: a.high.uint16
         l = inl
       let n = r - l + 1
       if n < 2:
@@ -39,12 +37,12 @@ func huffmanCodeLengths(
         elif a[r].weight > p:
           dec r
         else:
-          swap(a[l], a[r])
+          swap a[l], a[r]
           inc l
           dec r
 
-      stack[top + 1] = (r shl 16) or inl
-      stack[top + 2] = (inr shl 16) or l
+      stack[top + 1] = (l, inr)
+      stack[top + 2] = (inl, r)
       inc(top, 2)
 
   var
