@@ -221,12 +221,17 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
       if totalDist > pos:
         failUncompress()
 
-      var copyPos = pos - totalDist
       if pos + totalLength > dst.len:
         dst.setLen((pos + totalLength) * 2)
-      for i in 0 ..< totalLength:
-        dst[pos + i] = dst[copyPos + i]
-      inc(pos, totalLength)
+
+      var remaining = totalLength
+      while totalDist >= 8 and remaining >= 8:
+        copy64(dst, dst, pos, pos - totalDist)
+        inc(pos, 8)
+        dec(remaining, 8)
+      for i in 0 ..< remaining:
+        dst[pos + i] = dst[pos - totalDist + i]
+      inc(pos, remaining)
 
   dst.setLen(pos)
 
@@ -242,7 +247,7 @@ func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
     dst.setLen(pos + len) # Make room for the bytes to be copied to
     b.readBytes(dst, pos, len)
 
-func inflate*(src: seq[uint8], dst: var seq[uint8]) =
+func inflate*(dst: var seq[uint8], src: seq[uint8]) =
   var
     b = initBitStream(src)
     finalBlock: bool
@@ -265,7 +270,7 @@ func inflate*(src: seq[uint8], dst: var seq[uint8]) =
 
 func inflate*(src: seq[uint8]): seq[uint8] =
   result = newSeqOfCap[uint8](src.len)
-  inflate(src, result)
+  inflate(result, src)
 
 when defined(release):
   {.pop.}

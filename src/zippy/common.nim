@@ -196,6 +196,13 @@ template read64*(s: seq[uint8], pos: int): uint64 =
   else:
     cast[ptr uint64](s[pos].unsafeAddr)[]
 
+template copy64*(dst: var seq[uint8], src: openarray[uint8], op, ip: int) =
+  when nimvm:
+    for i in 0 .. 7:
+      dst[op + i] = src[ip + i]
+  else:
+    cast[ptr uint64](dst[op].addr)[] = read64(src, ip)
+
 template reverseUint16*(code: uint16, length: uint8): uint16 =
   (
     (bitReverseTable[(code and 255).uint8].uint16 shl 8) or

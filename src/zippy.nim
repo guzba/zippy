@@ -148,7 +148,7 @@ func uncompress(
     if pos + 8 >= src.len:
       failUncompress()
 
-    inflate(src[pos ..< ^8], dst)
+    inflate(dst, src[pos ..< ^8])
 
     let checksum = read32(src, src.len - 8)
     if checksum != crc32(dst):
@@ -183,12 +183,12 @@ func uncompress(
     if (flg and 0b00100000) != 0: # FDICT
       raise newException(ZippyError, "Preset dictionary is not yet supported")
 
-    inflate(src[2 .. ^4], dst)
+    inflate(dst, src[2 .. ^4])
 
     if checksum != adler32(dst):
       raise newException(ZippyError, "Checksum verification failed")
   of dfDeflate:
-    inflate(src, dst)
+    inflate(dst, src)
   of dfDetect:
     # Should never happen
     failUncompress()
