@@ -294,7 +294,7 @@ func adler32*(data: seq[uint8]): uint32 =
 
   result = (s2 shl 16) or s1
 
-func vmSeq2Str*(src: seq[uint8]): string=
+func vmSeq2Str*(src: seq[uint8]): string =
   result = newStringOfCap(src.len)
   for i, c in src:
     result.add(c.char)
