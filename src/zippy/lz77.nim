@@ -80,7 +80,7 @@ func lz77Encode*(
       limit = min(src.len, pos + maxMatchLen)
       tries = config.chain
       prevOffset, longestMatchOffset, longestMatchLen: int
-    while tries > 0:
+    while tries > 0 and hashPos != 0:
       dec tries
 
       var offset: int

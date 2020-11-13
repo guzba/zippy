@@ -36,11 +36,11 @@ Each file is compressed 1000 times.
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 3.8033s | 63.32%
-urls.10K | 20.1375s | 67.49%
-rfctest3.gold | 0.8436s | 70.73%
-randtest3.gold | 0.1572s | 0%
-paper-100k.pdf | 2.3882s | 19.94%
-geo.protodata | 1.7566s | 86.92%
+urls.10K | 19.4417s | 67.49%
+rfctest3.gold | 0.7493s | 70.73%
+randtest3.gold | 0.1258s | 0%
+paper-100k.pdf | 2.1207s | 19.94%
+geo.protodata | 1.5153s | 86.92%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
@@ -80,11 +80,11 @@ geo.protodata | 0.4888s | 84.12%
 File | Time | % Size Reduction
 --- | --- | ---:
 alice29.txt | 4.5244s | 63.49%
-urls.10K | 29.1812s | 67.67%
-rfctest3.gold | 1.4090s | 70.82%
-randtest3.gold | 0.1660s | 0%
-paper-100k.pdf | 2.4495s | 20.01%
-geo.protodata | 1.8597s | 87.06%
+urls.10K | 28.0756s | 67.67%
+rfctest3.gold | 1.3413s | 70.82%
+randtest3.gold | 0.1257s | 0%
+paper-100k.pdf | 2.1737s | 20.01%
+geo.protodata | 1.6195s | 87.06%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | % Size Reduction
