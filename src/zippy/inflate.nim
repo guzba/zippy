@@ -116,7 +116,7 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
 
 func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
-  ## This is function is the most important for inflate performance.
+  ## This function is the most important for inflate performance.
 
   b.checkBytePos()
 
