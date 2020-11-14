@@ -16,7 +16,7 @@ const
 func crc32*(v: uint32, data: seq[uint8]): uint32 =
   result = v
   for value in data:
-    result = crcTable[(result xor value.uint32) and 0xff] xor (result shr 8)
+    result = crcTable[(result xor value) and 255] xor (result shr 8)
 
 func crc32*(data: seq[uint8]): uint32 =
-  crc32(0xffffffff.uint32, data) xor 0xffffffff.uint32
+  not crc32(0xffffffff.uint32, data)
