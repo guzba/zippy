@@ -228,19 +228,17 @@ func findMatchLength*(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
     s2 = s2
   while s2 <= limit - 8:
     let x = read64(src, s2) xor read64(src, s1 + result)
-    if x == 0:
-      inc(s2, 8)
-      inc(result, 8)
-    else:
+    if x != 0:
       let matchingBits = countTrailingZeroBits(x)
       inc(result, matchingBits shr 3)
       return
+    inc(s2, 8)
+    inc(result, 8)
   while s2 < limit:
-    if src[s2] == src[s1 + result]:
-      inc s2
-      inc result
-    else:
+    if src[s2] != src[s1 + result]:
       return
+    inc s2
+    inc result
 
 func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c

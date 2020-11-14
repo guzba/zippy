@@ -35,7 +35,7 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 3.8033s | 63.32%
+alice29.txt | 3.7915s | 63.32%
 urls.10K | 19.4417s | 67.49%
 rfctest3.gold | 0.7493s | 70.73%
 randtest3.gold | 0.1258s | 0%
