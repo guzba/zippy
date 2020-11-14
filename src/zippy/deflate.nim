@@ -10,6 +10,10 @@ func huffmanCodeLengths(
   ## https://en.wikipedia.org/wiki/Package-merge_algorithm#Reduction_of_length-limited_Huffman_coding_to_the_coin_collector%27s_problem
   ## https://en.wikipedia.org/wiki/Canonical_Huffman_code
 
+  # When to use the fixed Huffman codes? If ever.
+  # Fast-path for when using best speed level?
+  # This is the slow part of deflating small files.
+
   type Coin = object
     symbols: seq[uint16]
     weight: int
