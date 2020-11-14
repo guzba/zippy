@@ -186,14 +186,14 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
     literalHuffman = initHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
     distanceHuffman = initHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
 
-  var pos = dst.len
+  var op = dst.len
   while true:
     let symbol = decodeSymbol(b, literalHuffman)
     if symbol <= 255:
-      if pos >= dst.len:
-        dst.setLen((pos + 1) * 2)
-      dst[pos] = symbol.uint8
-      inc pos
+      if op >= dst.len:
+        dst.setLen((op + 1) * 2)
+      dst[op] = symbol.uint8
+      inc op
     elif symbol == 256:
       break
     else:
@@ -218,22 +218,38 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
           b.readBits(baseDistanceExtraBits[distIndex])
         ).int
 
-      if totalDist > pos:
+      if totalDist > op:
         failUncompress()
 
-      if pos + totalLength > dst.len:
-        dst.setLen((pos + totalLength) * 2)
+      # Min match is 3 so leave room to overwrite by 13
+      if op + totalLength + 13 > dst.len:
+        dst.setLen((op + totalLength) * 2 + 10)
 
-      var remaining = totalLength
-      while totalDist >= 8 and remaining >= 8:
-        copy64(dst, dst, pos, pos - totalDist)
-        inc(pos, 8)
-        dec(remaining, 8)
-      for i in 0 ..< remaining:
-        dst[pos + i] = dst[pos - totalDist + i]
-      inc(pos, remaining)
+      if totalLength <= 16 and totalDist >= 8 and dst.len > op + 16:
+        copy64(dst, dst, op, op - totalDist)
+        copy64(dst, dst, op + 8, op - totalDist + 8)
+        inc(op, totalLength)
+      elif dst.len - op >= totalLength + 10:
+        var
+          src = op - totalDist
+          pos = op
+          remaining = totalLength
+        while pos - src < 8:
+          copy64(dst, dst, pos, src)
+          dec(remaining, pos - src)
+          inc(pos, pos - src)
+        while remaining > 0:
+          copy64(dst, dst, pos, src)
+          inc(src, 8)
+          inc(pos, 8)
+          dec(remaining, 8)
+        inc(op, totalLength)
+      else:
+        for i in op ..< op + totalLength:
+          dst[op] = dst[op - totalDist]
+          inc op
 
-  dst.setLen(pos)
+  dst.setLen(op)
 
 func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
   b.skipRemainingBitsInCurrentByte()
