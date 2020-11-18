@@ -198,26 +198,22 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
       break
     else:
       let lengthIndex = symbol - firstLengthCodeIndex
-
       if lengthIndex >= baseLengths.len:
         failUncompress()
 
-      let
-        totalLength = (
-          baseLengths[lengthIndex] +
-          b.readBits(baseLengthsExtraBits[lengthIndex])
-        ).int
-        distIndex = decodeSymbol(b, distanceHuffman)
+      let totalLength = (
+        baseLengths[lengthIndex] +
+        b.readBits(baseLengthsExtraBits[lengthIndex])
+      ).int
 
+      let distIndex = decodeSymbol(b, distanceHuffman)
       if distIndex >= baseDistances.len:
         failUncompress()
 
-      let
-        totalDist = (
-          baseDistances[distIndex] +
-          b.readBits(baseDistanceExtraBits[distIndex])
-        ).int
-
+      let totalDist = (
+        baseDistances[distIndex] +
+        b.readBits(baseDistanceExtraBits[distIndex])
+      ).int
       if totalDist > op:
         failUncompress()
 
