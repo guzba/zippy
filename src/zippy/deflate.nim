@@ -263,7 +263,9 @@ func deflate*(src: sink seq[uint8], level = -1): seq[uint8] =
           b = repeatCount mod 6
         bitLensRle.add(bitLens[i])
         for j in 0 ..< a:
-          bitLensRle.add([16.uint8, 3])
+          # bitLensRle.add([16.uint8, 3]) Makes ARC unhappy?
+          bitLensRle.add(16)
+          bitLensRle.add(3)
         if b >= 3:
           bitLensRle.add([16.uint8, b.uint8 - 3])
         else:

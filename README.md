@@ -10,7 +10,7 @@ Zippy can also be used at compile time. This is great for baking assets into exe
 
 To ensure Zippy is compatible with other implementations, `tests/validate.nim` can be run. This script verifies that data compressed by Zippy can be uncompressed by other implementations (and that other implementations can uncompress data compressed by Zippy).
 
-This library also works using both `nim c` and `nim cpp`, in addition to `--cc:vcc` on Windows.
+This library works well using Nim's relatively new `--gc:arc` and `--gc:orc` as well as the default garbage collector. This library also works using both `nim c` and `nim cpp`, in addition to `--cc:vcc` on Windows.
 
 I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 1.4.0.
 
