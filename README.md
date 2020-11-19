@@ -14,8 +14,6 @@ This library works well using Nim's relatively new `--gc:arc` and `--gc:orc` as 
 
 I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 1.4.0.
 
-**NOTE: This library is in active development. It is tested and should work well, but the API is not yet stable.**
-
 ## Examples
 
 Simple examples using Zippy can be found in the [examples/](https://github.com/guzba/zippy/blob/master/examples) folder. This includes an [HTTP client](https://github.com/guzba/zippy/blob/master/examples/http_client.nim) and [HTTP server](https://github.com/guzba/zippy/blob/master/examples/http_server.nim) example for handing gzip'ed requests and responses.
@@ -161,6 +159,7 @@ paper-100k.pdf | 0.7909s
 geo.protodata | 0.2902s
 
 ## Testing
+
 `nimble test`
 
 To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can do run the fuzzer any time by running `nim c -r tests/fuzz.nim`
