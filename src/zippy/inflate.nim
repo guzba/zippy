@@ -259,7 +259,7 @@ func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
     dst.setLen(pos + len) # Make room for the bytes to be copied to
     b.readBytes(dst, pos, len)
 
-func inflate*(dst: var seq[uint8], src: seq[uint8]) =
+func inflate*(dst: var seq[uint8], src: sink seq[uint8]) =
   var
     b = initBitStream(src)
     finalBlock: bool
@@ -280,7 +280,7 @@ func inflate*(dst: var seq[uint8], src: seq[uint8]) =
     else:
       raise newException(ZippyError, "Invalid block header")
 
-func inflate*(src: seq[uint8]): seq[uint8] =
+func inflate*(src: sink seq[uint8]): seq[uint8] =
   result = newSeqOfCap[uint8](src.len)
   inflate(result, src)
 
