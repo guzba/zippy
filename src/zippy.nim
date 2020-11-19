@@ -14,7 +14,7 @@ type
     dfDetect, dfZlib, dfGzip, dfDeflate
 
 func compress*(
-  src: seq[uint8], level = DefaultCompression, dataFormat = dfGzip
+  src: sink seq[uint8], level = DefaultCompression, dataFormat = dfGzip
 ): seq[uint8] =
   ## Compresses src and returns the compressed data.
 
@@ -24,17 +24,19 @@ func compress*(
       "A data format must be specified to compress"
     )
 
-  let deflated = deflate(src, level)
-
   if dataFormat == dfGzip:
     result.setLen(10)
     result[0] = 31
     result[1] = 139
     result[2] = 8
 
-    result.add(deflated)
+    let
+      checksum = crc32(src)
+      isize = src.len
 
-    let checksum = crc32(src)
+    # Last to touch src for sink
+    result.add(deflate(src, level))
+
     result.add([
       ((checksum shr 0) and 255).uint8,
       ((checksum shr 8) and 255).uint8,
@@ -42,10 +44,10 @@ func compress*(
       ((checksum shr 24) and 255).uint8
     ])
     result.add([
-      ((src.len shr 0) and 255).uint8,
-      ((src.len shr 8) and 255).uint8,
-      ((src.len shr 16) and 255).uint8,
-      ((src.len shr 24) and 255).uint8
+      ((isize shr 0) and 255).uint8,
+      ((isize shr 8) and 255).uint8,
+      ((isize shr 16) and 255).uint8,
+      ((isize shr 24) and 255).uint8
     ])
   elif dataFormat == dfZlib:
     const
@@ -58,9 +60,11 @@ func compress*(
     result[0] = cmf
     result[1] = fcheck
 
-    result.add(deflated)
-
     let checksum = adler32(src)
+
+    # Last to touch src for sink
+    result.add(deflate(src, level))
+
     result.add([
       ((checksum shr 24) and 255).uint8,
       ((checksum shr 16) and 255).uint8,
@@ -68,10 +72,10 @@ func compress*(
       ((checksum shr 0) and 255).uint8
     ])
   else:
-    result = deflated
+    result = deflate(src, level)
 
 template compress*(
-  src: string, level = DefaultCompression, dataFormat = dfGzip
+  src: sink string, level = DefaultCompression, dataFormat = dfGzip
 ): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
