@@ -80,7 +80,7 @@ template compress*(
     cast[string](compress(cast[seq[uint8]](src), level, dataFormat))
 
 func uncompress(
-  src: seq[uint8], dataFormat: CompressedDataFormat, dst: var seq[uint8]
+  src: sink seq[uint8], dataFormat: CompressedDataFormat, dst: var seq[uint8]
 ) =
   case dataFormat:
   of dfGzip:
@@ -139,13 +139,16 @@ func uncompress(
     if pos + 8 >= src.len:
       failUncompress()
 
+    let
+      checksum = read32(src, src.len - 8)
+      isize = read32(src, src.len - 4)
+
+    # Last to touch src for sink
     inflate(dst, src[pos ..< ^8])
 
-    let checksum = read32(src, src.len - 8)
     if checksum != crc32(dst):
       raise newException(ZippyError, "Checksum verification failed")
 
-    let isize = read32(src, src.len - 4)
     if isize != (dst.len mod (1 shl 32)).uint32:
       raise newException(ZippyError, "Size verification failed")
   of dfZlib:
@@ -184,7 +187,7 @@ func uncompress(
     # Should never happen
     failUncompress()
 
-func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
+func uncompress*(src: sink seq[uint8], dataFormat = dfDetect): seq[uint8] =
   ## Uncompresses src and returns the uncompressed data seq.
 
   result = newSeqOfCap[uint8](src.len)
@@ -209,7 +212,7 @@ func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
   else:
     uncompress(src, dataFormat, result)
 
-template uncompress*(src: string, dataFormat = dfDetect): string =
+template uncompress*(src: sink string, dataFormat = dfDetect): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
     vmSeq2Str(uncompress(vmStr2Seq(src)))
