@@ -14,7 +14,7 @@ type
     dfDetect, dfZlib, dfGzip, dfDeflate
 
 func compress*(
-  src: sink seq[uint8], level = DefaultCompression, dataFormat = dfGzip
+  src: seq[uint8], level = DefaultCompression, dataFormat = dfGzip
 ): seq[uint8] =
   ## Compresses src and returns the compressed data.
 
@@ -34,7 +34,7 @@ func compress*(
       checksum = crc32(src)
       isize = src.len
 
-    # Last to touch src for sink
+    # Last to touch src
     result.add(deflate(src, level))
 
     result.add([
@@ -62,7 +62,7 @@ func compress*(
 
     let checksum = adler32(src)
 
-    # Last to touch src for sink
+    # Last to touch src
     result.add(deflate(src, level))
 
     result.add([
@@ -75,7 +75,7 @@ func compress*(
     result = deflate(src, level)
 
 template compress*(
-  src: sink string, level = DefaultCompression, dataFormat = dfGzip
+  src: string, level = DefaultCompression, dataFormat = dfGzip
 ): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
@@ -84,7 +84,7 @@ template compress*(
     cast[string](compress(cast[seq[uint8]](src), level, dataFormat))
 
 func uncompress(
-  src: sink seq[uint8], dataFormat: CompressedDataFormat, dst: var seq[uint8]
+  src: seq[uint8], dataFormat: CompressedDataFormat, dst: var seq[uint8]
 ) =
   case dataFormat:
   of dfGzip:
@@ -147,7 +147,7 @@ func uncompress(
       checksum = read32(src, src.len - 8)
       isize = read32(src, src.len - 4)
 
-    # Last to touch src for sink
+    # Last to touch src
     inflate(dst, src[pos ..< ^8])
 
     if checksum != crc32(dst):
@@ -191,7 +191,7 @@ func uncompress(
     # Should never happen
     failUncompress()
 
-func uncompress*(src: sink seq[uint8], dataFormat = dfDetect): seq[uint8] =
+func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
   ## Uncompresses src and returns the uncompressed data seq.
 
   result = newSeqOfCap[uint8](src.len)
@@ -216,7 +216,7 @@ func uncompress*(src: sink seq[uint8], dataFormat = dfDetect): seq[uint8] =
   else:
     uncompress(src, dataFormat, result)
 
-template uncompress*(src: sink string, dataFormat = dfDetect): string =
+template uncompress*(src: string, dataFormat = dfDetect): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
     vmSeq2Str(uncompress(vmStr2Seq(src)))

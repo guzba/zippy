@@ -179,7 +179,7 @@ func huffmanOnlyEncode(
 
   (encoded, freqLitLen, freqDist, 0)
 
-func deflateNoCompression(src: sink seq[uint8]): seq[uint8] =
+func deflateNoCompression(src: seq[uint8]): seq[uint8] =
   let blockCount = max(
     (src.len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
     1
@@ -205,7 +205,7 @@ func deflateNoCompression(src: sink seq[uint8]): seq[uint8] =
   b.data.setLen(b.bytePos)
   b.data
 
-func deflate*(src: sink seq[uint8], level = -1): seq[uint8] =
+func deflate*(src: seq[uint8], level = -1): seq[uint8] =
   if level < -2 or level > 9:
     raise newException(ZippyError, "Invalid compression level " & $level)
 
