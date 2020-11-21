@@ -123,29 +123,28 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   var
     bits = b.data[b.bytePos].uint16 shr b.bitPos
     numBits = 8 - b.bitPos
-    bytePos = b.bytePos + 1
+
+  # Fill bits up since we know codes must be between 1 and 15 bits long
+  if b.bytePos + 1 < b.data.len:
+    bits = bits or (b.data[b.bytePos + 1].uint16 shl numBits)
+  numBits += 8
+  if b.bytePos + 2 < b.data.len:
+    bits = bits or (b.data[b.bytePos + 2].uint16 shl numBits)
+  numBits = 15
+
+  var
     chunk = h.chunks[bits and (huffmanNumChunks - 1)]
     n = (chunk and huffmanCountMask).int
-  while true:
-    if numBits < n:
-      if bytePos >= b.data.len:
-        failEndOfBuffer()
-      bits = bits or (b.data[bytePos].uint16 shl numBits)
-      inc bytePos
-      numBits += 8
-      chunk = h.chunks[bits and (huffmanNumChunks - 1)]
-      n = (chunk and huffmanCountMask).int
-    if n > huffmanChunkBits:
-      chunk = h.links[
-        chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask
-      ]
-      n = (chunk and huffmanCountMask).int
-    if n <= numBits:
-      if n == 0:
-        failUncompress()
-      inc(b.bytePos, (n + b.bitPos) shr 3)
-      b.bitPos = (n + b.bitPos) and 7
-      return (chunk shr huffmanValueShift).uint16
+  if n > huffmanChunkBits:
+    chunk = h.links[
+      chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask
+    ]
+    n = (chunk and huffmanCountMask).int
+  if n == 0:
+    failUncompress()
+  inc(b.bytePos, (n + b.bitPos) shr 3)
+  b.bitPos = (n + b.bitPos) and 7
+  return (chunk shr huffmanValueShift).uint16
 
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
