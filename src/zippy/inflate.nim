@@ -127,9 +127,9 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   # Fill bits up since we know codes must be between 1 and 15 bits long
   if b.bytePos + 1 < b.data.len:
     bits = bits or (b.data[b.bytePos + 1].uint16 shl numBits)
-  numBits += 8
   if b.bytePos + 2 < b.data.len:
-    bits = bits or (b.data[b.bytePos + 2].uint16 shl numBits)
+    bits = bits or (b.data[b.bytePos + 2].uint16 shl (numBits + 8))
+
   numBits = 15
 
   var
@@ -140,11 +140,14 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask
     ]
     n = (chunk and huffmanCountMask).int
-  if n == 0:
+
+  if n == 0 or n > numBits:
     failUncompress()
+
   inc(b.bytePos, (n + b.bitPos) shr 3)
   b.bitPos = (n + b.bitPos) and 7
-  return (chunk shr huffmanValueShift).uint16
+
+  chunk shr huffmanValueShift
 
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
