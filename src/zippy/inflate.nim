@@ -10,7 +10,7 @@ type
   Huffman = object
     minCodeLength, maxCodeLength: uint8
     chunks: array[huffmanNumChunks, uint16]
-    links: seq[seq[uint16]]
+    links: seq[array[64, uint16]]
     linkMask: uint16
 
 when defined(release):
@@ -67,7 +67,7 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
       result.chunks[reverse] = (
         (offset shl huffmanValueShift) or huffmanChunkBits + 1
       ).uint16
-      result.links[offset].setLen(numLinks)
+      # result.links[offset].setLen(numLinks)
 
   for i, n in lengths:
     if n == 0:

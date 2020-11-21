@@ -131,7 +131,7 @@ Each file is uncompressed 1000 times:
 **https://github.com/guzba/zippy** results:
 File | Time
 --- | ---:
-alice29.txt | 0.7169s
+alice29.txt | 0.7139s
 urls.10K | 3.3344s
 rfctest3.gold | 0.1618s
 randtest3.gold | 0.0373s
