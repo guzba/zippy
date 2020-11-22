@@ -18,7 +18,7 @@ func huffmanCodeLengths(
     symbols: seq[uint16]
     weight: int
 
-  func quickSort(s: var seq[Coin], lo, hi: int) =
+  func sort(s: var seq[Coin], lo, hi: int) =
     if lo >= hi:
       return
 
@@ -32,8 +32,8 @@ func huffmanCodeLengths(
         inc pivot
         inc swapPos
 
-    quickSort(s, lo, pivot - 1)
-    quickSort(s, pivot + 1, hi)
+    sort(s, lo, pivot - 1)
+    sort(s, pivot + 1, hi)
 
   var
     highestSymbol: int
@@ -84,7 +84,7 @@ func huffmanCodeLengths(
 
     addSymbolCoins(coins, 0)
 
-    quickSort(coins, 0, numSymbolsUsed - 1)
+    sort(coins, 0, numSymbolsUsed - 1)
 
     var
       numCoins = numSymbolsUsed
@@ -114,7 +114,7 @@ func huffmanCodeLengths(
         addSymbolCoins(coins, numCoins)
         inc(numCoins, numSymbolsUsed)
 
-      quickSort(coins, 0, numCoins - 1)
+      sort(coins, 0, numCoins - 1)
 
       settled = numCoins == numCoinsPrev
 
