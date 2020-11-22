@@ -97,12 +97,12 @@ geo.protodata | 0.6812s | 83.66%
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 4.5244s | 63.49%
-urls.10K | 28.0756s | 67.67%
-rfctest3.gold | 1.3413s | 70.82%
+alice29.txt | 4.7699s | 63.75%
+urls.10K | 29.0633s | 68.14%
+rfctest3.gold | 1.5786s | 70.92%
 randtest3.gold | 0.1257s | 0%
-paper-100k.pdf | 2.1737s | 20.01%
-geo.protodata | 1.6195s | 87.06%
+paper-100k.pdf | 2.5364s | 20.07%
+geo.protodata | 1.9823s | 87.07%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | Size Reduction

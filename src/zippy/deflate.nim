@@ -4,7 +4,7 @@ when defined(release):
   {.push checks: off.}
 
 func huffmanCodeLengths(
-  frequencies: seq[int], minCodes, maxCodeLen: int
+  level: int, frequencies: seq[int], minCodes, maxCodeLen: int
 ): (int, seq[uint8], seq[uint16]) =
   ## https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
   ## https://en.wikipedia.org/wiki/Package-merge_algorithm#Reduction_of_length-limited_Huffman_coding_to_the_coin_collector%27s_problem
@@ -116,7 +116,7 @@ func huffmanCodeLengths(
 
       sort(coins, 0, numCoins - 1)
 
-      settled = numCoins == numCoinsPrev
+      settled = numCoins == numCoinsPrev and level <= 6
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].symbols.len:
@@ -215,8 +215,12 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
   # Deflate using dynamic Huffman tree
 
   let
-    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(freqLitLen, 257, 15)
-    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(freqDist, 2, 15)
+    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(
+      level, freqLitLen, 257, 15
+    )
+    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(
+      level, freqDist, 2, 15
+    )
 
   var bitLens = newSeqOfCap[uint8](llNumCodes + distNumCodes)
   for i in 0 ..< llNumCodes:
@@ -274,7 +278,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         inc i
       inc i
 
-  let (_, clLengths, clCodes) = huffmanCodeLengths(clFreq, clFreq.len, 7)
+  let (_, clLengths, clCodes) = huffmanCodeLengths(level, clFreq, clFreq.len, 7)
 
   var bitLensCodeLen = newSeq[uint8](clFreq.len)
   for i in 0 ..< bitLensCodeLen.len:
