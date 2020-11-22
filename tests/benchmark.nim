@@ -17,7 +17,8 @@ const
     "rfctest3.gold",
     "randtest3.gold",
     "paper-100k.pdf",
-    "geo.protodata"
+    "geo.protodata",
+    "gzipfiletest.txt"
   ]
   iterations = 1000
 

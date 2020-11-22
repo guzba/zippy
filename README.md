@@ -33,12 +33,12 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 3.7915s | 63.32%
-urls.10K | 19.4417s | 67.49%
-rfctest3.gold | 0.7038s | 70.73%
+alice29.txt | 3.6917s | 63.32%
+urls.10K | 19.2545s | 67.49%
+rfctest3.gold | 0.6802s | 70.73%
 randtest3.gold | 0.1258s | 0%
-paper-100k.pdf | 1.9375s | 19.94%
-geo.protodata | 1.3566s | 86.91%
+paper-100k.pdf | 1.9175s | 19.94%
+geo.protodata | 1.2939s | 86.91%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | Size Reduction
@@ -66,11 +66,11 @@ geo.protodata | 1.1967s | 87.18%
 File | Time | Size Reduction
 --- | --- | ---:
 alice29.txt | 1.5947s | 55.32%
-urls.10K | 5.2662s | 61.70%
-rfctest3.gold | 0.4414s | 66.31%
+urls.10K | 5.2385s | 61.70%
+rfctest3.gold | 0.4295s | 66.31%
 randtest3.gold | 0.0646s | 0%
-paper-100k.pdf | 1.1512s | 18.44%
-geo.protodata | 0.9107s | 80.42%
+paper-100k.pdf | 1.0918s | 18.44%
+geo.protodata | 0.8353s | 80.42%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | Size Reduction
@@ -97,12 +97,12 @@ geo.protodata | 0.6812s | 83.66%
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 4.7699s | 63.75%
-urls.10K | 29.0633s | 68.14%
-rfctest3.gold | 1.5786s | 70.92%
+alice29.txt | 4.4614s | 63.75%
+urls.10K | 27.8507s | 68.14%
+rfctest3.gold | 1.3401s | 70.92%
 randtest3.gold | 0.1257s | 0%
-paper-100k.pdf | 2.5364s | 20.07%
-geo.protodata | 1.9823s | 87.07%
+paper-100k.pdf | 2.1010s | 20.07%
+geo.protodata | 1.5293s | 87.07%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | Size Reduction
