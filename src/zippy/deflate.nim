@@ -16,7 +16,7 @@ func huffmanCodeLengths(
 
   type Coin = object
     symbols: seq[uint16]
-    weight: int
+    numSymbols, weight: int
 
   func sort(s: var seq[Coin], lo, hi: int) =
     if lo >= hi:
@@ -66,7 +66,8 @@ func huffmanCodeLengths(
       for i in 0 ..< numCodes:
         let freq = frequencies[i]
         if freq > 0:
-          coins[idx].symbols.add(i.uint16)
+          coins[idx].symbols[0] = i.uint16
+          coins[idx].numSymbols = 1
           coins[idx].weight = freq
           inc idx
 
@@ -75,12 +76,8 @@ func huffmanCodeLengths(
       prevCoins = newSeq[Coin](coins.len)
 
     for i in 0 ..< coins.len:
-      # Cause the symbol seqs to have the correct capacity.
-      # Benchmarking shows this increases perf.
-      coins[i].symbols.setLen(coins.len)
-      coins[i].symbols.setLen(0)
-      prevCoins[i].symbols.setLen(coins.len)
-      prevCoins[i].symbols.setLen(0)
+      coins[i].symbols.setLen(32)
+      prevCoins[i].symbols.setLen(32)
 
     addSymbolCoins(coins, 0)
 
@@ -95,16 +92,30 @@ func huffmanCodeLengths(
       swap(numCoinsPrev, numCoins)
 
       for i in 0 ..< numCoins:
-        coins[i].symbols.setLen(0)
+        coins[i].numSymbols = 0
         coins[i].weight = 0
 
       numCoins = 0
 
       for i in countup(0, numCoinsPrev - 2, 2):
-        coins[numCoins].weight = prevCoins[i].weight
-        coins[numCoins].symbols.add(prevCoins[i].symbols)
-        coins[numCoins].symbols.add(prevCoins[i + 1].symbols)
-        coins[numCoins].weight += prevCoins[i + 1].weight
+        let mergedNumSymbols =
+          prevCoins[i + 0].numSymbols + prevCoins[i + 1].numSymbols
+        if mergedNumSymbols > coins[numCoins].symbols.len:
+          coins[numCoins].symbols.setLen(
+            max(mergedNumSymbols, coins[numCoins].symbols.len) * 2
+          )
+
+        var symbolIdx: int
+        for j in 0 ..< prevCoins[i + 0].numSymbols:
+          coins[numCoins].symbols[symbolIdx] = prevCoins[i + 0].symbols[j]
+          inc symbolIdx
+        for j in 0 ..< prevCoins[i + 1].numSymbols:
+          coins[numCoins].symbols[symbolIdx] = prevCoins[i + 1].symbols[j]
+          inc symbolIdx
+
+        coins[numCoins].numSymbols = mergedNumSymbols
+        coins[numCoins].weight =
+          prevCoins[i + 0].weight + prevCoins[i + 1].weight
         inc numCoins
 
       if settled:
@@ -119,7 +130,7 @@ func huffmanCodeLengths(
       settled = numCoins == numCoinsPrev and level <= 6
 
     for i in 0 ..< numSymbolsUsed - 1:
-      for j in 0 ..< coins[i].symbols.len:
+      for j in 0 ..< coins[i].numSymbols:
         inc lengths[coins[i].symbols[j]]
 
   var lengthCounts: array[maxCodeLength + 1, uint8]
@@ -216,10 +227,10 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
 
   let
     (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(
-      level, freqLitLen, 257, 15
+      level, freqLitLen, 257, maxCodeLength
     )
     (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(
-      level, freqDist, 2, 15
+      level, freqDist, 2, maxCodeLength
     )
 
   var bitLens = newSeqOfCap[uint8](llNumCodes + distNumCodes)
