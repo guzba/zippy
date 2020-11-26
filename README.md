@@ -131,12 +131,12 @@ Each file is uncompressed 1000 times:
 **https://github.com/guzba/zippy** results:
 File | Time
 --- | ---:
-alice29.txt | 0.7105s
-urls.10K | 3.2775s
-rfctest3.gold | 0.1618s
+alice29.txt | 0.5906s
+urls.10K | 2.9935s
+rfctest3.gold | 0.1405s
 randtest3.gold | 0.0373s
 paper-100k.pdf | 0.6453s
-geo.protodata | 0.2298s
+geo.protodata | 0.2070s
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time

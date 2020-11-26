@@ -1,118 +1,71 @@
 import bitstreams, common, zippyerror
 
 const
-  huffmanChunkBits = 9
-  huffmanNumChunks = 1 shl huffmanChunkBits
-  huffmanCountMask = 15
-  huffmanValueShift = 4
+  fastBits = 9
+  fastMask = (1 shl 9) - 1
 
 type
   Huffman = object
-    minCodeLength, maxCodeLength: uint8
-    chunks: array[huffmanNumChunks, uint16]
-    links: seq[array[64, uint16]]
-    linkMask: uint16
+    firstCode, firstSymbol: array[16, uint16]
+    maxCodes: array[17, int]
+    lengths: array[288, uint8]
+    values: array[288, uint16]
+    fast: array[1 shl 9, uint16]
 
 when defined(release):
   {.push checks: off.}
 
+func reverse16Bits(n: int): int {.inline.} =
+  result = n
+  result = ((result and 0xAAAA) shr 1) or ((result and 0x5555) shl 1)
+  result = ((result and 0xCCCC) shr 2) or ((result and 0x3333) shl 2)
+  result = ((result and 0xF0F0) shr 4) or ((result and 0x0F0F) shl 4)
+  result = ((result and 0xFF00) shr 8) or ((result and 0x00FF) shl 8)
+
+func reverseBits(n, bits: int): int {.inline.} =
+  assert bits <= 16
+  reverse16Bits(n) shr (16 - bits)
+
 func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
 
-  var
-    counts: array[maxCodeLength + 1, uint16]
-    numCodes: int
+  var sizes: array[17, int]
+  for i in 0 ..< lengths.len:
+    inc sizes[lengths[i]]
+  sizes[0] = 0
 
-  result.minCodeLength = uint8.high
-
-  for _, n in lengths:
-    if n == 0:
-      continue
-    inc counts[n]
-    inc numCodes
-    result.minCodeLength = min(n, result.minCodeLength)
-    result.maxCodeLength = max(n, result.maxCodeLength)
-
-  if result.maxCodeLength == 0 or
-    result.maxCodeLength > maxCodeLength or
-    numCodes > maxCodes:
-    failUncompress()
+  for i in 1 ..< 16:
+    if sizes[i] > (1 shl i):
+      failUncompress()
 
   var
-    code: uint16
-    nextCode: array[maxCodeLength + 1, uint16]
-  for i in result.minCodeLength .. result.maxCodeLength:
-    code = code shl 1
+    code, k: int
+    nextCode: array[16, int]
+  for i in 1 ..< 16:
     nextCode[i] = code
-    code += counts[i]
+    result.firstCode[i] = code.uint16
+    result.firstSymbol[i] = k.uint16
+    code = code + sizes[i]
+    if sizes[i] > 0 and code - 1 >= (1 shl i):
+      failUncompress()
+    result.maxCodes[i] = (code shl (16 - i))
+    code = code shl 1
+    k += sizes[i]
 
-  # if code != (1.uint16 shl result.maxCodeLength) and
-  #   not (code == 1 and result.maxCodeLength == 1):
-  #   debugEcho code, " ", result.maxCodeLength, " ", result.minCodeLength
-  #   failUncompress()
+  result.maxCodes[16] = 1 shl 16
 
-  if result.maxCodeLength > huffmanChunkBits:
-    let numLinks = 1.uint16 shl (result.maxCodeLength - huffmanChunkBits)
-    result.linkMask = numLinks - 1
-
-    let link = nextCode[huffmanChunkBits + 1] shr 1
-    result.links.setLen(huffmanNumChunks - link)
-    for i in link ..< huffmanNumChunks:
-      let
-        reverse = reverseUint16(i.uint16, huffmanChunkBits)
-        offset = i - link
-      when not defined(release):
-        if result.chunks[reverse] != 0:
-          raise newException(ZippyError, "Overwriting chunk")
-      result.chunks[reverse] = (
-        (offset shl huffmanValueShift) or huffmanChunkBits + 1
-      ).uint16
-      # result.links[offset].setLen(numLinks)
-
-  for i, n in lengths:
-    if n == 0:
-      continue
-
-    let
-      code = nextCode[n]
-      chunk = (i.uint16 shl huffmanValueShift) or n
-      reverse = reverseUint16(code, n)
-    inc nextCode[n]
-    if n <= huffmanChunkBits:
-      for offset in countup(reverse.int, result.chunks.high, 1 shl n):
-        when not defined(release):
-          if result.chunks[offset] != 0:
-            raise newException(ZippyError, "Overwriting chunk")
-        result.chunks[offset] = chunk
-    else:
-      let
-        j = reverse and (huffmanNumChunks - 1)
-        value = result.chunks[j] shr huffmanValueShift
-        reverseShifted = reverse shr huffmanChunkBits
-      when not defined(release):
-        if (result.chunks[j] and huffmanCountMask) != huffmanChunkBits + 1:
-          raise newException(ZippyError, "Not an indirect chunk")
-      for offset in countup(
-        reverseShifted.int,
-        result.links[value].high,
-        1 shl (n - huffmanChunkBits)
-      ):
-        when not defined(release):
-          if result.links[value][offset] != 0:
-            raise newException(ZippyError, "Overwriting chunk")
-        result.links[value][offset] = chunk
-
-  # when not defined(release):
-  #   for i, chunk in result.chunks:
-  #     if chunk == 0:
-  #       if code == 1 and i mod 2 == 1:
-  #         continue
-  #       raise newException(ZippyError, "Missing chunk")
-
-  #   for i in 0 ..< result.links.len:
-  #     for _, chunk in result.links[i]:
-  #       if chunk == 0:
-  #         raise newException(ZippyError, "Missing chunk")
+  for i, len in lengths:
+    if len > 0:
+      let symbolId = nextCode[len] - result.firstCode[len].int + result.firstSymbol[len].int
+      result.lengths[symbolId] = len
+      result.values[symbolId] = i.uint16
+      if len <= fastBits:
+        let fast = (len.uint16 shl 9) or i.uint16
+        var k = reverseBits(nextCode[len], len.int)
+        while k < (1 shl fastBits):
+          result.fast[k] = fast
+          k += (1 shl len)
+      inc nextCode[len]
 
 func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
@@ -121,33 +74,37 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   b.checkBytePos()
 
   var
-    bits = b.data[b.bytePos].uint16 shr b.bitPos
+    bits = b.data[b.bytePos].int shr b.bitPos
     numBits = 8 - b.bitPos
 
   # Fill bits up since we know codes must be between 1 and 15 bits long
   if b.bytePos + 1 < b.data.len:
-    bits = bits or (b.data[b.bytePos + 1].uint16 shl numBits)
+    bits = bits or (b.data[b.bytePos + 1].int shl numBits)
   if b.bytePos + 2 < b.data.len:
-    bits = bits or (b.data[b.bytePos + 2].uint16 shl (numBits + 8))
+    bits = bits or (b.data[b.bytePos + 2].int shl (numBits + 8))
 
-  numBits = 15
+  let fast = h.fast[bits and fastMask]
+  var len: int
+  if fast > 0:
+    len = (fast.int shr 9)
+    result = fast and 511
+  else: # Slow path
+    let k = reverse16Bits(bits)
+    len = fastBits + 1
+    while len < h.maxCodes.len:
+      if k < h.maxCodes[len]:
+        break
+      inc len
 
-  var
-    chunk = h.chunks[bits and (huffmanNumChunks - 1)]
-    n = (chunk and huffmanCountMask).int
-  if n > huffmanChunkBits:
-    chunk = h.links[
-      chunk shr huffmanValueShift][(bits shr huffmanChunkBits) and h.linkMask
-    ]
-    n = (chunk and huffmanCountMask).int
+    if len == 16:
+      failUncompress()
 
-  if n == 0 or n > numBits:
-    failUncompress()
+    let symbolId =
+      (k shr (16 - len)) - h.firstCode[len].int + h.firstSymbol[len].int
+    result = h.values[symbolId]
 
-  inc(b.bytePos, (n + b.bitPos) shr 3)
-  b.bitPos = (n + b.bitPos) and 7
-
-  chunk shr huffmanValueShift
+  b.bytePos += (len + b.bitPos) shr 3
+  b.bitPos = (len + b.bitPos) and 7
 
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman

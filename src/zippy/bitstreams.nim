@@ -1,18 +1,5 @@
 import zippyerror
 
-const
-  masks = [
-    0b00000000.uint8,
-    0b00000001,
-    0b00000011,
-    0b00000111,
-    0b00001111,
-    0b00011111,
-    0b00111111,
-    0b01111111,
-    0b11111111,
-  ]
-
 type
   BitStream* = object
     bytePos*, bitPos*: int
@@ -44,31 +31,25 @@ template checkBytePos*(b: BitStream) =
   if b.bytePos >= b.data.len:
     failEndOfBuffer()
 
-func read(b: var BitStream, bits: int): uint8 =
-  assert bits <= 8
-
+func readBits*(b: var BitStream, bits: int): uint16 =
   b.checkBytePos()
 
-  result = b.data[b.bytePos] shr b.bitPos
-
-  let bitsLeftInByte = 8 - b.bitPos
-  if bitsLeftInByte >= bits:
-    b.movePos(bits)
-    result = result and masks[bits]
-  else:
-    let bitsNeeded = bits - bitsLeftInByte
-    b.incPos()
-    b.checkBytePos()
-    result = result or
-      ((b.data[b.bytePos] and masks[bitsNeeded]) shl bitsLeftInByte)
-    inc(b.bitPos, bitsNeeded)
-
-func readBits*(b: var BitStream, bits: int): uint16 =
   assert bits <= 16
 
-  result = b.read(min(bits, 8)).uint16
-  if bits > 8:
-    result = result or (b.read(bits - 8).uint16 shl 8)
+  result = b.data[b.bytePos].uint16 shr b.bitPos
+  let numBits = 8 - b.bitPos
+
+  # Fill result up
+  if b.bytePos + 1 < b.data.len:
+    result = result or (b.data[b.bytePos + 1].uint16 shl numBits)
+  if b.bytePos + 2 < b.data.len:
+    result = result or (b.data[b.bytePos + 2].uint16 shl (numBits + 8))
+
+  # Mask out any bits past requested bit length
+  result = result and ((1 shl bits) - 1).uint16
+
+  b.bytePos += (bits + b.bitPos) shr 3
+  b.bitPos = (bits + b.bitPos) and 7
 
 func skipBits*(b: var BitStream, bits: int) =
   var bitsLeftToSkip = bits
@@ -78,17 +59,6 @@ func skipBits*(b: var BitStream, bits: int) =
       let skipping = min(bitsLeftToSkip, bitsLeftInByte)
       dec(bitsLeftToSkip, skipping)
       b.movePos(skipping)
-
-func peekBits*(b: var BitStream, bits: int): uint16 =
-  let
-    bytePos = b.bytePos
-    bitPos = b.bitPos
-
-  result = b.readBits(bits)
-
-  # Restore these values after reading
-  b.bytePos = bytePos
-  b.bitPos = bitPos
 
 func skipRemainingBitsInCurrentByte*(b: var BitStream) =
   if b.bitPos > 0:
