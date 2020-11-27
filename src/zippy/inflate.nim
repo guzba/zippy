@@ -56,7 +56,8 @@ func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
 
   for i, len in lengths:
     if len > 0:
-      let symbolId = nextCode[len] - result.firstCode[len].int + result.firstSymbol[len].int
+      let symbolId =
+        nextCode[len] - result.firstCode[len].int + result.firstSymbol[len].int
       result.lengths[symbolId] = len
       result.values[symbolId] = i.uint16
       if len <= fastBits:
