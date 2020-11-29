@@ -10,7 +10,7 @@ type
     maxCodes: array[17, int]
     lengths: array[288, uint8]
     values: array[288, uint16]
-    fast: array[1 shl 9, uint16]
+    fast: array[1 shl fastBits, uint16]
 
 when defined(release):
   {.push checks: off.}
@@ -26,13 +26,16 @@ func reverseBits(n, bits: int): int {.inline.} =
   assert bits <= 16
   reverse16Bits(n) shr (16 - bits)
 
-func initHuffman(lengths: seq[uint8], maxCodes: int): Huffman =
+func initHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
 
   var sizes: array[17, int]
   for i in 0 ..< lengths.len:
     inc sizes[lengths[i]]
   sizes[0] = 0
+
+  if lengths.len > maxNumCodes:
+    failUncompress()
 
   for i in 1 ..< 16:
     if sizes[i] > (1 shl i):
