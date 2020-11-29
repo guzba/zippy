@@ -203,7 +203,7 @@ func deflateNoCompression(src: seq[uint8]): seq[uint8] =
     if len > 0:
       b.addBytes(src, pos, len.int)
 
-  b.data.setLen(b.bytePos)
+  b.data.setLen(b.pos)
   b.data
 
 func deflate*(src: seq[uint8], level = -1): seq[uint8] =
@@ -357,7 +357,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         inc(encPos, 3)
         inc(srcPos, length.int)
 
-        if b.bytePos + 6 > b.data.len:
+        if b.pos + 6 > b.data.len:
           b.data.setLen(b.data.len * 2)
 
         b.addBits(
@@ -372,8 +372,8 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         inc encPos
 
         let worstCaseBytesNeeded = (length * maxCodeLength + 7) div 8
-        if b.bytePos + worstCaseBytesNeeded >= b.data.len:
-          b.data.setLen(max(b.bytePos + worstCaseBytesNeeded, b.data.len * 2))
+        if b.pos + worstCaseBytesNeeded >= b.data.len:
+          b.data.setLen(max(b.pos + worstCaseBytesNeeded, b.data.len * 2))
 
         for j in 0 ..< length:
           b.addBits(llCodes[src[srcPos]], llLengths[src[srcPos]].int)
@@ -386,7 +386,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
 
   b.skipRemainingBitsInCurrentByte()
 
-  b.data.setLen(b.bytePos)
+  b.data.setLen(b.pos)
   b.data
 
 when defined(release):

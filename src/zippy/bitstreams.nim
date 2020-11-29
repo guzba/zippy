@@ -2,8 +2,13 @@ import zippyerror
 
 type
   BitStream* = object
-    bytePos*, bitPos*: int
+    pos*: int
     data*: seq[uint8]
+    # Reading
+    bitCount*: int
+    bitBuf*: uint64
+    # Writing
+    bitPos: int
 
 when defined(release):
   {.push checks: off.}
@@ -14,79 +19,75 @@ template failEndOfBuffer*() =
 func initBitStream*(data: seq[uint8]): BitStream =
   result.data = data
 
-func len*(b: BitStream): int =
-  b.data.len
-
-func movePos*(b: var BitStream, bits: int) {.inline.} =
-  b.bytePos += (bits + b.bitPos) shr 3
-  b.bitPos = (bits + b.bitPos) and 7
-
-template checkBytePos*(b: BitStream) =
-  if b.bytePos >= b.data.len:
-    failEndOfBuffer()
+func fillBitBuf*(b: var BitStream) {.inline.} =
+  while b.bitCount <= 56:
+    if b.pos >= b.data.len:
+      break
+    b.bitBuf = b.bitBuf or (b.data[b.pos].uint64 shl b.bitCount)
+    inc b.pos
+    b.bitCount += 8
 
 func readBits*(b: var BitStream, bits: int): uint16 =
-  b.checkBytePos()
-
   assert bits <= 16
 
-  result = b.data[b.bytePos].uint16 shr b.bitPos
-  let numBits = 8 - b.bitPos
+  if b.bitCount < 16:
+    b.fillBitBuf()
 
-  # Fill result up
-  if b.bytePos + 1 < b.data.len:
-    result = result or (b.data[b.bytePos + 1].uint16 shl numBits)
-  if b.bytePos + 2 < b.data.len:
-    result = result or (b.data[b.bytePos + 2].uint16 shl (numBits + 8))
-
-  b.movePos(bits)
-
-  # Mask out any bits past requested bit length
-  result = result and ((1 shl bits) - 1).uint16
-
-func skipBits*(b: var BitStream, bits: int) =
-  var bitsLeftToSkip = bits
-  while bitsLeftToSkip > 0:
-    let
-      bitsLeftInByte = 8 - b.bitPos
-      skipping = min(bitsLeftToSkip, bitsLeftInByte)
-    dec(bitsLeftToSkip, skipping)
-    b.movePos(skipping)
-
-func skipRemainingBitsInCurrentByte*(b: var BitStream) =
-  if b.bitPos > 0:
-    b.movePos(8 - b.bitPos)
+  result = (b.bitBuf and ((1.uint32 shl bits) - 1)).uint16
+  b.bitBuf = b.bitBuf shr bits
+  b.bitCount -= bits
 
 func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   assert b.bitPos == 0
+  assert b.bitCount mod 8 == 0
 
-  if b.bytePos + len > b.data.len:
+  let posOffset = b.bitCount div 8
+
+  if b.pos - posOffset + len > b.data.len:
     failEndOfBuffer()
 
   when nimvm:
     for i in 0 ..< len:
-      dst[start + i] = b.data[b.bytePos + i]
+      dst[start + i] = b.data[b.pos - posOffset + i]
   else:
-    copyMem(dst[start].addr, b.data[b.bytePos].addr, len)
+    copyMem(dst[start].addr, b.data[b.pos - posOffset].addr, len)
 
-  b.skipBits(len * 8)
+  b.pos = b.pos - posOffset + len
+  b.bitCount = 0
+  b.bitBuf = 0
+
+func movePos(b: var BitStream, bits: int) {.inline.} =
+  # Used when writing
+  b.pos += (bits + b.bitPos) shr 3
+  b.bitPos = (bits + b.bitPos) and 7
+
+func skipRemainingBitsInCurrentByte*(b: var BitStream) =
+  # If writing
+  if b.bitPos > 0:
+    b.movePos(8 - b.bitPos)
+
+  # If reading
+  let mod8 = b.bitCount mod 8
+  if mod8 != 0:
+    b.bitCount -= mod8
+    b.bitBuf = b.bitBuf shr mod8
 
 func addBytes*(b: var BitStream, src: seq[uint8], start, len: int) =
   assert b.bitPos == 0
 
-  if b.bytePos + len > b.data.len:
-    b.data.setLen(b.bytePos + len)
+  if b.pos + len > b.data.len:
+    b.data.setLen(b.pos + len)
 
   when nimvm:
     for i in 0 ..< len:
-      b.data[b.bytePos + i] = src[start + i]
+      b.data[b.pos + i] = src[start + i]
   else:
-    copyMem(b.data[b.bytePos].addr, src[start].unsafeAddr, len)
+    copyMem(b.data[b.pos].addr, src[start].unsafeAddr, len)
 
-  b.skipBits(len * 8)
+  b.movePos(len * 8)
 
 func addBit*(b: var BitStream, bit: uint8) =
-  b.data[b.bytePos] = b.data[b.bytePos] or (bit shl b.bitPos)
+  b.data[b.pos] = b.data[b.pos] or (bit shl b.bitPos)
   b.movePos(1)
 
 func addBits*(b: var BitStream, value: uint16, bits: int) =
@@ -99,7 +100,7 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
       bitsLeftInByte = 8 - b.bitPos
       bitsAdded = min(bitsLeftInByte, bitsRemaining) # Can be 0 which is fine
       bitsToAdd = (value shr (bits - bitsRemaining)) shl b.bitPos
-    b.data[b.bytePos] = b.data[b.bytePos] or (bitsToAdd and 255).uint8
+    b.data[b.pos] = b.data[b.pos] or (bitsToAdd and 255).uint8
     dec(bitsRemaining, bitsAdded)
     b.movePos(bitsAdded)
 

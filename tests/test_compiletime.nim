@@ -1,4 +1,4 @@
-import strformat, zippy
+import zippy
 
 const
   testPath = "tests/data/rfctest1.gold"

@@ -75,26 +75,17 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
   ## This function is the most important for inflate performance.
 
-  b.checkBytePos()
+  if b.bitCount < 16:
+    b.fillBitBuf()
 
-  var
-    bits = b.data[b.bytePos].int shr b.bitPos
-    numBits = 8 - b.bitPos
-
-  # Fill bits up since we know codes must be between 1 and 15 bits long
-  if b.bytePos + 1 < b.data.len:
-    bits = bits or (b.data[b.bytePos + 1].int shl numBits)
-  if b.bytePos + 2 < b.data.len:
-    bits = bits or (b.data[b.bytePos + 2].int shl (numBits + 8))
-
-  let fast = h.fast[bits and fastMask]
+  let fast = h.fast[b.bitBuf and fastMask]
   var len: int
   if fast > 0:
     len = (fast.int shr 9)
     result = fast and 511
   else: # Slow path
-    let k = reverse16Bits(bits)
-    len = fastBits + 1
+    let k = reverse16Bits(cast[int](b.bitBuf))
+    len = 1
     while len < h.maxCodes.len:
       if k < h.maxCodes[len]:
         break
@@ -107,7 +98,11 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       (k shr (16 - len)) - h.firstCode[len].int + h.firstSymbol[len].int
     result = h.values[symbolId]
 
-  b.movePos(len)
+  if len > b.bitCount:
+    failEndOfBuffer()
+
+  b.bitBuf = b.bitBuf shr len
+  b.bitCount -= len
 
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
