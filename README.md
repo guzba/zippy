@@ -50,16 +50,6 @@ randtest3.gold | 0.1545s | 0%
 paper-100k.pdf | 1.8938s | 20.59%
 geo.protodata | 1.0743s | 87.24%
 
-Go Standard Library results: (version go1.15.4)
-File | Time | Size Reduction
---- | --- | ---:
-alice29.txt | 6.6272s | 64.27%
-urls.10K | 16.44320s | 68.47%
-rfctest3.gold | 1.0392s | 71.65%
-randtest3.gold | 0.2613s | 0%
-paper-100k.pdf | 2.0695s | 20.23%
-geo.protodata | 1.1967s | 87.18%
-
 #### Fastest compression
 
 **https://github.com/guzba/zippy** results:
@@ -82,16 +72,6 @@ randtest3.gold | 0.1189s | 0%
 paper-100k.pdf | 1.6632s | 20.22%
 geo.protodata | 0.4888s | 84.12%
 
-Go Standard Library results: (version go1.15.4)
-File | Time | Size Reduction
---- | --- | ---:
-alice29.txt | 1.7653s | 56.78%
-urls.10K | 6.4503s | 64.29%
-rfctest3.gold | 0.4828s | 67.53%
-randtest3.gold | 0.2016s | 0.%
-paper-100k.pdf | 0.6714s | 17.03%
-geo.protodata | 0.6812s | 83.66%
-
 #### Best compression
 
 **https://github.com/guzba/zippy** results:
@@ -113,16 +93,6 @@ rfctest3.gold | 2.6180s | 71.77%
 randtest3.gold | 0.1169s | 0%
 paper-100k.pdf | 2.0639s | 20.64%
 geo.protodata | 1.4266s | 87.37%
-
-Go Standard Library results: (version go1.15.4)
-File | Time | Size Reduction
---- | --- | ---:
-alice29.txt | 7.7597s | 64.32%
-urls.10K | 29.6607s | 68.95%
-rfctest3.gold | 2.7995s | 71.68%
-randtest3.gold | 0.2805s | 0%
-paper-100k.pdf | 2.5282s | 20.28%
-geo.protodata | 1.4392s | 87.28%
 
 ### Uncompress
 
@@ -147,16 +117,6 @@ rfctest3.gold | 0.1285s
 randtest3.gold | 0.0053s
 paper-100k.pdf | 0.3139s
 geo.protodata | 0.1957s
-
-Go Standard Library results: (version go1.15.4)
-File | Time
---- | ---:
-alice29.txt | 1.0781s
-urls.10K | 3.9454s
-rfctest3.gold | 0.2244s
-randtest3.gold | 0.0129s
-paper-100k.pdf | 0.7909s
-geo.protodata | 0.2902s
 
 ## Testing
 
