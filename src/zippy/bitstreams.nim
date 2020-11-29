@@ -17,11 +17,9 @@ func initBitStream*(data: seq[uint8]): BitStream =
 func len*(b: BitStream): int =
   b.data.len
 
-func movePos(b: var BitStream, bits: int) {.inline.} =
-  assert b.bitPos + bits <= 8
-  inc(b.bitPos, bits)
-  inc(b.bytePos, b.bitPos shr 3)
-  b.bitPos = b.bitPos and 7
+func movePos*(b: var BitStream, bits: int) {.inline.} =
+  b.bytePos += (bits + b.bitPos) shr 3
+  b.bitPos = (bits + b.bitPos) and 7
 
 template checkBytePos*(b: BitStream) =
   if b.bytePos >= b.data.len:
@@ -41,11 +39,10 @@ func readBits*(b: var BitStream, bits: int): uint16 =
   if b.bytePos + 2 < b.data.len:
     result = result or (b.data[b.bytePos + 2].uint16 shl (numBits + 8))
 
+  b.movePos(bits)
+
   # Mask out any bits past requested bit length
   result = result and ((1 shl bits) - 1).uint16
-
-  b.bytePos += (bits + b.bitPos) shr 3
-  b.bitPos = (bits + b.bitPos) and 7
 
 func skipBits*(b: var BitStream, bits: int) =
   var bitsLeftToSkip = bits
@@ -58,8 +55,7 @@ func skipBits*(b: var BitStream, bits: int) =
 
 func skipRemainingBitsInCurrentByte*(b: var BitStream) =
   if b.bitPos > 0:
-    inc b.bytePos
-    b.bitPos = 0
+    b.movePos(8 - b.bitPos)
 
 func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   assert b.bitPos == 0

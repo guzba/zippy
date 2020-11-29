@@ -107,8 +107,7 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
       (k shr (16 - len)) - h.firstCode[len].int + h.firstSymbol[len].int
     result = h.values[symbolId]
 
-  b.bytePos += (len + b.bitPos) shr 3
-  b.bitPos = (len + b.bitPos) and 7
+  b.movePos(len)
 
 func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
   var literalHuffman, distanceHuffman: Huffman
