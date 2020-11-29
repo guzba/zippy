@@ -17,10 +17,6 @@ func initBitStream*(data: seq[uint8]): BitStream =
 func len*(b: BitStream): int =
   b.data.len
 
-func incPos(b: var BitStream) {.inline.} =
-  inc b.bytePos
-  b.bitPos = 0
-
 func movePos(b: var BitStream, bits: int) {.inline.} =
   assert b.bitPos + bits <= 8
   inc(b.bitPos, bits)
@@ -54,15 +50,16 @@ func readBits*(b: var BitStream, bits: int): uint16 =
 func skipBits*(b: var BitStream, bits: int) =
   var bitsLeftToSkip = bits
   while bitsLeftToSkip > 0:
-    let bitsLeftInByte = 8 - b.bitPos
-    if bitsLeftInByte > 0:
-      let skipping = min(bitsLeftToSkip, bitsLeftInByte)
-      dec(bitsLeftToSkip, skipping)
-      b.movePos(skipping)
+    let
+      bitsLeftInByte = 8 - b.bitPos
+      skipping = min(bitsLeftToSkip, bitsLeftInByte)
+    dec(bitsLeftToSkip, skipping)
+    b.movePos(skipping)
 
 func skipRemainingBitsInCurrentByte*(b: var BitStream) =
   if b.bitPos > 0:
-    b.incPos()
+    inc b.bytePos
+    b.bitPos = 0
 
 func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   assert b.bitPos == 0
