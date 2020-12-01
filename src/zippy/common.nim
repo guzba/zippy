@@ -118,6 +118,41 @@ const
     13, 13 # 28-29
   ]
 
+  clclOrder* = [
+    16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
+  ]
+
+  bitReverseTable* = block:
+    var result: array[256, uint8]
+    for i in 0 ..< result.len:
+      result[i] = reverseBits(i.uint8)
+    result
+
+template reverseUint16*(code: uint16, length: uint8): uint16 =
+  (
+    (bitReverseTable[(code and 255).uint8].uint16 shl 8) or
+    (bitReverseTable[(code shr 8).uint8].uint16)
+  ) shr (16 - length)
+
+func makeCodes(lengths: seq[uint8]): seq[uint16] =
+  result = newSeq[uint16](lengths.len)
+
+  var lengthCounts: array[16, uint8]
+  for l in lengths:
+    inc lengthCounts[l]
+
+  lengthCounts[0] = 0
+
+  var nextCode: array[16, uint16]
+  for i in 1 .. maxCodeLength:
+    nextCode[i] = (nextCode[i - 1] + lengthCounts[i - 1]) shl 1
+
+  for i in 0 ..< result.len:
+    if lengths[i] != 0:
+      result[i] = reverseUint16(nextCode[lengths[i]], lengths[i])
+      inc nextCode[lengths[i]]
+
+const
   fixedCodeLengths* = block:
     var lengths = newSeq[uint8](maxFixedLitLenCodes)
     for i in 0 ..< lengths.len:
@@ -131,21 +166,17 @@ const
         lengths[i] = 8
     lengths
 
-  fixedDistanceLengths* = block:
+  fixedCodes* = block:
+    makeCodes(fixedCodeLengths)
+
+  fixedDistLengths* = block:
     var lengths = newSeq[uint8](maxDistCodes)
     for i in 0 ..< lengths.len:
       lengths[i] = 5
     lengths
 
-  clclOrder* = [
-    16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
-  ]
-
-  bitReverseTable* = block:
-    var result: array[256, uint8]
-    for i in 0 ..< result.len:
-      result[i] = reverseBits(i.uint8)
-    result
+  fixedDistCodes* = block:
+    makeCodes(fixedDistLengths)
 
 template failUncompress*() =
   raise newException(
@@ -188,12 +219,6 @@ template copy64*(dst: var seq[uint8], src: openarray[uint8], op, ip: int) =
       dst[op + i] = src[ip + i]
   else:
     cast[ptr uint64](dst[op].addr)[] = read64(src, ip)
-
-template reverseUint16*(code: uint16, length: uint8): uint16 =
-  (
-    (bitReverseTable[(code and 255).uint8].uint16 shl 8) or
-    (bitReverseTable[(code shr 8).uint8].uint16)
-  ) shr (16 - length)
 
 func distanceCodeIndex*(value: uint16): uint16 =
   const distanceCodes = [

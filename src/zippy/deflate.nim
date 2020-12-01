@@ -5,7 +5,7 @@ when defined(release):
 
 func huffmanCodeLengths(
   level: int, frequencies: seq[int], minCodes, maxCodeLen: int
-): (int, seq[uint8], seq[uint16]) =
+): (seq[uint8], seq[uint16]) =
   ## https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
   ## https://en.wikipedia.org/wiki/Package-merge_algorithm#Reduction_of_length-limited_Huffman_coding_to_the_coin_collector%27s_problem
   ## https://en.wikipedia.org/wiki/Canonical_Huffman_code
@@ -158,7 +158,7 @@ func huffmanCodeLengths(
   if codes.len < numCodes:
     codes.setLen(numCodes)
 
-  (numCodes, lengths, codes)
+  (lengths, codes)
 
 func huffmanOnlyEncode(
   src: seq[uint8]
@@ -226,119 +226,127 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
   if literalsTotal >= (src.len.float32 * 0.98).int:
     return deflateNoCompression(src)
 
-  # Deflate using dynamic Huffman tree
-
   let
-    (llNumCodes, llLengths, llCodes) = huffmanCodeLengths(
-      level, freqLitLen, 257, maxCodeLength
-    )
-    (distNumCodes, distLengths, distCodes) = huffmanCodeLengths(
-      level, freqDist, 2, maxCodeLength
-    )
-
-  var bitLens = newSeqOfCap[uint8](llNumCodes + distNumCodes)
-  for i in 0 ..< llNumCodes:
-    bitLens.add(llLengths[i])
-  for i in 0 ..< distNumCodes:
-    bitLens.add(distLengths[i])
-
-  var
-    bitLensRle: seq[uint8]
-    bitCount: int
-  block construct_binlens_rle:
-    var i: int
-    while i < bitLens.len:
-      var repeatCount: int
-      while i + repeatCount + 1 < bitLens.len and
-        bitLens[i + repeatCount + 1] == bitLens[i]:
-        inc repeatCount
-
-      if bitLens[i] == 0 and repeatCount >= 2:
-        inc repeatCount # Initial zero
-        if repeatCount <= 10:
-          bitLensRle.add([17.uint8, repeatCount.uint8 - 3])
-        else:
-          repeatCount = min(repeatCount, 138) # Max of 138 zeros for code 18
-          bitLensRle.add([18.uint8, repeatCount.uint8 - 11])
-        inc(i, repeatCount - 1)
-        inc(bitCount, 7)
-      elif repeatCount >= 3: # Repeat code for non-zero, must be >= 3 times
-        var
-          a = repeatCount div 6
-          b = repeatCount mod 6
-        bitLensRle.add(bitLens[i])
-        for j in 0 ..< a:
-          # bitLensRle.add([16.uint8, 3]) Makes ARC unhappy?
-          bitLensRle.add(16)
-          bitLensRle.add(3)
-        if b >= 3:
-          bitLensRle.add([16.uint8, b.uint8 - 3])
-        else:
-          dec(repeatCount, b)
-        inc(i, repeatCount)
-        inc(bitCount, (a + b) * 2)
+    useFixedCodes = src.len <= 8192
+    (llLengths, llCodes) = block:
+      if useFixedCodes:
+        (fixedCodeLengths, fixedCodes)
       else:
-        bitLensRle.add(bitLens[i])
-      inc i
-      inc(bitCount, 7)
-
-  var clFreq = newSeq[int](19)
-  block count_cl_frequencies:
-    var i: int
-    while i < bitLensRle.len:
-      inc clFreq[bitLensRle[i]]
-      # Skip the number of times codes are repeated
-      if bitLensRle[i] >= 16:
-        inc i
-      inc i
-
-  let (_, clLengths, clCodes) = huffmanCodeLengths(level, clFreq, clFreq.len, 7)
-
-  var bitLensCodeLen = newSeq[uint8](clFreq.len)
-  for i in 0 ..< bitLensCodeLen.len:
-    bitLensCodeLen[i] = clLengths[clclOrder[i]]
-
-  while bitLensCodeLen[bitLensCodeLen.high] == 0 and bitLensCodeLen.len > 4:
-    bitLensCodeLen.setLen(bitLensCodeLen.len - 1)
-
-  let
-    hlit = (llNumCodes - 257).uint8
-    hdist = distNumCodes.uint8 - 1
-    hclen = bitLensCodeLen.len.uint8 - 4
+        huffmanCodeLengths(level, freqLitLen, 257, maxCodeLength)
+    (distLengths, distCodes) = block:
+      if useFixedCodes:
+        (fixedDistLengths, fixedDistCodes)
+      else:
+        huffmanCodeLengths(level, freqDist, 2, maxCodeLength)
 
   var b: BitStream
-  # TODO: Improve the b.data.setLens
-  b.data.setLen(
-    b.data.len +
-    (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
-    bitLensRle.len * 2
-  )
+  if useFixedCodes:
+    b.data.setLen(1024)
+    b.addBit(1)
+    b.addBits(1, 2) # Fixed Huffman codes
+  else:
+    var bitLens = newSeqOfCap[uint8](llCodes.len + distCodes.len)
+    for i in 0 ..< llCodes.len:
+      bitLens.add(llLengths[i])
+    for i in 0 ..< distCodes.len:
+      bitLens.add(distLengths[i])
 
-  b.addBit(1)
-  b.addBits(2, 2)
+    var
+      bitLensRle: seq[uint8]
+      bitCount: int
+    block construct_binlens_rle:
+      var i: int
+      while i < bitLens.len:
+        var repeatCount: int
+        while i + repeatCount + 1 < bitLens.len and
+          bitLens[i + repeatCount + 1] == bitLens[i]:
+          inc repeatCount
 
-  b.addBits(hlit, 5)
-  b.addBits(hdist, 5)
-  b.addBits(hclen, 4)
-
-  for i in 0.uint8 ..< hclen + 4:
-    b.addBits(bitLensCodeLen[i], 3)
-
-  block write_bitlens_rle:
-    var i: int
-    while i < bitLensRle.len:
-      let symbol = bitLensRle[i]
-      b.addBits(clCodes[symbol], clLengths[symbol].int)
-      inc i
-      if symbol == 16:
-        b.addBits(bitLensRle[i], 2)
+        if bitLens[i] == 0 and repeatCount >= 2:
+          inc repeatCount # Initial zero
+          if repeatCount <= 10:
+            bitLensRle.add([17.uint8, repeatCount.uint8 - 3])
+          else:
+            repeatCount = min(repeatCount, 138) # Max of 138 zeros for code 18
+            bitLensRle.add([18.uint8, repeatCount.uint8 - 11])
+          inc(i, repeatCount - 1)
+          inc(bitCount, 7)
+        elif repeatCount >= 3: # Repeat code for non-zero, must be >= 3 times
+          var
+            a = repeatCount div 6
+            b = repeatCount mod 6
+          bitLensRle.add(bitLens[i])
+          for j in 0 ..< a:
+            # bitLensRle.add([16.uint8, 3]) Makes ARC unhappy?
+            bitLensRle.add(16)
+            bitLensRle.add(3)
+          if b >= 3:
+            bitLensRle.add([16.uint8, b.uint8 - 3])
+          else:
+            dec(repeatCount, b)
+          inc(i, repeatCount)
+          inc(bitCount, (a + b) * 2)
+        else:
+          bitLensRle.add(bitLens[i])
         inc i
-      elif symbol == 17:
-        b.addBits(bitLensRle[i], 3)
+        inc(bitCount, 7)
+
+    var clFreq = newSeq[int](19)
+    block count_cl_frequencies:
+      var i: int
+      while i < bitLensRle.len:
+        inc clFreq[bitLensRle[i]]
+        # Skip the number of times codes are repeated
+        if bitLensRle[i] >= 16:
+          inc i
         inc i
-      elif symbol == 18:
-        b.addBits(bitLensRle[i], 7)
+
+    let (clLengths, clCodes) = huffmanCodeLengths(level, clFreq, clFreq.len, 7)
+
+    var bitLensCodeLen = newSeq[uint8](clFreq.len)
+    for i in 0 ..< bitLensCodeLen.len:
+      bitLensCodeLen[i] = clLengths[clclOrder[i]]
+
+    while bitLensCodeLen[bitLensCodeLen.high] == 0 and bitLensCodeLen.len > 4:
+      bitLensCodeLen.setLen(bitLensCodeLen.len - 1)
+
+    let
+      hlit = (llCodes.len - 257).uint8
+      hdist = distCodes.len.uint8 - 1
+      hclen = bitLensCodeLen.len.uint8 - 4
+
+    # TODO: Improve the b.data.setLens
+    b.data.setLen(
+      b.data.len +
+      (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
+      bitLensRle.len * 2
+    )
+
+    b.addBit(1)
+    b.addBits(2, 2)# Dynamic Huffman codes
+
+    b.addBits(hlit, 5)
+    b.addBits(hdist, 5)
+    b.addBits(hclen, 4)
+
+    for i in 0.uint8 ..< hclen + 4:
+      b.addBits(bitLensCodeLen[i], 3)
+
+    block write_bitlens_rle:
+      var i: int
+      while i < bitLensRle.len:
+        let symbol = bitLensRle[i]
+        b.addBits(clCodes[symbol], clLengths[symbol].int)
         inc i
+        if symbol == 16:
+          b.addBits(bitLensRle[i], 2)
+          inc i
+        elif symbol == 17:
+          b.addBits(bitLensRle[i], 3)
+          inc i
+        elif symbol == 18:
+          b.addBits(bitLensRle[i], 7)
+          inc i
 
   block write_encoded_data:
     var srcPos, encPos: int

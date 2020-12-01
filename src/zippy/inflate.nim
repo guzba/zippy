@@ -109,7 +109,7 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
 
   if fixedCodes:
     literalHuffman = initHuffman(fixedCodeLengths, maxFixedLitLenCodes)
-    distanceHuffman = initHuffman(fixedDistanceLengths, maxDistCodes)
+    distanceHuffman = initHuffman(fixedDistLengths, maxDistCodes)
   else:
     let
       hlit = b.readBits(5).int + firstLengthCodeIndex

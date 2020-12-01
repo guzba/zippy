@@ -23,7 +23,8 @@ const
     "lcet10.txt",
     "paper-100k.pdf",
     "plrabn12.txt",
-    "urls.10K"
+    "urls.10K",
+    "gzipfiletest.txt"
   ]
 
 block nimlang_zip: # Requires zlib1.dll
