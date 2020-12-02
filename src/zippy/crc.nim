@@ -13,10 +13,10 @@ const
       table[i] = c
     table
 
-func crc32*(v: uint32, data: seq[uint8]): uint32 =
+func crc32*(v: uint32, data: openarray[uint8]): uint32 =
   result = v
   for value in data:
     result = crcTable[(result xor value) and 255] xor (result shr 8)
 
-func crc32*(data: seq[uint8]): uint32 =
+func crc32*(data: openarray[uint8]): uint32 {.inline.} =
   not crc32(0xffffffff.uint32, data)

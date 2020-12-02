@@ -191,7 +191,7 @@ template failCompress*() =
 when defined(release):
   {.push checks: off.}
 
-template read32*(s: seq[uint8], pos: int): uint32 =
+template read32*(s: openarray[uint8], pos: int): uint32 =
   when nimvm:
     (s[pos + 0].uint32 shl 0) or
     (s[pos + 1].uint32 shl 8) or
@@ -200,7 +200,7 @@ template read32*(s: seq[uint8], pos: int): uint32 =
   else:
     cast[ptr uint32](s[pos].unsafeAddr)[]
 
-template read64*(s: seq[uint8], pos: int): uint64 =
+template read64*(s: openarray[uint8], pos: int): uint64 =
   when nimvm:
     (s[pos + 0].uint64 shl 0) or
     (s[pos + 1].uint64 shl 8) or
@@ -247,7 +247,9 @@ func distanceCodeIndex*(value: uint16): uint16 =
   else:
     distanceCodes[value shr 14] + 28
 
-func findMatchLength*(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
+func findMatchLength*(
+  src: openarray[uint8], s1, s2, limit: int
+): int {.inline.} =
   var
     s1 = s1
     s2 = s2
@@ -265,7 +267,7 @@ func findMatchLength*(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
     inc s2
     inc result
 
-func adler32*(data: seq[uint8]): uint32 =
+func adler32*(data: openarray[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
 
   const nmax = 5552
