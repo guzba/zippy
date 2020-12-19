@@ -102,7 +102,7 @@ Each file is uncompressed 1000 times:
 File | Time
 --- | ---:
 alice29.txt | 0.5163s
-urls.10K | 2.5991s
+urls.10K | 2.5521s
 rfctest3.gold | 0.1240s
 randtest3.gold | 0.0128s
 paper-100k.pdf | 0.4829s
