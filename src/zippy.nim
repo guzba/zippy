@@ -148,7 +148,7 @@ func uncompress(
       isize = read32(src, src.len - 4)
 
     # Last to touch src
-    inflate(dst, src[pos ..< ^8])
+    inflate(dst, src, pos)
 
     if checksum != crc32(dst):
       raise newException(ZippyError, "Checksum verification failed")
@@ -181,7 +181,7 @@ func uncompress(
     if (flg and 0b00100000) != 0: # FDICT
       raise newException(ZippyError, "Preset dictionary is not yet supported")
 
-    inflate(dst, src[2 .. ^4])
+    inflate(dst, src, 2)
 
     if checksum != adler32(dst):
       raise newException(ZippyError, "Checksum verification failed")

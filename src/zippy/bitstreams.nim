@@ -16,8 +16,9 @@ when defined(release):
 template failEndOfBuffer*() =
   raise newException(ZippyError, "Cannot read further, at end of buffer")
 
-func initBitStream*(data: seq[uint8]): BitStream =
+func initBitStream*(data: seq[uint8], pos = 0): BitStream =
   result.data = data
+  result.pos = pos
 
 func fillBitBuf*(b: var BitStream) {.inline.} =
   while b.bitCount <= 56:

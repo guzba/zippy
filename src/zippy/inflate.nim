@@ -216,9 +216,9 @@ func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
     dst.setLen(pos + len) # Make room for the bytes to be copied to
     b.readBytes(dst, pos, len)
 
-func inflate*(dst: var seq[uint8], src: seq[uint8]) =
+func inflate*(dst: var seq[uint8], src: seq[uint8], pos = 0) =
   var
-    b = initBitStream(src)
+    b = initBitStream(src, pos)
     finalBlock: bool
   while not finalBlock:
     let

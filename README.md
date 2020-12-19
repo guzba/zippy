@@ -101,22 +101,22 @@ Each file is uncompressed 1000 times:
 **https://github.com/guzba/zippy** results:
 File | Time
 --- | ---:
-alice29.txt | 0.5163s
-urls.10K | 2.5521s
+alice29.txt | 0.4994s
+urls.10K | 2.4864s
 rfctest3.gold | 0.1240s
-randtest3.gold | 0.0128s
-paper-100k.pdf | 0.4829s
-geo.protodata | 0.1940s
+randtest3.gold | 0.098s
+paper-100k.pdf | 0.4585s
+geo.protodata | 0.1916s
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time
 --- | ---:
-alice29.txt | 0.4806s
-urls.10K | 1.9870s
+alice29.txt | 5.160s
+urls.10K | 2.0093s
 rfctest3.gold | 0.1285s
-randtest3.gold | 0.0053s
-paper-100k.pdf | 0.3139s
-geo.protodata | 0.1957s
+randtest3.gold | 0.0101s
+paper-100k.pdf | 0.3345s
+geo.protodata | 0.1866s
 
 ## Testing
 
