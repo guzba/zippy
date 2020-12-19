@@ -123,15 +123,17 @@ const
   ]
 
   bitReverseTable* = block:
-    var result: array[256, uint8]
+    var result: array[256, uint16]
     for i in 0 ..< result.len:
       result[i] = reverseBits(i.uint8)
     result
 
+when defined(release):
+  {.push checks: off.}
+
 template reverseUint16*(code: uint16, length: uint8): uint16 =
   (
-    (bitReverseTable[(code and 255).uint8].uint16 shl 8) or
-    (bitReverseTable[(code shr 8).uint8].uint16)
+    (bitReverseTable[(code and 255)] shl 8) or bitReverseTable[(code shr 8)]
   ) shr (16 - length)
 
 func makeCodes(lengths: seq[uint8]): seq[uint16] =
@@ -188,10 +190,7 @@ template failCompress*() =
     ZippyError, "Unexpected error while compressing"
   )
 
-when defined(release):
-  {.push checks: off.}
-
-template read32*(s: openarray[uint8], pos: int): uint32 =
+template read32*(s: seq[uint8], pos: int): uint32 =
   when nimvm:
     (s[pos + 0].uint32 shl 0) or
     (s[pos + 1].uint32 shl 8) or
@@ -200,7 +199,7 @@ template read32*(s: openarray[uint8], pos: int): uint32 =
   else:
     cast[ptr uint32](s[pos].unsafeAddr)[]
 
-template read64*(s: openarray[uint8], pos: int): uint64 =
+template read64*(s: seq[uint8], pos: int): uint64 =
   when nimvm:
     (s[pos + 0].uint64 shl 0) or
     (s[pos + 1].uint64 shl 8) or
@@ -213,7 +212,7 @@ template read64*(s: openarray[uint8], pos: int): uint64 =
   else:
     cast[ptr uint64](s[pos].unsafeAddr)[]
 
-template copy64*(dst: var seq[uint8], src: openarray[uint8], op, ip: int) =
+template copy64*(dst: var seq[uint8], src: seq[uint8], op, ip: int) =
   when nimvm:
     for i in 0 .. 7:
       dst[op + i] = src[ip + i]
@@ -248,7 +247,7 @@ func distanceCodeIndex*(value: uint16): uint16 =
     distanceCodes[value shr 14] + 28
 
 func findMatchLength*(
-  src: openarray[uint8], s1, s2, limit: int
+  src: seq[uint8], s1, s2, limit: int
 ): int {.inline.} =
   var
     s1 = s1
@@ -267,7 +266,7 @@ func findMatchLength*(
     inc s2
     inc result
 
-func adler32*(data: openarray[uint8]): uint32 =
+func adler32*(data: seq[uint8]): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
 
   const nmax = 5552

@@ -1,6 +1,6 @@
 import benchy, strformat, zip/zlib, zippy
 
-import miniz, nimPNG/nimz
+# import miniz, nimPNG/nimz
 
 const
   zs = [
