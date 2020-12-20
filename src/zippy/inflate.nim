@@ -104,7 +104,9 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   b.bitBuf = b.bitBuf shr len
   b.bitCount -= len
 
-func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
+func inflateBlock(
+  b: var BitStream, dst: var seq[uint8], op: var int, fixedCodes: bool
+) =
   var literalHuffman, distanceHuffman: Huffman
 
   if fixedCodes:
@@ -143,7 +145,6 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
     literalHuffman = initHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
     distanceHuffman = initHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
 
-  var op = dst.len
   while true:
     let symbol = decodeSymbol(b, literalHuffman)
     if symbol <= 255:
@@ -202,9 +203,7 @@ func inflateBlock(b: var BitStream, dst: var seq[uint8], fixedCodes: bool) =
           dst[op] = dst[op - totalDist]
           inc op
 
-  dst.setLen(op)
-
-func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
+func inflateNoCompression(b: var BitStream, dst: var seq[uint8], op: var int) =
   b.skipRemainingBitsInCurrentByte()
   let
     len = b.readBits(16).int
@@ -212,13 +211,14 @@ func inflateNoCompression(b: var BitStream, dst: var seq[uint8]) =
   if len + nlen != 65535:
     failUncompress()
   if len > 0:
-    let pos = dst.len
-    dst.setLen(pos + len) # Make room for the bytes to be copied to
-    b.readBytes(dst, pos, len)
+    dst.setLen(op + len) # Make room for the bytes to be copied to
+    b.readBytes(dst, op, len)
+  op += len
 
 func inflate*(dst: var seq[uint8], src: seq[uint8], pos = 0) =
   var
     b = initBitStream(src, pos)
+    op: int
     finalBlock: bool
   while not finalBlock:
     let
@@ -229,13 +229,15 @@ func inflate*(dst: var seq[uint8], src: seq[uint8], pos = 0) =
 
     case btype:
     of 0: # No compression
-      inflateNoCompression(b, dst)
+      inflateNoCompression(b, dst, op)
     of 1: # Compressed with fixed Huffman codes
-      inflateBlock(b, dst, true)
+      inflateBlock(b, dst, op, true)
     of 2: # Compressed with dynamic Huffman codes
-      inflateBlock(b, dst, false)
+      inflateBlock(b, dst, op, false)
     else:
       raise newException(ZippyError, "Invalid block header")
+
+  dst.setLen(op)
 
 func inflate*(src: seq[uint8]): seq[uint8] =
   result = newSeqOfCap[uint8](src.len)
