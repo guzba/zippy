@@ -214,3 +214,10 @@ Helper for when preferring to work with strings.
 ```nim
 template uncompress(src: string; dataFormat = dfDetect): string
 ```
+## **type** ZippyError
+
+Raised if an operation fails.
+
+```nim
+ZippyError = object of ValueError
+```
