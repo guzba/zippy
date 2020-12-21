@@ -40,6 +40,7 @@ block:
   doAssert i == 3026
 
   removeDir("tmp/extract")
+  createDir("tmp")
   tarball.extractAll("tmp/extract")
 
   for path, entry in tarball.contents:
