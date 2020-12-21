@@ -210,7 +210,7 @@ proc extractAll*(tarball: Tarball, dest: string) =
 
   moveDir(tmpDir, dest)
 
-proc extractTarball*(tarPath, dest: string) =
+proc extractAll*(tarPath, dest: string) =
   ## Extracts the files in the tarball located at tarPath into the destination
   ## directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
   let tarball = Tarball()

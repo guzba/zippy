@@ -283,12 +283,12 @@ Extracts the files stored in tarball to the destination directory. The path to t
 proc extractAll(tarball: Tarball; dest: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadEnvEffect, ReadIOEffect, WriteDirEffect, WriteIOEffect].}
 ```
 
-## **proc** extractTarball
+## **proc** extractAll
 
 Extracts the files in the tarball located at tarPath into the destination directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
 
 ```nim
-proc extractTarball(tarPath, dest: string) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
+proc extractAll(tarPath, dest: string) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
 ```
 
 ## **proc** createTarball
