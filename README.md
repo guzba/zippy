@@ -221,3 +221,82 @@ Raised if an operation fails.
 ```nim
 ZippyError = object of ValueError
 ```
+
+# API: zippy/tarballs
+
+```nim
+import zippy/tarballs
+```
+
+## **type** EntryKind
+
+```nim
+EntryKind = enum
+ NormalFile = 48, Directory = 53
+```
+
+## **type** TarballEntry
+
+
+```nim
+TarballEntry = object
+ kind*: EntryKind
+ contents*: string
+ lastModified*: times.Time
+```
+
+## **type** Tarball
+
+
+```nim
+Tarball = ref object
+ contents*: OrderedTable[string, TarballEntry]
+```
+
+## **proc** addDir
+
+Recursively adds all of the files and directories inside dir to tarball.
+
+```nim
+proc addDir(tarball: Tarball; dir: string) {.raises: [OSError, IOError], tags: [ReadDirEffect, ReadIOEffect].}
+```
+
+## **proc** open
+
+Opens the tarball file located at path and reads its contents into tarball.contents (clears any existing tarball.contents entries). Supports .tar, .tar.gz, .taz and .tgz file extensions.
+
+```nim
+proc open(tarball: Tarball; path: string) {.raises: [IOError, ZippyError, ZippyError], tags: [ReadIOEffect].}
+```
+
+## **proc** writeTarball
+
+Writes tarball.contents to a tarball file at path. Uses the path's file extension to determine the tarball format. Supports .tar, .tar.gz, .taz and .tgz file extensions.
+
+```nim
+proc writeTarball(tarball: Tarball; path: string) {.raises: [ZippyError, IOError], tags: [WriteIOEffect].}
+```
+
+## **proc** extractAll
+
+Extracts the files stored in tarball to the destination directory. The path to the destination directory must exist. The destination directory itself must not exist (it is not overwitten).
+
+```nim
+proc extractAll(tarball: Tarball; dest: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadEnvEffect, ReadIOEffect, WriteDirEffect, WriteIOEffect].}
+```
+
+## **proc** extractTarball
+
+Extracts the files in the tarball located at tarPath into the destination directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
+
+```nim
+proc extractTarball(tarPath, dest: string) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
+```
+
+## **proc** createTarball
+
+Creates a tarball containing all of the files and directories inside source and writes the tarball file to dest. Uses the dest path's file extension to determine the tarball format. Supports .tar, .tar.gz, .taz and .tgz file extensions.
+
+```nim
+proc createTarball(source, dest: string) {.raises: [OSError, IOError, ZippyError], tags: [ReadDirEffect, ReadIOEffect, WriteIOEffect].}
+```

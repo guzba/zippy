@@ -81,7 +81,13 @@ proc open*(tarball: Tarball, path: string) =
       continue
 
     let
-      fileSize = parseOctInt(header[124 .. 134])
+      fileSize =
+        try:
+          parseOctInt(header[124 .. 134])
+        except ValueError:
+          raise newException(
+            ZippyError, "Unexpected error while opening tarball"
+          )
       typeFlag = header[156]
       fileNamePrefix =
         if header[257 ..< 263] == "ustar\0":
@@ -211,11 +217,11 @@ proc extractTarball*(tarPath, dest: string) =
   tarball.open(tarPath)
   tarball.extractAll(dest)
 
-proc createTarball*(filesDir, dest: string) =
+proc createTarball*(source, dest: string) =
   ## Creates a tarball containing all of the files and directories inside
-  ## filesDir and writes the tarball file to dest. Uses the dest path's file
+  ## source and writes the tarball file to dest. Uses the dest path's file
   ## extension to determine the tarball format. Supports .tar, .tar.gz, .taz
   ## and .tgz file extensions.
   let tarball = Tarball()
-  tarball.addDir(filesDir)
+  tarball.addDir(source)
   tarball.writeTarball(dest)
