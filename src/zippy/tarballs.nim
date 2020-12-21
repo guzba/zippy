@@ -1,4 +1,5 @@
-import os, zippy, zippy/zippyerror, zippy/common, strutils, tables, random, times
+import os, random, strutils, tables, times, zippy, zippy/common,
+    zippy/zippyerror
 
 type
   EntryKind* = enum

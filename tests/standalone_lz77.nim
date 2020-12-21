@@ -203,11 +203,11 @@ timeIt "lz77_2":
       #       echo "bad @ ", i, " ", original[i], " ", decoded[i]
       #       break
 
-# let
-#   original = cast[seq[uint8]]("zSAM SAM SAM a SAM SAM SAMz")
-#   encoded = lz77Encode2(original)
-# echo &"original: {original.len} encoded: {encoded.len}"
-# echo totalMatch
-# echo encoded
-# echo cast[string](lz77Decode2(original, encoded))
-# doAssert original == lz77Decode2(original, encoded)
+    # let
+    #   original = cast[seq[uint8]]("zSAM SAM SAM a SAM SAM SAMz")
+    #   encoded = lz77Encode2(original)
+    # echo &"original: {original.len} encoded: {encoded.len}"
+    # echo totalMatch
+    # echo encoded
+    # echo cast[string](lz77Decode2(original, encoded))
+    # doAssert original == lz77Decode2(original, encoded)

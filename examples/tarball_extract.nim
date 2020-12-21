@@ -1,4 +1,4 @@
-import zippy/tarballs, os
+import os, zippy/tarballs
 
 # Extracts all of the files and directories in the tarball into output/dir.
 

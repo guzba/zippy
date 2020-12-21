@@ -1,4 +1,4 @@
-import untar, benchy, zippy/tarballs, tables
+import benchy, tables, untar, zippy/tarballs
 
 timeIt "untar":
   let tarFile = newTarFile("tests/data/tarballs/Nim-1.4.2.tar.gz")

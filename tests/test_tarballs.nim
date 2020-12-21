@@ -1,4 +1,4 @@
-import zippy/tarballs, os, tables
+import os, tables, zippy/tarballs
 
 block: # .tar
   let tarball = Tarball()

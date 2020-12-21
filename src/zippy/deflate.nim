@@ -323,7 +323,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
     )
 
     b.addBit(1)
-    b.addBits(2, 2)# Dynamic Huffman codes
+    b.addBits(2, 2) # Dynamic Huffman codes
 
     b.addBits(hlit, 5)
     b.addBits(hdist, 5)

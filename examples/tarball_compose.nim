@@ -1,4 +1,4 @@
-import zippy/tarballs, tables
+import tables, zippy/tarballs
 
 # Compose a tarball by manually adding entries and then write it out.
 
