@@ -2,9 +2,7 @@
 
 `nimble install zippy`
 
-Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [ZLIB](https://tools.ietf.org/html/rfc1950) and [GZIP](https://tools.ietf.org/html/rfc1952).
-
-In addition to the above data compression formats, Zippy can also open and create [Tarballs](https://en.wikipedia.org/wiki/Tar_(computing)) (.tar, .tar.gz, .tgz, .taz). [ZIP archive](https://en.wikipedia.org/wiki/Zip_(file_format)) support is also in progress.
+Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [ZLIB](https://tools.ietf.org/html/rfc1950) and [GZIP](https://tools.ietf.org/html/rfc1952) data compression formats. Zippy can also create and open [Tarballs](https://en.wikipedia.org/wiki/Tar_(computing)) (.tar, .tar.gz, .tgz, .taz). [ZIP archive](https://en.wikipedia.org/wiki/Zip_(file_format)) support is also in progress.
 
 The goal of this library is to be a pure Nim implementation that is small, performant and dependency-free.
 
