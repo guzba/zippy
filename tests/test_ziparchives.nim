@@ -1,4 +1,4 @@
-import tables, zippy/ziparchives, os
+import os, tables, zippy/ziparchives
 
 block:
   let archive = ZipArchive()
