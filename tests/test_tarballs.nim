@@ -19,7 +19,7 @@ block: # .tar
   tarball.open("tests/data/tarballs/dir.tar")
 
   for path, entry in tarball.contents:
-    if entry.kind == NormalFile:
+    if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
 block: # .tar.gz
@@ -27,7 +27,7 @@ block: # .tar.gz
   tarball.open("tests/data/tarballs/dir.tar.gz")
 
   for path, entry in tarball.contents:
-    if entry.kind == NormalFile:
+    if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
 block:
@@ -44,7 +44,7 @@ block:
   tarball.extractAll("tmp/tarballs")
 
   for path, entry in tarball.contents:
-    if entry.kind == Directory:
+    if entry.kind == ekDirectory:
       doAssert dirExists("tmp/tarballs" / path)
     else:
       doAssert fileExists("tmp/tarballs" / path)
