@@ -212,6 +212,7 @@ Helper for when preferring to work with strings.
 ```nim
 template uncompress(src: string; dataFormat = dfDetect): string
 ```
+
 ## **type** ZippyError
 
 Raised if an operation fails.
@@ -230,7 +231,7 @@ import zippy/tarballs
 
 ```nim
 EntryKind = enum
- NormalFile = 48, Directory = 53
+ ekNormalFile = 48, ekDirectory = 53
 ```
 
 ## **type** TarballEntry
@@ -256,7 +257,7 @@ Tarball = ref object
 Recursively adds all of the files and directories inside dir to tarball.
 
 ```nim
-proc addDir(tarball: Tarball; dir: string) {.raises: [OSError, IOError], tags: [ReadDirEffect, ReadIOEffect].}
+proc addDir(tarball: Tarball; dir: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadIOEffect].}
 ```
 
 ## **proc** open
@@ -288,7 +289,8 @@ proc extractAll(tarball: Tarball; dest: string) {.raises: [ZippyError, OSError, 
 Extracts the files in the tarball located at tarPath into the destination directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
 
 ```nim
-proc extractAll(tarPath, dest: string) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
+proc extractAll(tarPath, dest: string) {.raises: [IOError, ZippyError, OSError], tags: [
+ ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
 ```
 
 ## **proc** createTarball
@@ -296,5 +298,84 @@ proc extractAll(tarPath, dest: string) {.raises: [IOError, ZippyError, OSError],
 Creates a tarball containing all of the files and directories inside source and writes the tarball file to dest. Uses the dest path's file extension to determine the tarball format. Supports .tar, .tar.gz, .taz and .tgz file extensions.
 
 ```nim
-proc createTarball(source, dest: string) {.raises: [OSError, IOError, ZippyError], tags: [ReadDirEffect, ReadIOEffect, WriteIOEffect].}
+proc createTarball(source, dest: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadIOEffect, WriteIOEffect].}
+```
+
+# API: zippy/ziparchives
+
+```nim
+import zippy/ziparchives
+```
+
+## **type** EntryKind
+
+
+```nim
+EntryKind = enum
+ ekFile, ekDirectory
+```
+
+## **type** ArchiveEntry
+
+
+```nim
+ArchiveEntry = object
+ kind*: EntryKind
+ contents*: string
+```
+
+## **type** ZipArchive
+
+
+```nim
+ZipArchive = ref object
+ contents*: OrderedTable[string, ArchiveEntry]
+```
+
+## **proc** addDir
+
+Recursively adds all of the files and directories inside dir to archive.
+
+```nim
+proc addDir(archive: ZipArchive; dir: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadIOEffect].}
+```
+
+## **proc** open
+
+Opens the zip archive file located at path and reads its contents into archive.contents (clears any existing archive.contents entries).
+
+```nim
+proc open(archive: ZipArchive; path: string) {.raises: [IOError, ZippyError, KeyError], tags: [ReadIOEffect].}
+```
+
+## **proc** writeZipArchive
+
+Writes archive.contents to a zip file at path.
+
+```nim
+proc writeZipArchive(archive: ZipArchive; path: string) {.raises: [ZippyError, ZippyError, IOError], tags: [WriteIOEffect].}
+```
+
+## **proc** extractAll
+
+Extracts the files stored in archive to the destination directory. The path to the destination directory must exist. The destination directory itself must not exist (it is not overwitten).
+
+```nim
+proc extractAll(archive: ZipArchive; dest: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadEnvEffect, ReadIOEffect, WriteDirEffect, WriteIOEffect].}
+```
+
+## **proc** extractAll
+
+Extracts the files in the archive located at zipPath into the destination directory.
+
+```nim
+proc extractAll(zipPath, dest: string) {.raises: [IOError, ZippyError, KeyError, OSError], tags: [ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
+```
+
+## **proc** createZipArchive
+
+Creates an archive containing all of the files and directories inside source and writes the zip file to dest.
+
+```nim
+proc createZipArchive(source, dest: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadIOEffect, WriteIOEffect].}
 ```
