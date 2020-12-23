@@ -1,7 +1,7 @@
 import zippy
 
 const
-  testPath = "tests/data/rfctest1.gold"
+  testPath = "tests/data/gzipfiletest.txt"
 
   testDefault = block:
     let
