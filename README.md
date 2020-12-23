@@ -39,11 +39,11 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 3.7798s | 63.32%
-urls.10K | 19.7357s | 67.49%
+alice29.txt | 3.6858 | 63.32%
+urls.10K | 19.4039s | 67.49%
 rfctest3.gold | 0.6802s | 70.73%
-randtest3.gold | 0.1073s | 0%
-paper-100k.pdf | 1.9175s | 19.94%
+randtest3.gold | 0.1054s | 0%
+paper-100k.pdf | 1.9085s | 19.94%
 geo.protodata | 1.2939s | 86.91%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
