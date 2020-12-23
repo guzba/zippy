@@ -30,21 +30,21 @@ block: # .tar.gz
     if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
-block:
-  let tarball = Tarball()
-  tarball.open("tests/data/tarballs/Nim-1.4.2.tar.gz")
+# block:
+#   let tarball = Tarball()
+#   tarball.open("tests/data/tarballs/Nim-1.4.2.tar.gz")
 
-  var i: int
-  for path, entry in tarball.contents:
-    inc i
-  doAssert i == 3026
+#   var i: int
+#   for path, entry in tarball.contents:
+#     inc i
+#   doAssert i == 3026
 
-  removeDir("tmp/tarballs")
-  createDir("tmp")
-  tarball.extractAll("tmp/tarballs")
+#   removeDir("tmp/tarballs")
+#   createDir("tmp")
+#   tarball.extractAll("tmp/tarballs")
 
-  for path, entry in tarball.contents:
-    if entry.kind == ekDirectory:
-      doAssert dirExists("tmp/tarballs" / path)
-    else:
-      doAssert fileExists("tmp/tarballs" / path)
+#   for path, entry in tarball.contents:
+#     if entry.kind == ekDirectory:
+#       doAssert dirExists("tmp/tarballs" / path)
+#     else:
+#       doAssert fileExists("tmp/tarballs" / path)
