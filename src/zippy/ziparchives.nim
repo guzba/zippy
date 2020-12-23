@@ -55,6 +55,9 @@ proc open*(archive: ZipArchive, path: string) =
 
   let data = cast[seq[uint8]](readFile(path))
 
+  template failOpen() =
+    raise newException(ZippyError, "Unexpected error opening zip archive")
+
   var pos: int
   while true:
     if pos + 4 > data.len:
@@ -192,14 +195,17 @@ proc open*(archive: ZipArchive, path: string) =
       # echo extraField
       # echo fileComment
 
-      # Update the entry kinds
-      if (externalFileAttr and 0x10) == 0x10:
-        archive.contents[fileName].kind = ekDirectory
-      elif externalFileAttr == 0 or (externalFileAttr and 0x20) == 0x20:
-        archive.contents[fileName].kind = ekFile
-      else:
-        # Not a directory or file entry
-        archive.contents.del(fileName)
+      try:
+        # Update the entry kinds
+        if (externalFileAttr and 0x10) == 0x10:
+          archive.contents[fileName].kind = ekDirectory
+        elif externalFileAttr == 0 or (externalFileAttr and 0x20) == 0x20:
+          archive.contents[fileName].kind = ekFile
+        else:
+          # Not a directory or file entry
+          archive.contents.del(fileName)
+      except KeyError:
+        failOpen()
 
     of 0x06054b50: # End of central directory record
       if pos + 22 > data.len:
@@ -235,7 +241,7 @@ proc open*(archive: ZipArchive, path: string) =
       break
 
     else:
-      raise newException(ZippyError, "Unexpected error opening zip archive")
+      failOpen()
 
 proc writeZipArchive*(archive: ZipArchive, path: string) =
   ## Writes archive.contents to a zip file at path.

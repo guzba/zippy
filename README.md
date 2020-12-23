@@ -345,7 +345,7 @@ proc addDir(archive: ZipArchive; dir: string) {.raises: [ZippyError, OSError, IO
 Opens the zip archive file located at path and reads its contents into archive.contents (clears any existing archive.contents entries).
 
 ```nim
-proc open(archive: ZipArchive; path: string) {.raises: [IOError, ZippyError, KeyError], tags: [ReadIOEffect].}
+proc open(archive: ZipArchive; path: string) {.raises: [IOError, ZippyError, ZippyError], tags: [ReadIOEffect].}
 ```
 
 ## **proc** writeZipArchive
@@ -369,7 +369,8 @@ proc extractAll(archive: ZipArchive; dest: string) {.raises: [ZippyError, OSErro
 Extracts the files in the archive located at zipPath into the destination directory.
 
 ```nim
-proc extractAll(zipPath, dest: string) {.raises: [IOError, ZippyError, KeyError, OSError], tags: [ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
+proc extractAll(zipPath, dest: string) {.raises: [IOError, ZippyError, OSError], tags: [
+ ReadIOEffect, ReadDirEffect, ReadEnvEffect, WriteDirEffect, WriteIOEffect].}
 ```
 
 ## **proc** createZipArchive
