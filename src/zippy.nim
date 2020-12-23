@@ -84,7 +84,7 @@ template compress*(
     cast[string](compress(cast[seq[uint8]](src), level, dataFormat))
 
 func uncompress(
-  src: seq[uint8], dataFormat: CompressedDataFormat, dst: var seq[uint8]
+  dst: var seq[uint8], src: seq[uint8], dataFormat: CompressedDataFormat
 ) =
   case dataFormat:
   of dfGzip:
@@ -203,18 +203,18 @@ func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
       src[0 .. 2] == [31.uint8, 139, 8] and
       (src[3] and 0b11100000) == 0
     ): # This looks like gzip
-      uncompress(src, dfGzip, result)
+      uncompress(result, src, dfGzip)
     elif (
       src.len >= 6 and
       (src[0] and 0b00001111) == 8 and
       (src[0] shr 4) <= 7 and
       ((src[0].uint16 * 256) + src[1].uint16) mod 31 == 0
     ): # This looks like zlib
-      uncompress(src, dfZlib, result)
+      uncompress(result, src, dfZlib)
     else:
       raise newException(ZippyError, "Unable to detect compressed data format")
   else:
-    uncompress(src, dataFormat, result)
+    uncompress(result, src, dataFormat)
 
 template uncompress*(src: string, dataFormat = dfDetect): string =
   ## Helper for when preferring to work with strings.
