@@ -4,11 +4,9 @@ import tables, zippy/tarballs
 
 let tarball = Tarball()
 tarball.contents["file.txt"] = TarballEntry(
-  kind: NormalFile,
   contents: "text file contents"
 )
 tarball.contents["fireworks.jpg"] = TarballEntry(
-  kind: NormalFile,
   contents: readFile("tests/data/fireworks.jpg")
 )
 tarball.writeTarball("composed.tar.gz")

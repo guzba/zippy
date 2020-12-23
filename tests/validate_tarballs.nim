@@ -6,6 +6,8 @@ proc trim(s: string): string =
       return s[0 ..< i]
   s
 
+createDir("tmp")
+
 let tarball = Tarball()
 tarball.addDir("tests/data")
 tarball.writeTarball("tmp/tarball.tar")

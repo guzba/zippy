@@ -39,12 +39,12 @@ block:
     inc i
   doAssert i == 3026
 
-  removeDir("tmp/extract")
+  removeDir("tmp/tarballs")
   createDir("tmp")
-  tarball.extractAll("tmp/extract")
+  tarball.extractAll("tmp/tarballs")
 
   for path, entry in tarball.contents:
     if entry.kind == Directory:
-      doAssert dirExists("tmp/extract" / path)
+      doAssert dirExists("tmp/tarballs" / path)
     else:
-      doAssert fileExists("tmp/extract" / path)
+      doAssert fileExists("tmp/tarballs" / path)

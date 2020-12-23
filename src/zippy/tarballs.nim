@@ -1,10 +1,12 @@
 import os, random, strutils, tables, times, zippy, zippy/common,
     zippy/zippyerror
 
+export zippyerror
+
 type
   EntryKind* = enum
-    NormalFile = '0',
-    Directory = '5'
+    ekNormalFile = '0',
+    ekDirectory = '5'
 
   TarballEntry* = object
     kind*: EntryKind
@@ -16,13 +18,13 @@ type
 
 proc addDir(tarball: Tarball, base, relative: string) =
   if relative.len > 0 and relative notin tarball.contents:
-    tarball.contents[relative] = TarballEntry(kind: Directory)
+    tarball.contents[relative.toUnixPath()] = TarballEntry(kind: ekDirectory)
 
   for kind, path in walkDir(base / relative, relative = true):
     case kind:
     of pcFile:
-      tarball.contents[relative / path] = TarballEntry(
-        kind: NormalFile,
+      tarball.contents[(relative / path).toUnixPath()] = TarballEntry(
+        kind: ekNormalFile,
         contents: readFile(base / relative / path),
         lastModified: getLastModificationTime(base / relative / path)
       )
@@ -33,6 +35,12 @@ proc addDir(tarball: Tarball, base, relative: string) =
 
 proc addDir*(tarball: Tarball, dir: string) =
   ## Recursively adds all of the files and directories inside dir to tarball.
+  if splitFile(dir).ext.len > 0:
+    raise newException(
+      ZippyError,
+      "Error adding dir " & dir & " to tarball, appears to be a file?"
+    )
+
   let (head, tail) = splitPath(dir)
   tarball.addDir(head, tail)
 
@@ -99,10 +107,11 @@ proc open*(tarball: Tarball, path: string) =
       failEOF()
 
     if typeFlag == '0' or typeFlag == '5':
-      tarball.contents[fileNamePrefix / fileName] = TarballEntry(
-        kind: EntryKind(typeFlag),
-        contents: data[pos ..< pos + fileSize]
-      )
+      tarball.contents[(fileNamePrefix / fileName).toUnixPath()] =
+        TarballEntry(
+          kind: EntryKind(typeFlag),
+          contents: data[pos ..< pos + fileSize]
+        )
 
     # Move pos by fileSize, where fileSize is 512 byte aligned
     pos += (fileSize + 511) and not 511
@@ -202,10 +211,12 @@ proc extractAll*(tarball: Tarball, dest: string) =
       )
 
     case entry.kind:
-    of NormalFile:
+    of ekNormalFile:
       createDir(tmpDir / splitFile(path).dir)
       writeFile(tmpDir / path, entry.contents)
-    of Directory:
+      if entry.lastModified > Time():
+        setLastModificationTime(tmpDir / path, entry.lastModified)
+    of ekDirectory:
       createDir(tmpDir / path)
 
   moveDir(tmpDir, dest)
