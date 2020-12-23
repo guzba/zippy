@@ -20,9 +20,9 @@ Simple examples using Zippy can be found in the [examples/](https://github.com/g
 
 * [HTTP client gzip](https://github.com/guzba/zippy/blob/master/examples/http_client.nim)
 * [HTTP server gzip](https://github.com/guzba/zippy/blob/master/examples/http_server.nim)
-* [Compress a dir into a tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_create.nim)
-* [Extract from a tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_extract.nim)
-* [Compose a tarball in code](https://github.com/guzba/zippy/blob/master/examples/tarball_compose.nim)
+* Compress a dir into a [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_create.nim) or [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_create.nim)
+* Extract from a [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_extract.nim) or [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_extract.nim)
+* Compose a [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_compose.nim) or [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_compose.nim) in code
 
 ## Performance
 
