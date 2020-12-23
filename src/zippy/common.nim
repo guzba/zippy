@@ -1,4 +1,4 @@
-import bitops, zippy/zippyerror
+import bitops, strutils, zippy/zippyerror
 
 type
   CompressionConfig* = object
@@ -131,7 +131,7 @@ const
 when defined(release):
   {.push checks: off.}
 
-template reverseUint16*(code: uint16, length: uint8): uint16 =
+func reverseUint16*(code: uint16, length: uint8): uint16 {.inline.} =
   (
     (bitReverseTable[(code and 255)] shl 8) or bitReverseTable[(code shr 8)]
   ) shr (16 - length)
@@ -190,7 +190,14 @@ template failCompress*() =
     ZippyError, "Unexpected error while compressing"
   )
 
-template read32*(s: seq[uint8], pos: int): uint32 =
+func read16*(s: seq[uint8], pos: int): uint16 {.inline.} =
+  when nimvm:
+    (s[pos + 0].uint16 shl 0) or
+    (s[pos + 1].uint16 shl 8)
+  else:
+    cast[ptr uint16](s[pos].unsafeAddr)[]
+
+func read32*(s: seq[uint8], pos: int): uint32 {.inline.} =
   when nimvm:
     (s[pos + 0].uint32 shl 0) or
     (s[pos + 1].uint32 shl 8) or
@@ -199,7 +206,7 @@ template read32*(s: seq[uint8], pos: int): uint32 =
   else:
     cast[ptr uint32](s[pos].unsafeAddr)[]
 
-template read64*(s: seq[uint8], pos: int): uint64 =
+func read64*(s: seq[uint8], pos: int): uint64 {.inline.} =
   when nimvm:
     (s[pos + 0].uint64 shl 0) or
     (s[pos + 1].uint64 shl 8) or
@@ -212,7 +219,7 @@ template read64*(s: seq[uint8], pos: int): uint64 =
   else:
     cast[ptr uint64](s[pos].unsafeAddr)[]
 
-template copy64*(dst: var seq[uint8], src: seq[uint8], op, ip: int) =
+func copy64*(dst: var seq[uint8], src: seq[uint8], op, ip: int) {.inline.} =
   when nimvm:
     for i in 0 .. 7:
       dst[op + i] = src[ip + i]
@@ -327,6 +334,9 @@ func vmStr2Seq*(src: string): seq[uint8] =
   result.setLen(src.len)
   for i, c in src:
     result[i] = c.uint8
+
+func toUnixPath*(path: string): string =
+  path.replace('\\', '/')
 
 when defined(release):
   {.pop.}

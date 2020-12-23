@@ -227,7 +227,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
     return deflateNoCompression(src)
 
   let
-    useFixedCodes = src.len <= 8192
+    useFixedCodes = src.len <= 2048
     (llLengths, llCodes) = block:
       if useFixedCodes:
         (fixedCodeLengths, fixedCodes)
