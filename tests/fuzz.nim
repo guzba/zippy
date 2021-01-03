@@ -25,3 +25,9 @@ for i in 0 ..< 10_000:
     doAssert uncompress(compressed).len > 0
   except ZippyError:
     discard
+
+  compressed = compressed[0 ..< pos]
+  try:
+    doAssert uncompress(compressed).len > 0
+  except ZippyError:
+    discard

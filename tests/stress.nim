@@ -27,14 +27,20 @@ for i in 0 ..< 10000:
   r.shuffle(shuffled)
 
   template fuzz() =
+    let pos = r.rand(compressed.len - 1)
     try:
-      let
-        pos = r.rand(compressed.len - 1)
-        value = r.rand(255).uint8
+      let value = r.rand(255).uint8
       compressed[pos] = value
       doAssert uncompress(compressed).len > 0
     except ZippyError:
       discard
+
+    compressed = compressed[0 ..< pos]
+    try:
+      doAssert uncompress(compressed).len > 0
+    except ZippyError:
+      discard
+
 
   for level in [1, -1]: # BestSpeed and Default
     block: # data
