@@ -59,7 +59,7 @@ func lz77Encode*(
     chain = newSeq[uint16](maxWindowSize) # pos a -> pos b
 
   template hash4(start: int): int =
-    (read32(src, start) * 0x1e35a7bd).int shr (32 - hashBits)
+    ((read32(src, start) * 0x1e35a7bd) shr (32 - hashBits)).int
 
   template updateChain() =
     chain[windowPos] = head[hash]

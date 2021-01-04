@@ -39,66 +39,66 @@ Each file is compressed 1000 times.
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 3.6858 | 63.32%
-urls.10K | 19.4039s | 67.49%
-rfctest3.gold | 0.6802s | 70.73%
-randtest3.gold | 0.1054s | 0%
-paper-100k.pdf | 1.9085s | 19.94%
-geo.protodata | 1.2939s | 86.91%
+alice29.txt | 3.6429 | 63.32%
+urls.10K | 19.2834s | 67.49%
+rfctest3.gold | 0.6695s | 70.73%
+randtest3.gold | 0.1003s | 0%
+paper-100k.pdf | 1.8863s | 19.94%
+geo.protodata | 1.2560s | 86.91%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 6.8945s | 64.23%
-urls.10K | 16.3272s | 68.29%
-rfctest3.gold | 0.8147s | 71.74%
-randtest3.gold | 0.1545s | 0%
-paper-100k.pdf | 1.8938s | 20.59%
-geo.protodata | 1.0743s | 87.24%
+alice29.txt | 6.8607s | 64.23%
+urls.10K | 16.3552s | 68.29%
+rfctest3.gold | 0.8023s | 71.74%
+randtest3.gold | 0.1168s | 0%
+paper-100k.pdf | 1.8572s | 20.59%
+geo.protodata | 1.0627s | 87.24%
 
 #### Fastest compression
 
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 1.5847s | 55.32%
-urls.10K | 5.2101s | 61.70%
-rfctest3.gold | 0.4295s | 66.31%
+alice29.txt | 1.5564s | 55.32%
+urls.10K | 5.0763s | 61.70%
+rfctest3.gold | 0.4265s | 66.31%
 randtest3.gold | 0.0382s | 0%
-paper-100k.pdf | 1.0918s | 18.44%
-geo.protodata | 0.8353s | 80.42%
+paper-100k.pdf | 1.0761s | 18.44%
+geo.protodata | 0.8267s | 80.42%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 1.7779s | 57.17%
-urls.10K | 7.3260s | 63.93%
-rfctest3.gold | 0.3270s | 67.53%
-randtest3.gold | 0.1189s | 0%
-paper-100k.pdf | 1.6632s | 20.22%
-geo.protodata | 0.4888s | 84.12%
+alice29.txt | 1.6872s | 57.17%
+urls.10K | 7.0526s | 63.93%
+rfctest3.gold | 0.3170s | 67.53%
+randtest3.gold | 0.1127s | 0%
+paper-100k.pdf | 1.6518s | 20.22%
+geo.protodata | 0.4873s | 84.12%
 
 #### Best compression
 
 **https://github.com/guzba/zippy** results:
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 4.5985s | 63.75%
-urls.10K | 28.5602s | 68.14%
-rfctest3.gold | 1.3401s | 70.92%
-randtest3.gold | 0.1257s | 0%
-paper-100k.pdf | 2.1010s | 20.07%
-geo.protodata | 1.5293s | 87.07%
+alice29.txt | 4.4691s | 63.75%
+urls.10K | 28.0097s | 68.14%
+rfctest3.gold | 1.3381s | 70.92%
+randtest3.gold | 0.1005s | 0%
+paper-100k.pdf | 2.0691s | 20.07%
+geo.protodata | 1.4902s | 87.07%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time | Size Reduction
 --- | --- | ---:
-alice29.txt | 9.9339s | 64.38%
-urls.10K | 30.5398s | 68.82%
-rfctest3.gold | 2.6180s | 71.77%
-randtest3.gold | 0.1169s | 0%
-paper-100k.pdf | 2.0639s | 20.64%
-geo.protodata | 1.4266s | 87.37%
+alice29.txt | 9.8849s | 64.38%
+urls.10K | 30.3654s | 68.82%
+rfctest3.gold | 2.5958s | 71.77%
+randtest3.gold | 0.1170s | 0%
+paper-100k.pdf | 2.0540s | 20.64%
+geo.protodata | 1.4190s | 87.37%
 
 ### Uncompress
 
@@ -107,22 +107,22 @@ Each file is uncompressed 1000 times:
 **https://github.com/guzba/zippy** results:
 File | Time
 --- | ---:
-alice29.txt | 0.4957s
-urls.10K | 2.2403s
-rfctest3.gold | 0.1240s
-randtest3.gold | 0.098s
-paper-100k.pdf | 0.4399s
-geo.protodata | 0.1905s
+alice29.txt | 0.4710s
+urls.10K | 2.1916s
+rfctest3.gold | 0.1137s
+randtest3.gold | 0.093s
+paper-100k.pdf | 0.4265s
+geo.protodata | 0.1775s
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 File | Time
 --- | ---:
-alice29.txt | 0.4806s
-urls.10K | 2.0093s
-rfctest3.gold | 0.1285s
-randtest3.gold | 0.0101s
-paper-100k.pdf | 0.3345s
-geo.protodata | 0.1866s
+alice29.txt | 0.4793s
+urls.10K | 1.9790s
+rfctest3.gold | 0.1169s
+randtest3.gold | 0.0090s
+paper-100k.pdf | 0.3123s
+geo.protodata | 0.1762s
 
 ## Testing
 
