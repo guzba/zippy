@@ -30,6 +30,25 @@ block: # .tar.gz
     if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
+# block:
+#   removeFile("examples.tar.gz")
+#   removeFile("tmp_tarball1.tar.gz")
+#   removeDir("tmp_tarball1/")
+#   removeDir("tmp_tarball2/")
+#   createTarball("examples/", "examples.tar.gz")
+#   extractAll("examples.tar.gz", "tmp_tarball1/")
+
+#   for (kind, path) in walkDir("tmp_tarball1"):
+#     doAssert kind == pcFile
+#     doAssert readFile("examples/" & splitPath(path).tail) == readFile(path)
+
+#   createTarball("tmp_tarball1/", "tmp_tarball1.tar.gz")
+#   extractAll("tmp_tarball1.tar.gz", "tmp_tarball2/")
+
+#   for (kind, path) in walkDir("tmp_tarball2"):
+#     doAssert kind == pcFile
+#     doAssert readFile("tmp_tarball1/" & splitPath(path).tail) == readFile(path)
+
 block: # .tar Creation
   let
     tarball  = Tarball()

@@ -185,7 +185,8 @@ proc extractAll*(tarball: Tarball, dest: string) =
     raise newException(
       ZippyError, "Destination " & dest & " already exists"
     )
-  if not dirExists(splitPath(dest).head):
+  let (head, tail) = splitPath(dest)
+  if tail != "" and not dirExists(head):
     raise newException(
       ZippyError, "Path to destination " & dest & " does not exist"
     )
