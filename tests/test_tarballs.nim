@@ -1,26 +1,26 @@
 import os, tables, zippy/tarballs
 
-block: # .tar
-  let tarball = Tarball()
-  tarball.open("tests/data/tarballs/basic.tar")
+# block: # .tar
+#   let tarball = Tarball()
+#   tarball.open("tests/data/tarballs/basic.tar")
 
-  for path, entry in tarball.contents:
-    doAssert readFile("tests/data/" & path) == entry.contents
+#   for path, entry in tarball.contents:
+#     doAssert readFile("tests/data/" & path) == entry.contents
 
-block: # .tar.gz
-  let tarball = Tarball()
-  tarball.open("tests/data/tarballs/basic.tar.gz")
+# block: # .tar.gz
+#   let tarball = Tarball()
+#   tarball.open("tests/data/tarballs/basic.tar.gz")
 
-  for path, entry in tarball.contents:
-    doAssert readFile("tests/data/" & path) == entry.contents
+#   for path, entry in tarball.contents:
+#     doAssert readFile("tests/data/" & path) == entry.contents
 
-block: # .tar
-  let tarball = Tarball()
-  tarball.open("tests/data/tarballs/dir.tar")
+# block: # .tar
+#   let tarball = Tarball()
+#   tarball.open("tests/data/tarballs/dir.tar")
 
-  for path, entry in tarball.contents:
-    if entry.kind == ekNormalFile:
-      doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
+#   for path, entry in tarball.contents:
+#     if entry.kind == ekNormalFile:
+#       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
 # block: # .tar.gz
 #   let tarball = Tarball()
