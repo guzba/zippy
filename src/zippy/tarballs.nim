@@ -112,8 +112,6 @@ proc open*(tarball: Tarball, path: string) =
           kind: EntryKind(typeFlag),
           contents: data[pos ..< pos + fileSize]
         )
-    else:
-      echo "Zippy tarball.open skipping unsupported entry type " & typeFlag
 
     # Move pos by fileSize, where fileSize is 512 byte aligned
     pos += (fileSize + 511) and not 511
@@ -145,7 +143,7 @@ proc writeTarball*(tarball: Tarball, path: string) =
     header.add(toOct(entry.lastModified.toUnix(), 11) & ' ') # Last modified time
     header.add("        ") # Empty checksum for now
     header.setLen(156)
-    header.add(ord(entry.kind).char)
+    header.add($ord(entry.kind))
     header.setLen(257)
     header.add("ustar\0") # UStar indicator
     header.add(toOct(0, 2)) # UStar version
@@ -187,8 +185,7 @@ proc extractAll*(tarball: Tarball, dest: string) =
     raise newException(
       ZippyError, "Destination " & dest & " already exists"
     )
-  let (head, tail) = splitPath(dest)
-  if tail != "" and not dirExists(head):
+  if not dirExists(splitPath(dest).head):
     raise newException(
       ZippyError, "Path to destination " & dest & " does not exist"
     )

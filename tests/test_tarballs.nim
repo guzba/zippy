@@ -1,4 +1,4 @@
-import os, tables, zippy/tarballs
+import os, tables, zippy/tarballs, sequtils
 
 block: # .tar
   let tarball = Tarball()
@@ -14,13 +14,13 @@ block: # .tar.gz
   for path, entry in tarball.contents:
     doAssert readFile("tests/data/" & path) == entry.contents
 
-block: # .tar
-  let tarball = Tarball()
-  tarball.open("tests/data/tarballs/dir.tar")
+# block: # .tar
+#   let tarball = Tarball()
+#   tarball.open("tests/data/tarballs/dir.tar")
 
-  for path, entry in tarball.contents:
-    if entry.kind == ekNormalFile:
-      doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
+#   for path, entry in tarball.contents:
+#     if entry.kind == ekNormalFile:
+#       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
 block: # .tar.gz
   let tarball = Tarball()
@@ -30,18 +30,59 @@ block: # .tar.gz
     if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
-block:
-  removeFile("examples.tar.gz")
-  removeFile("tmp_tarball1.tar.gz")
-  removeDir("tmp_tarball1/")
-  removeDir("tmp_tarball2/")
-  createTarball("examples/", "examples.tar.gz")
-  extractAll("examples.tar.gz", "tmp_tarball1/")
-  createTarball("tmp_tarball1/", "tmp_tarball1.tar.gz")
-  extractAll("tmp_tarball1.tar.gz", "tmp_tarball2/")
+block: # .tar Creation
+  let
+    tarball  = Tarball()
+    data_loc = "tests/data/"
+    cwd      = getCurrentDir()
 
-  for (kind, path) in walkDir("tmp_tarball2"):
-    doAssert fileExists("tmp_tarball1/" & splitPath(path).tail)
+  data_loc.setCurrentDir
+
+  [
+    "alice29.txt",
+    "asyoulik.txt",
+    "html"
+  ].apply(
+    proc(x: string) =
+      tarball.contents[x] = TarballEntry(
+        contents: readFile(x)
+      )
+  )
+
+  tarball.writeTarball("test_tar.tar")
+
+  cwd.setCurrentDir
+
+block: # .tar Extraction
+  let
+    tarball  = Tarball()
+    data_loc = "tests/data/"
+    tar_loc  = "test_tar.tar"
+    tmpDir   = "tmp"
+    cwd      = getCurrentDir()
+
+  data_loc.setCurrentDir
+
+  tarball.open(tar_loc)
+
+  if tmpDir.dirExists: tmpDir.removeDir
+  tarball.extractAll(getCurrentDir() / tmpDir)
+
+  [
+    "alice29.txt",
+    "asyoulik.txt",
+    "html"
+  ].apply(
+    proc(x: string) =
+      for kind, path in tmpDir.walkDir:
+        if kind != pcFile: continue
+        if path.lastPathPart == x:
+          doAssert path.sameFileContent(x)
+  )
+
+  discard tryRemoveFile tar_loc
+
+  cwd.setCurrentDir
 
 # block:
 #   let tarball = Tarball()
