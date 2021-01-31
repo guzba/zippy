@@ -112,6 +112,8 @@ proc open*(tarball: Tarball, path: string) =
           kind: EntryKind(typeFlag),
           contents: data[pos ..< pos + fileSize]
         )
+    else:
+      echo "Zippy tarball.open skipping unsupported entry type " & typeFlag
 
     # Move pos by fileSize, where fileSize is 512 byte aligned
     pos += (fileSize + 511) and not 511
@@ -185,7 +187,8 @@ proc extractAll*(tarball: Tarball, dest: string) =
     raise newException(
       ZippyError, "Destination " & dest & " already exists"
     )
-  if not dirExists(splitPath(dest).head):
+  let (head, tail) = splitPath(dest)
+  if tail != "" and not dirExists(head):
     raise newException(
       ZippyError, "Path to destination " & dest & " does not exist"
     )
