@@ -106,14 +106,17 @@ proc open*(tarball: Tarball, path: string) =
     if pos + fileSize > data.len:
       failEOF()
 
-    if typeFlag == '0' or typeFlag == '5':
+    if typeFlag == '0' or typeFlag == '\0':
       tarball.contents[(fileNamePrefix / fileName).toUnixPath()] =
         TarballEntry(
-          kind: EntryKind(typeFlag),
+          kind: ekNormalFile,
           contents: data[pos ..< pos + fileSize]
         )
-    else:
-      echo "Zippy tarball.open skipping unsupported entry type " & typeFlag
+    elif typeFlag == '5':
+      tarball.contents[(fileNamePrefix / fileName).toUnixPath()] =
+        TarballEntry(
+          kind: ekDirectory
+        )
 
     # Move pos by fileSize, where fileSize is 512 byte aligned
     pos += (fileSize + 511) and not 511
