@@ -3,7 +3,8 @@ import asyncdispatch, asynchttpserver, zippy
 let server = newAsyncHttpServer()
 
 proc cb(req: Request) {.async.} =
-  if req.headers["Accept-Encoding"].contains("gzip"):
+  if req.headers.hasKey("Accept-Encoding") and
+    req.headers["Accept-Encoding"].contains("gzip"):
     # This client supports gzip, send compressed response
     let headers = newHttpHeaders([("Content-Encoding", "gzip")])
     await req.respond(
