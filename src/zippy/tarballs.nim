@@ -44,6 +44,9 @@ proc addDir*(tarball: Tarball, dir: string) =
   let (head, tail) = splitPath(dir)
   tarball.addDir(head, tail)
 
+proc clear*(tarball: Tarball) =
+  tarball.contents.clear()
+
 template failEOF() =
   raise newException(
     ZippyError, "Attempted to read past end of file, corrupted tarball?"
@@ -54,7 +57,7 @@ proc open*(tarball: Tarball, path: string) =
   ## tarball.contents (clears any existing tarball.contents entries).
   ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
 
-  tarball.contents.clear()
+  tarball.clear()
 
   proc trim(s: string): string =
     for i in 0 ..< s.len:

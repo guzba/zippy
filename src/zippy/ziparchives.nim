@@ -42,12 +42,20 @@ proc addDir*(archive: ZipArchive, dir: string) =
   let (head, tail) = splitPath(dir)
   archive.addDir(head, tail)
 
+proc clear*(archive: ZipArchive) =
+  archive.contents.clear()
+
 template failEOF() =
   raise newException(
     ZippyError, "Attempted to read past end of file, corrupted zip archive?"
   )
 
-proc open*(archive: ZipArchive, data: seq[uint8]) = 
+proc open*(archive: ZipArchive, data: seq[uint8]) =
+  ## Opens the zip archive data and reads its contents into
+  ## tarball.contents (clears any existing archive.contents entries).
+
+  archive.clear()
+
   template failOpen() =
     raise newException(ZippyError, "Unexpected error opening zip archive")
 
@@ -236,25 +244,15 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
     else:
       failOpen()
 
-proc open*(archive: ZipArchive, stream: StringStream) = 
+proc open*(archive: ZipArchive, stream: StringStream) =
   ## Opens the zip archive from a stream (in-memory) and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
-
-  archive.contents.clear()
-
-  let data =  cast[seq[uint8]](stream.readAll())
-
-  open(archive, data)
+  open(archive, cast[seq[uint8]](stream.readAll()))
 
 proc open*(archive: ZipArchive, path: string) =
   ## Opens the zip archive file located at path and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
-
-  archive.contents.clear()
-
-  let data = cast[seq[uint8]](readFile(path))
-
-  open(archive, data)
+  open(archive, cast[seq[uint8]](readFile(path)))
 
 proc writeZipArchive*(archive: ZipArchive, path: string) =
   ## Writes archive.contents to a zip file at path.
@@ -421,6 +419,3 @@ proc createZipArchive*(source, dest: string) =
   let archive = ZipArchive()
   archive.addDir(source)
   archive.writeZipArchive(dest)
-
-proc clear*(archive: ZipArchive) = 
-  archive.contents.clear()
