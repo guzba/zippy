@@ -1,4 +1,4 @@
-import os, random, strutils, tables, zippy, zippy/common, zippy/crc,
+import os, random, strutils, streams, tables, zippy, zippy/common, zippy/crc,
     zippy/zippyerror
 
 export zippyerror
@@ -47,14 +47,7 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted zip archive?"
   )
 
-proc open*(archive: ZipArchive, path: string) =
-  ## Opens the zip archive file located at path and reads its contents into
-  ## archive.contents (clears any existing archive.contents entries).
-
-  archive.contents.clear()
-
-  let data = cast[seq[uint8]](readFile(path))
-
+proc open*(archive: ZipArchive, data: seq[uint8]) = 
   template failOpen() =
     raise newException(ZippyError, "Unexpected error opening zip archive")
 
@@ -243,6 +236,26 @@ proc open*(archive: ZipArchive, path: string) =
     else:
       failOpen()
 
+proc open*(archive: ZipArchive, stream: StringStream) = 
+  ## Opens the zip archive from a stream (in-memory) and reads its contents into
+  ## archive.contents (clears any existing archive.contents entries).
+
+  archive.contents.clear()
+
+  let data =  cast[seq[uint8]](stream.readAll())
+
+  open(archive, data)
+
+proc open*(archive: ZipArchive, path: string) =
+  ## Opens the zip archive file located at path and reads its contents into
+  ## archive.contents (clears any existing archive.contents entries).
+
+  archive.contents.clear()
+
+  let data = cast[seq[uint8]](readFile(path))
+
+  open(archive, data)
+
 proc writeZipArchive*(archive: ZipArchive, path: string) =
   ## Writes archive.contents to a zip file at path.
 
@@ -408,3 +421,6 @@ proc createZipArchive*(source, dest: string) =
   let archive = ZipArchive()
   archive.addDir(source)
   archive.writeZipArchive(dest)
+
+proc clear*(archive: ZipArchive) = 
+  archive.contents.clear()
