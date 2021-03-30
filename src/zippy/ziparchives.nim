@@ -84,9 +84,17 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
 
       pos += 30 # Move to end of fixed-size entries
 
-      if (generalPurposeFlag and (1 shl 3).uint16) != 0:
-        # Data descriptor bit set
-        raise newException(ZippyError, "Unsupported zip archive")
+      if (generalPurposeFlag and 0b100) != 0:
+        raise newException(
+          ZippyError,
+          "Unsupported zip archive, data descriptor bit set"
+        )
+
+      if (generalPurposeFlag and 0b1000) != 0:
+        raise newException(
+          ZippyError,
+          "Unsupported zip archive, uses deflate64"
+        )
 
       # echo minVersionToExtract
       # echo generalPurposeFlag
