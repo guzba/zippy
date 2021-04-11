@@ -5,7 +5,7 @@ const
   fastMask = (1 shl 9) - 1
 
 type
-  Huffman = object
+  Huffman = ref object
     firstCode, firstSymbol: array[16, uint16]
     maxCodes: array[17, int]
     lengths: array[288, uint8]
@@ -26,8 +26,10 @@ func reverseBits(n, bits: int): int {.inline.} =
   assert bits <= 16
   reverse16Bits(n) shr (16 - bits)
 
-func initHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
+func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
+
+  result = Huffman()
 
   var sizes: array[17, int]
   for i in 0 ..< lengths.len:
@@ -110,8 +112,8 @@ func inflateBlock(
   var literalHuffman, distanceHuffman: Huffman
 
   if fixedCodes:
-    literalHuffman = initHuffman(fixedCodeLengths, maxFixedLitLenCodes)
-    distanceHuffman = initHuffman(fixedDistLengths, maxDistCodes)
+    literalHuffman = newHuffman(fixedCodeLengths, maxFixedLitLenCodes)
+    distanceHuffman = newHuffman(fixedDistLengths, maxDistCodes)
   else:
     let
       hlit = b.readBits(5).int + firstLengthCodeIndex
@@ -122,7 +124,7 @@ func inflateBlock(
     for i in 0 ..< hclen.int:
       clCodeLengths[clclOrder[i]] = b.readBits(3).uint8
 
-    let h = initHuffman(clCodeLengths, 19)
+    let h = newHuffman(clCodeLengths, 19)
 
     var unpacked: seq[uint8]
     while unpacked.len < hlit + hdist:
@@ -142,8 +144,8 @@ func inflateBlock(
       else:
         raise newException(ZippyError, "Invalid symbol")
 
-    literalHuffman = initHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
-    distanceHuffman = initHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
+    literalHuffman = newHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
+    distanceHuffman = newHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
 
   while true:
     let symbol = decodeSymbol(b, literalHuffman)
@@ -177,13 +179,13 @@ func inflateBlock(
 
       # Min match is 3 so leave room to overwrite by 13
       if op + totalLength + 13 > dst.len:
-        dst.setLen((op + totalLength) * 2 + 10)
+        dst.setLen((op + totalLength) * 2 + 10) # At least 16
 
-      if totalLength <= 16 and totalDist >= 8 and dst.len > op + 16:
+      if totalLength <= 16 and totalDist >= 8:
         copy64(dst, dst, op, op - totalDist)
         copy64(dst, dst, op + 8, op - totalDist + 8)
         inc(op, totalLength)
-      elif dst.len - op >= totalLength + 10:
+      else:
         var
           src = op - totalDist
           pos = op
@@ -198,10 +200,6 @@ func inflateBlock(
           inc(pos, 8)
           dec(remaining, 8)
         inc(op, totalLength)
-      else:
-        for i in op ..< op + totalLength:
-          dst[op] = dst[op - totalDist]
-          inc op
 
 func inflateNoCompression(b: var BitStream, dst: var seq[uint8], op: var int) =
   b.skipRemainingBitsInCurrentByte()
