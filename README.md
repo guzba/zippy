@@ -41,12 +41,12 @@ Each file is compressed 10 times per run.
 **https://github.com/guzba/zippy** results:
 file | min | avg | std dv | runs | % red
 --- | --- | --- | --- | --- | ---:
-alice29.txt | 29.684 ms | 29.942 ms | ±0.188 | x167 | 63.32%
-urls.10K | 161.095 ms | 161.969 ms | ±0.449 | x31 | 67.49%
-rfctest3.gold | 5.056 ms | 5.132 ms | ±0.079 | x973 | 70.73%
-randtest3.gold | 0.776 ms | 0.789 ms | ±0.015 | x1000 | 0%
-paper-100k.pdf | 14.967 ms | 15.123 ms | ±0.109 | x331 | 19.94%
-geo.protodata | 9.493 ms | 9.581 ms | ±0.068 | x522 | 86.91%
+alice29.txt | 29.543 ms | 30.698 ms | ±0.188 | x167 | 63.32%
+urls.10K | 157.261 ms | 166.513 ms | ±0.449 | x31 | 67.49%
+rfctest3.gold | 5.486 ms | 5.621 ms | ±0.079 | x973 | 70.73%
+randtest3.gold | 0.757 ms | 0.777 ms | ±0.015 | x1000 | 0%
+paper-100k.pdf | 15.460 ms | 16.046 ms | ±0.109 | x331 | 19.94%
+geo.protodata | 10.012 ms | 10.434 ms | ±0.068 | x522 | 86.91%
 
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
@@ -64,12 +64,12 @@ geo.protodata | 8.996 ms | 9.094 ms | ±0.065 | x549 | 87.24%
 **https://github.com/guzba/zippy** results:
 file | min | avg | std dv | runs | % red
 --- | --- | --- | --- | --- | ---:
-alice29.txt | 12.190 ms | 12.320 ms | ±0.153 | x405 | 55.32%
-urls.10K | 39.377 ms | 39.591 ms | ±0.131 | x127 | 61.70%
-rfctest3.gold | 2.956 ms | 2.986 ms | ±0.022 | x1000 | 66.31%
-randtest3.gold | 0.268 ms | 0.277 ms | ±0.009 | x1000 | 0%
-paper-100k.pdf | 8.262 ms | 8.332 ms | ±0.049 | x600 | 18.44%
-geo.protodata | 5.891 ms | 5.924 ms | ±0.016 | x844 | 80.42%
+alice29.txt | 12.745 ms | 13.261 ms | ±0.153 | x405 | 55.32%
+urls.10K | 40.832 ms | 41.720 ms | ±0.131 | x127 | 61.70%
+rfctest3.gold | 3.430 ms | 3.522 ms | ±0.022 | x1000 | 66.31%
+randtest3.gold | 0.291 ms | 0.306 ms | ±0.009 | x1000 | 0%
+paper-100k.pdf | 9.154 ms | 9.399 ms | ±0.049 | x600 | 18.44%
+geo.protodata | 6.609 ms | 6.747 ms | ±0.016 | x844 | 80.42%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 file | min | avg | std dv | runs | % red
@@ -86,12 +86,12 @@ geo.protodata | 3.494 ms | 3.531 ms | ±0.024 | x1000 | 84.12%
 **https://github.com/guzba/zippy** results:
 file | min | avg | std dv | runs | % red
 --- | --- | --- | --- | --- | ---:
-alice29.txt | 36.647 ms | 36.911 ms | ±0.149 | x136 | 63.75%
-urls.10K | 235.869 ms | 237.799 ms | ±0.431 | x22 | 68.14%
-rfctest3.gold | 10.528 ms | 10.766 ms | ±0.121 | x465 | 70.92%
-randtest3.gold | 0.778 ms | 0.789 ms | ±0.008 | x1000 | 0%
-paper-100k.pdf | 15.948 ms | 16.085 ms | ±0.078 | x311 | 20.07%
-geo.protodata | 10.824 ms | 10.890 ms | ±0.046 | x459 | 87.07%
+alice29.txt | 36.293 ms | 37.635 ms | ±0.149 | x136 | 63.75%
+urls.10K | 229.110 ms | 244.351 ms | ±0.431 | x22 | 68.14%
+rfctest3.gold | 10.681 ms | 11.173 ms | ±0.121 | x465 | 70.92%
+randtest3.gold | 0.762 ms | 0.780 ms | ±0.008 | x1000 | 0%
+paper-100k.pdf | 16.124 ms | 16.833 ms | ±0.078 | x311 | 20.07%
+geo.protodata | 10.795 ms | 11.222 ms | ±0.046 | x459 | 87.07%
 
 https://github.com/nim-lang/zip results: (Requires zlib1.dll)
 file | min | avg | std dv | runs | % red

@@ -89,7 +89,6 @@ func huffmanCodeLengths(
     var
       numCoins = numSymbolsUsed
       numCoinsPrev = 0
-      settled: bool
     for i in 1 .. maxCodeLen:
       swap(prevCoins, coins)
       swap(numCoinsPrev, numCoins)
@@ -121,16 +120,11 @@ func huffmanCodeLengths(
           prevCoins[i + 0].weight + prevCoins[i + 1].weight
         inc numCoins
 
-      if settled:
-        break
-
       if i < maxCodeLen:
         addSymbolCoins(coins, numCoins)
         inc(numCoins, numSymbolsUsed)
 
       quickSort(coins, 0, numCoins - 1)
-
-      settled = numCoins == numCoinsPrev and level <= 6
 
     for i in 0 ..< numSymbolsUsed - 1:
       for j in 0 ..< coins[i].numSymbols:
