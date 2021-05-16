@@ -1,5 +1,5 @@
 import os, random, strutils, tables, times, zippy, zippy/common,
-    zippy/zippyerror
+    zippy/zippyerror, streams
 
 export zippyerror
 
@@ -52,6 +52,47 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted tarball?"
   )
 
+type
+  TarFormat = enum
+    tfUnk, tfTar, tfTgz,tfLzw, tfLzh, tfXz
+
+proc guessTarFormat(fname:string):TarFormat =
+  #[
+  Position: 0
+  1F 8B: .tgz
+  1F 9D: tar.z (tar zip) Lempel-Ziv-Welch 
+  1F a0: tar.z (tar zip) LZH
+  FD 37 7A 58 5A 00: .tar.xz
+
+  Position 0x101:
+  75 73 74 61 72 00 30 30: 0x101 (tar)
+  75 73 74 61 72 20 20 00: 0x101 (tar)  
+  ]#
+  let fs = newFileStream(fname, fmRead)
+  defer: fs.close
+
+  var buffer: array[8, uint8]
+  discard fs.readData(buffer.addr, 6)
+  #let n1 = fs.readUint8
+  if  buffer[0] == 0x1F:
+    case buffer[1]:
+    of 0x8B: return tfTgz
+    of 0x9D: return tfLzw
+    of 0xA0: return tfLzh
+    else:    return tfUnk
+  
+  elif buffer[0 .. 5] == [0xFD'u8,0x37, 0x7A, 0x58, 0x5A, 0x00]:
+    return tfXz
+  
+  fs.setPosition(0x101)
+  discard fs.readData(buffer.addr, 8)  
+  if buffer == [0x75'u8, 0x73, 0x74, 0x61, 0x72, 0x00, 0x30, 0x30] or
+     buffer == [0x75'u8, 0x73, 0x74, 0x61, 0x72, 0x20, 0x20, 0x00]:
+    return tfTar
+  
+  else:
+    return tfUnk
+
 proc open*(tarball: Tarball, path: string) =
   ## Opens the tarball file located at path and reads its contents into
   ## tarball.contents (clears any existing tarball.contents entries).
@@ -67,11 +108,13 @@ proc open*(tarball: Tarball, path: string) =
 
   let
     ext = splitFile(path).ext
+    # Using magic number instead of extension
+    fileFormat = guessTarFormat(path)
     data =
-      case ext:
-      of ".tar":
+      case fileFormat:
+      of tfTar:
         readFile(path)
-      of ".gz", ".taz", ".tgz":
+      of tfTgz: #".gz", ".taz", ".tgz":
         # Tarball compressed using gzip
         uncompress(readFile(path), dfGzip)
       else:
