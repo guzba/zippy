@@ -7,8 +7,13 @@ srcDir = "src"
 
 requires "nim >= 1.0.0"
 
+proc test(flags: string) =
+  exec "nim c " & flags & " -r tests/test_all.nim"
+
 task test, "Run all tests":
-  exec "nim c -r tests/test_all.nim"
+  test("")
+  test("--gc:orc")
 
 task github_actions, "GitHub Actions tests":
-  exec "nim c -d:githubActions -r tests/test_all.nim"
+  test("-d:githubActions")
+  test("--gc:orc -d:githubActions")
