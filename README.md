@@ -1,5 +1,7 @@
 # Zippy
 
+![Github Actions](https://github.com/guzba/zippy/workflows/Github%20Actions/badge.svg)
+
 `nimble install zippy`
 
 Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [ZLIB](https://tools.ietf.org/html/rfc1950) and [GZIP](https://tools.ietf.org/html/rfc1952) data compression formats. Zippy can also create and open [Tarballs](https://en.wikipedia.org/wiki/Tar_(computing)) (.tar, .tar.gz, .tgz, .taz) and [ZIP archives](https://en.wikipedia.org/wiki/Zip_(file_format)).

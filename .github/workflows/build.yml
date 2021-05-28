@@ -1,4 +1,4 @@
-name: Run tests
+name: Github Actions
 on: [push, pull_request]
 jobs:
   build:
