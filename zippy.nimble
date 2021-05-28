@@ -24,6 +24,8 @@ task test, "Run all tests":
   test "-d:debug", "tests/test_all"
   test "-d:release", "tests/test_all"
   test "--threads:on -d:release", "tests/test_all"
+  test "-d:release --gc:orc", "tests/test_all"
+  test "-d:release --gc:arc", "tests/test_all"
 
 task testvcc, "Run all tests with vcc compiler":
   test "--cc:vcc -d:debug", "tests/test_all"
