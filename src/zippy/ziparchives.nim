@@ -389,7 +389,11 @@ proc extractAll*(archive: ZipArchive, dest: string) =
     for _ in 0 ..< len:
       result.add(rand('a'.int .. 'z'.int).char)
 
-  let tmpDir = getTempDir() / "ziparchive_" & randomString(10)
+  let tmpDir =
+    when defined(windows):
+      getHomeDir() / r"AppData\Local\Temp" / "ziparchive_" & randomString(10)
+    else:
+      getTempDir() / "ziparchive_" & randomString(10)
   removeDir(tmpDir)
   createDir(tmpDir)
 

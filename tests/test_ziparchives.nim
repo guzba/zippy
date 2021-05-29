@@ -1,33 +1,37 @@
 import os, tables, zippy/ziparchives
 
+proc testTempDir(): string =
+  when defined(windows):
+    getHomeDir() / r"AppData\Local\Temp" / "ziparchives"
+  else:
+    getTempDir() / "ziparchives"
+
 block:
   let archive = ZipArchive()
   archive.open("tests/data/ziparchives/basic.zip")
 
-  removeDir("tmp/ziparchives")
-  createDir("tmp")
+  removeDir(testTempDir())
 
-  archive.extractAll("tmp/ziparchives")
+  archive.extractAll(testTempDir())
 
   for path, entry in archive.contents:
     if entry.kind == ekFile:
-      doAssert fileExists("tmp/ziparchives" / path)
+      doAssert fileExists(testTempDir() / path)
       doAssert readFile("tests/data/" & path) == entry.contents
     else:
-      doAssert dirExists("tmp/ziparchives" / path)
+      doAssert dirExists(testTempDir() / path)
 
 block:
   let archive = ZipArchive()
   archive.addDir("src/")
 
-  removeDir("tmp/ziparchives")
-  createDir("tmp")
+  removeDir(testTempDir())
 
-  archive.extractAll("tmp/ziparchives")
+  archive.extractAll(testTempDir())
 
   for path, entry in archive.contents:
     if entry.kind == ekFile:
-      doAssert fileExists("tmp/ziparchives" / path)
+      doAssert fileExists(testTempDir() / path)
       doAssert readFile("src/" & path) == entry.contents
     else:
-      doAssert dirExists("tmp/ziparchives" / path)
+      doAssert dirExists(testTempDir() / path)

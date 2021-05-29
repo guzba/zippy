@@ -203,7 +203,11 @@ proc extractAll*(tarball: Tarball, dest: string) =
     for _ in 0 ..< len:
       result.add(rand('a'.int .. 'z'.int).char)
 
-  let tmpDir = getTempDir() / "tarball_" & randomString(10)
+  let tmpDir =
+    when defined(windows):
+      getHomeDir() / r"AppData\Local\Temp" / "tarball_" & randomString(10)
+    else:
+      getTempDir() / "tarball_" & randomString(10)
   removeDir(tmpDir)
   createDir(tmpDir)
 

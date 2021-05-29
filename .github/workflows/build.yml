@@ -12,4 +12,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: jiro4989/setup-nim-action@v1
-    - run: nimble github_actions
+    - run: nimble test
+    - run: nimble test --gc:orc
