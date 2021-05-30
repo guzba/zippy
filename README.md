@@ -38,96 +38,84 @@ The times below are measured on a Ryzen 5 5600X.
 
 Each file is compressed 10 times per run.
 
-#### Default compression
+```
+https://github.com/guzba/zippy compress [default]
+name ............................... min time      avg time    std dv   runs
+alice29.txt ....................... 29.130 ms     29.345 ms    ±0.125   x171
+urls.10K ......................... 155.155 ms    156.018 ms    ±0.350    x33
+rfctest3.gold ...................... 5.038 ms      5.104 ms    ±0.041   x977
+randtest3.gold ..................... 0.750 ms      0.762 ms    ±0.008  x1000
+paper-100k.pdf .................... 14.935 ms     15.072 ms    ±0.089   x332
+geo.protodata ...................... 9.304 ms      9.375 ms    ±0.035   x533
+gzipfiletest.txt ................... 0.124 ms      0.131 ms    ±0.003  x1000
 
-**https://github.com/guzba/zippy** results:
-file | min | avg | std dv | runs | % red
---- | --- | --- | --- | --- | ---:
-alice29.txt | 29.543 ms | 30.698 ms | ±0.188 | x167 | 63.32%
-urls.10K | 157.261 ms | 166.513 ms | ±0.449 | x31 | 67.49%
-rfctest3.gold | 5.486 ms | 5.621 ms | ±0.079 | x973 | 70.73%
-randtest3.gold | 0.757 ms | 0.777 ms | ±0.015 | x1000 | 0%
-paper-100k.pdf | 15.460 ms | 16.046 ms | ±0.109 | x331 | 19.94%
-geo.protodata | 10.012 ms | 10.434 ms | ±0.068 | x522 | 86.91%
+https://github.com/nim-lang/zip compress [default]
+alice29.txt ....................... 58.002 ms     58.234 ms    ±0.203    x86
+urls.10K ......................... 132.830 ms    133.476 ms    ±0.469    x38
+rfctest3.gold ...................... 6.513 ms      6.567 ms    ±0.045   x761
+randtest3.gold ..................... 0.889 ms      0.905 ms    ±0.015  x1000
+paper-100k.pdf .................... 15.015 ms     15.085 ms    ±0.046   x332
+geo.protodata ...................... 8.999 ms      9.053 ms    ±0.030   x552
+gzipfiletest.txt ................... 0.119 ms      0.122 ms    ±0.005  x1000
 
+https://github.com/guzba/zippy compress [best speed]
+alice29.txt ....................... 12.215 ms     12.282 ms    ±0.028   x407
+urls.10K .......................... 39.742 ms     39.925 ms    ±0.165   x126
+rfctest3.gold ...................... 2.941 ms      2.977 ms    ±0.019  x1000
+randtest3.gold ..................... 0.287 ms      0.296 ms    ±0.009  x1000
+paper-100k.pdf ..................... 8.432 ms      8.502 ms    ±0.069   x588
+geo.protodata ...................... 5.850 ms      5.888 ms    ±0.015   x849
+gzipfiletest.txt ................... 0.059 ms      0.064 ms    ±0.004  x1000
 
-https://github.com/nim-lang/zip results: (Requires zlib1.dll)
-file | min | avg | std dv | runs | % red
---- | --- | --- | --- | --- | ---:
-alice29.txt | 58.013 ms | 58.213 ms | ±0.177 | x86 | 64.23%
-urls.10K | 132.910 ms | 133.379 ms | ±0.380 | x38 | 68.29%
-rfctest3.gold | 6.525 ms | 6.589 ms | ±0.060 | x757 | 71.74%
-randtest3.gold | 0.887 ms | 0.903 ms | ±0.015 | x1000 | 0%
-paper-100k.pdf | 15.020 ms | 15.113 ms | ±0.058 | x331 | 20.59%
-geo.protodata | 8.996 ms | 9.094 ms | ±0.065 | x549 | 87.24%
+https://github.com/nim-lang/zip compress [best speed]
+alice29.txt ....................... 12.760 ms     12.849 ms    ±0.052   x389
+urls.10K .......................... 53.205 ms     53.383 ms    ±0.112    x94
+rfctest3.gold ...................... 2.174 ms      2.198 ms    ±0.019  x1000
+randtest3.gold ..................... 0.813 ms      0.829 ms    ±0.015  x1000
+paper-100k.pdf .................... 12.807 ms     12.860 ms    ±0.033   x389
+geo.protodata ...................... 3.490 ms      3.524 ms    ±0.026  x1000
+gzipfiletest.txt ................... 0.093 ms      0.095 ms    ±0.003  x1000
 
-#### Fastest compression
+https://github.com/guzba/zippy compress [best compression]
+alice29.txt ....................... 35.601 ms     35.810 ms    ±0.097   x140
+urls.10K ......................... 225.956 ms    226.853 ms    ±0.710    x23
+rfctest3.gold ..................... 10.082 ms     10.141 ms    ±0.037   x493
+randtest3.gold ..................... 0.750 ms      0.759 ms    ±0.006  x1000
+paper-100k.pdf .................... 15.335 ms     15.404 ms    ±0.043   x325
+geo.protodata ...................... 9.948 ms      9.993 ms    ±0.030   x500
+gzipfiletest.txt ................... 0.123 ms      0.131 ms    ±0.004  x1000
 
-**https://github.com/guzba/zippy** results:
-file | min | avg | std dv | runs | % red
---- | --- | --- | --- | --- | ---:
-alice29.txt | 12.745 ms | 13.261 ms | ±0.153 | x405 | 55.32%
-urls.10K | 40.832 ms | 41.720 ms | ±0.131 | x127 | 61.70%
-rfctest3.gold | 3.430 ms | 3.522 ms | ±0.022 | x1000 | 66.31%
-randtest3.gold | 0.291 ms | 0.306 ms | ±0.009 | x1000 | 0%
-paper-100k.pdf | 9.154 ms | 9.399 ms | ±0.049 | x600 | 18.44%
-geo.protodata | 6.609 ms | 6.747 ms | ±0.016 | x844 | 80.42%
-
-https://github.com/nim-lang/zip results: (Requires zlib1.dll)
-file | min | avg | std dv | runs | % red
---- | --- | --- | --- | --- | ---:
-alice29.txt | 12.797 ms | 13.024 ms | ±0.198 | x384 | 57.17%
-urls.10K | 53.304 ms | 53.515 ms | ±0.122 | x94 | 63.93%
-rfctest3.gold | 2.179 ms | 2.220 ms | ±0.029 | x1000 | 67.53%
-randtest3.gold | 0.813 ms | 0.831 ms | ±0.016 | x1000 | 0%
-paper-100k.pdf | 12.806 ms | 12.878 ms | ±0.056 | x388 | 20.22%
-geo.protodata | 3.494 ms | 3.531 ms | ±0.024 | x1000 | 84.12%
-
-#### Best compression
-
-**https://github.com/guzba/zippy** results:
-file | min | avg | std dv | runs | % red
---- | --- | --- | --- | --- | ---:
-alice29.txt | 36.293 ms | 37.635 ms | ±0.149 | x136 | 63.75%
-urls.10K | 229.110 ms | 244.351 ms | ±0.431 | x22 | 68.14%
-rfctest3.gold | 10.681 ms | 11.173 ms | ±0.121 | x465 | 70.92%
-randtest3.gold | 0.762 ms | 0.780 ms | ±0.008 | x1000 | 0%
-paper-100k.pdf | 16.124 ms | 16.833 ms | ±0.078 | x311 | 20.07%
-geo.protodata | 10.795 ms | 11.222 ms | ±0.046 | x459 | 87.07%
-
-https://github.com/nim-lang/zip results: (Requires zlib1.dll)
-file | min | avg | std dv | runs | % red
---- | --- | --- | --- | --- | ---:
-alice29.txt | 86.051 ms | 86.287 ms | ±0.216 | x58 | 64.38%
-urls.10K | 253.127 ms | 253.952 ms | ±0.724 | x20 | 68.82%
-rfctest3.gold | 21.753 ms | 22.018 ms | ±0.168 | x227 | 71.77%
-randtest3.gold | 0.887 ms | 0.902 ms | ±0.014 | x1000 | 0%
-paper-100k.pdf | 16.749 ms | 16.838 ms | ±0.056 | x297 | 20.64%
-geo.protodata | 12.252 ms | 12.346 ms | ±0.066 | x405 | 87.37%
+https://github.com/nim-lang/zip compress [best compression]
+alice29.txt ....................... 85.742 ms     85.883 ms    ±0.194    x59
+urls.10K ......................... 251.885 ms    252.070 ms    ±0.095    x20
+rfctest3.gold ..................... 21.737 ms     21.788 ms    ±0.035   x230
+randtest3.gold ..................... 0.886 ms      0.902 ms    ±0.016  x1000
+paper-100k.pdf .................... 16.752 ms     16.848 ms    ±0.080   x297
+geo.protodata ..................... 12.247 ms     12.303 ms    ±0.041   x407
+gzipfiletest.txt ................... 0.119 ms      0.122 ms    ±0.003  x1000
+```
 
 ### Uncompress
 
 Each file is uncompressed 10 times per run.
 
-**https://github.com/guzba/zippy** results:
-file | min | avg | std dv | runs
---- | --- | --- | --- | ---:
-alice29.txt.z | 3.570 ms | 3.595 ms | ±0.018 | x1000
-urls.10K.z | 17.324 ms | 17.392 ms | ±0.057 | x288
-rfctest3.z | 0.777 ms | 0.794 ms | ±0.011 | x1000
-randtest3.z | 0.067 ms | 0.070 ms | ±0.006 | x1000
-paper-100k.pdf.z | 2.908 ms | 2.937 ms | ±0.034 | x1000
-geo.protodata.z | 1.268 ms | 1.299 ms | ±0.016 | x1000
+```
+https://github.com/guzba/zippy uncompress
+alice29.txt.z ...................... 3.590 ms      3.613 ms    ±0.012  x1000
+urls.10K.z ........................ 17.099 ms     17.171 ms    ±0.027   x292
+rfctest3.z ......................... 0.777 ms      0.817 ms    ±0.018  x1000
+randtest3.z ........................ 0.064 ms      0.068 ms    ±0.006  x1000
+paper-100k.pdf.z ................... 2.874 ms      2.897 ms    ±0.012  x1000
+geo.protodata.z .................... 1.244 ms      1.282 ms    ±0.015  x1000
 
-https://github.com/nim-lang/zip results: (Requires zlib1.dll)
-file | min | avg | std dv | runs
---- | --- | --- | --- | ---:
-alice29.txt.z | 3.530 ms | 3.572 ms | ±0.016 | x1000
-urls.10K.z | 15.029 ms | 15.093 ms | ±0.053 | x331
-rfctest3.z | 0.452 ms | 0.481 ms | ±0.037 | x1000
-randtest3.z | 0.065 ms | 0.072 ms | ±0.011 | x1000
-paper-100k.pdf.z | 2.208 ms | 2.221 ms | ±0.009 | x1000
-geo.protodata.z | 0.897 ms | 0.918 ms | ±0.016 | x1000
+https://github.com/nim-lang/zip uncompress
+alice29.txt.z ...................... 3.533 ms      3.575 ms    ±0.015  x1000
+urls.10K.z ........................ 14.996 ms     15.057 ms    ±0.027   x332
+rfctest3.z ......................... 0.451 ms      0.458 ms    ±0.008  x1000
+randtest3.z ........................ 0.065 ms      0.067 ms    ±0.001  x1000
+paper-100k.pdf.z ................... 2.207 ms      2.216 ms    ±0.006  x1000
+geo.protodata.z .................... 0.896 ms      0.937 ms    ±0.044  x1000
+```
 
 ## Testing
 
