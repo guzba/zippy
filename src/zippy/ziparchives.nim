@@ -205,14 +205,9 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
       # echo fileComment
 
       try:
-        # Update the entry kinds
+        # Update the entry kind for directories
         if (externalFileAttr and 0x10) == 0x10:
           archive.contents[fileName].kind = ekDirectory
-        elif externalFileAttr == 0 or (externalFileAttr and 0x20) == 0x20:
-          archive.contents[fileName].kind = ekFile
-        else:
-          # Not a directory or file entry
-          archive.contents.del(fileName)
       except KeyError:
         failOpen()
 
