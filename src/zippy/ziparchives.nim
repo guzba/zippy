@@ -50,14 +50,22 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted zip archive?"
   )
 
-proc open*(archive: ZipArchive, data: seq[uint8]) =
-  ## Opens the zip archive data and reads its contents into
-  ## tarball.contents (clears any existing archive.contents entries).
+proc open*(archive: ZipArchive, path: string) =
+  ## Opens the zip archive file located at path and reads its contents into
+  ## archive.contents (clears any existing archive.contents entries).
+
+  let data = readFile(path)
 
   archive.clear()
 
   template failOpen() =
     raise newException(ZippyError, "Unexpected error opening zip archive")
+
+  template read16(data: string, pos: int): uint16 =
+    read16(cast[seq[uint8]](data), pos)
+
+  template read32(data: string, pos: int): uint32 =
+    read32(cast[seq[uint8]](data), pos)
 
   var pos: int
   while true:
@@ -116,9 +124,9 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
       if pos + fileNameLength + extraFieldLength > data.len:
         failEOF()
 
-      let fileName = cast[string](data[pos ..< pos + fileNameLength])
+      let fileName = data[pos ..< pos + fileNameLength]
       pos += fileNameLength
-      # let extraField = cast[string](data[pos ..< pos + extraFieldLength])
+      # let extraField = data[pos ..< pos + extraFieldLength]
       pos += extraFieldLength
 
       # echo fileName
@@ -133,7 +141,7 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
         else:
           uncompress(data[pos ..< pos + compressedSize], dfDeflate)
 
-      if crc32(uncompressed) != uncompressedCrc32:
+      if crc32(cast[seq[uint8]](uncompressed)) != uncompressedCrc32:
         raise newException(
           ZippyError,
           "Verifying archive entry " & fileName & " CRC-32 failed"
@@ -145,7 +153,7 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
         )
 
       archive.contents[fileName.toUnixPath()] =
-        ArchiveEntry(contents: cast[string](uncompressed))
+        ArchiveEntry(contents: uncompressed)
 
       pos += compressedSize
 
@@ -193,11 +201,11 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
       if pos + fileNameLength + extraFieldLength + fileCommentLength > data.len:
         failEOF()
 
-      let fileName = cast[string](data[pos ..< pos + fileNameLength])
+      let fileName = data[pos ..< pos + fileNameLength]
       pos += fileNameLength
-      # let extraField = cast[string](data[pos ..< pos + extraFieldLength])
+      # let extraField = data[pos ..< pos + extraFieldLength]
       pos += extraFieldLength
-      # let fileComment = cast[string](data[pos ..< pos + fileCommentLength])
+      # let fileComment = data[pos ..< pos + fileCommentLength]
       pos += fileCommentLength
 
       # echo fileName
@@ -250,12 +258,7 @@ proc open*(archive: ZipArchive, data: seq[uint8]) =
 proc open*(archive: ZipArchive, stream: StringStream) =
   ## Opens the zip archive from a stream (in-memory) and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
-  open(archive, cast[seq[uint8]](stream.readAll()))
-
-proc open*(archive: ZipArchive, path: string) =
-  ## Opens the zip archive file located at path and reads its contents into
-  ## archive.contents (clears any existing archive.contents entries).
-  open(archive, cast[seq[uint8]](readFile(path)))
+  archive.open(stream.readAll())
 
 proc writeZipArchive*(archive: ZipArchive, path: string) =
   ## Writes archive.contents to a zip file at path.
