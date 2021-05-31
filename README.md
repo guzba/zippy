@@ -253,6 +253,13 @@ Recursively adds all of the files and directories inside dir to tarball.
 proc addDir(tarball: Tarball; dir: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadIOEffect].}
 ```
 
+## **proc** clear
+
+
+```nim
+proc clear(tarball: Tarball)
+```
+
 ## **proc** open
 
 Opens the tarball file located at path and reads its contents into tarball.contents (clears any existing tarball.contents entries). Supports .tar, .tar.gz, .taz and .tgz file extensions.
@@ -333,12 +340,27 @@ Recursively adds all of the files and directories inside dir to archive.
 proc addDir(archive: ZipArchive; dir: string) {.raises: [ZippyError, OSError, IOError], tags: [ReadDirEffect, ReadIOEffect].}
 ```
 
+## **proc** clear
+
+
+```nim
+proc clear(archive: ZipArchive)
+```
+
 ## **proc** open
 
 Opens the zip archive file located at path and reads its contents into archive.contents (clears any existing archive.contents entries).
 
 ```nim
 proc open(archive: ZipArchive; path: string) {.raises: [IOError, ZippyError, ZippyError], tags: [ReadIOEffect].}
+```
+
+## **proc** open
+
+Opens the zip archive from a stream (in-memory) and reads its contents into archive.contents (clears any existing archive.contents entries).
+
+```nim
+proc open(archive: ZipArchive; stream: StringStream) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect].}
 ```
 
 ## **proc** writeZipArchive
