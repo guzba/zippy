@@ -268,6 +268,13 @@ Opens the tarball file located at path and reads its contents into tarball.conte
 proc open(tarball: Tarball; path: string) {.raises: [IOError, ZippyError, ZippyError], tags: [ReadIOEffect].}
 ```
 
+## **proc** open
+
+Opens the tarball from a stream and reads its contents into tarball.contents (clears any existing tarball.contents entries).
+
+```nim
+proc open(tarball: Tarball; stream: Stream) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect].}
+
 ## **proc** writeTarball
 
 Writes tarball.contents to a tarball file at path. Uses the path's file extension to determine the tarball format. Supports .tar, .tar.gz, .taz and .tgz file extensions.
@@ -357,10 +364,10 @@ proc open(archive: ZipArchive; path: string) {.raises: [IOError, ZippyError, Zip
 
 ## **proc** open
 
-Opens the zip archive from a stream (in-memory) and reads its contents into archive.contents (clears any existing archive.contents entries).
+Opens the zip archive from a stream and reads its contents into archive.contents (clears any existing archive.contents entries).
 
 ```nim
-proc open(archive: ZipArchive; stream: StringStream) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect].}
+proc open(archive: ZipArchive; stream: Stream) {.raises: [IOError, ZippyError, OSError], tags: [ReadIOEffect].}
 ```
 
 ## **proc** writeZipArchive
