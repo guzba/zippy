@@ -1,4 +1,4 @@
-import os, random, strutils, streams, tables, zippy, zippy/common, zippy/crc,
+import os, random, streams, strutils, tables, zippy, zippy/common, zippy/crc,
     zippy/zippyerror
 
 export zippyerror

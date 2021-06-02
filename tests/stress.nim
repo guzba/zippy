@@ -41,7 +41,6 @@ for i in 0 ..< 10000:
     except ZippyError:
       discard
 
-
   for level in [1, -1]: # BestSpeed and Default
     block: # data
       var

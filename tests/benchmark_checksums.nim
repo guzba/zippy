@@ -1,4 +1,4 @@
-import benchy, zippy/crc, zippy/common
+import benchy, zippy/common, zippy/crc
 
 let data = cast[seq[uint8]](readFile("tests/data/fireworks.jpg"))
 
