@@ -1,4 +1,4 @@
-import os, tables, zippy/tarballs
+import os, streams, tables, zippy/tarballs
 
 block: # .tar
   let tarball = Tarball()
@@ -25,6 +25,28 @@ block: # .tar
 block: # .tar.gz
   let tarball = Tarball()
   tarball.open("tests/data/tarballs/dir.tar.gz")
+
+  for path, entry in tarball.contents:
+    if entry.kind == ekNormalFile:
+      doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
+
+block: # .tar
+  let fs = newFileStream("tests/data/tarballs/dir.tar")
+  defer: fs.close()
+
+  let tarball = Tarball()
+  tarball.open(fs) # tfDetect
+
+  for path, entry in tarball.contents:
+    if entry.kind == ekNormalFile:
+      doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
+
+block: # .tar.gz
+  let fs = newFileStream("tests/data/tarballs/dir.tar.gz")
+  defer: fs.close()
+
+  let tarball = Tarball()
+  tarball.open(fs) # tfDetect
 
   for path, entry in tarball.contents:
     if entry.kind == ekNormalFile:

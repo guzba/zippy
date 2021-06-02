@@ -1,4 +1,4 @@
-import os, random, strutils, tables, times, zippy, zippy/common,
+import os, random, streams, strutils, tables, times, zippy, zippy/common,
     zippy/zippyerror
 
 export zippyerror
@@ -15,6 +15,9 @@ type
 
   Tarball* = ref object
     contents*: OrderedTable[string, TarballEntry]
+
+  TarballFormat* = enum
+    tfDetect, tfUncompressed, tfGzip
 
 proc addDir(tarball: Tarball, base, relative: string) =
   if relative.len > 0 and relative notin tarball.contents:
@@ -52,10 +55,9 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted tarball?"
   )
 
-proc open*(tarball: Tarball, path: string) =
-  ## Opens the tarball file located at path and reads its contents into
-  ## tarball.contents (clears any existing tarball.contents entries).
-  ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
+proc open*(tarball: Tarball, stream: Stream, tarballFormat = tfDetect) =
+  ## Opens the zip archive from a stream and reads its contents into
+  ## archive.contents (clears any existing archive.contents entries).
 
   tarball.clear()
 
@@ -65,17 +67,26 @@ proc open*(tarball: Tarball, path: string) =
         return s[0 ..< i]
     s
 
-  let
-    ext = splitFile(path).ext
-    data =
-      case ext:
-      of ".tar":
-        readFile(path)
-      of ".gz", ".taz", ".tgz":
-        # Tarball compressed using gzip
-        uncompress(readFile(path), dfGzip)
+  var data = stream.readAll() # TODO: actually treat as a stream
+
+  var tarballFormat = tarballFormat
+  if tarballFormat == tfDetect:
+    if data[0] == 0x1F.char:
+      case data[1].uint8:
+      of 0x8B:
+        tarballFormat = tfGzip
       else:
-        raise newException(ZippyError, "Unsupported tarball extension " & ext)
+        raise newException(ZippyError, "Unsupported tarball format")
+    else:
+      tarballFormat = tfUncompressed
+
+  case tarballFormat:
+  of tfUncompressed:
+    discard
+  of tfGzip:
+    data = uncompress(data, dfGzip)
+  of tfDetect:
+    discard # Handled above
 
   var pos: int
   while pos < data.len:
@@ -123,6 +134,21 @@ proc open*(tarball: Tarball, path: string) =
 
     # Move pos by fileSize, where fileSize is 512 byte aligned
     pos += (fileSize + 511) and not 511
+
+proc open*(tarball: Tarball, path: string) =
+  ## Opens the tarball file located at path and reads its contents into
+  ## tarball.contents (clears any existing tarball.contents entries).
+  ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
+  let
+    stream = newStringStream(readFile(path))
+    ext = splitFile(path).ext
+  case ext:
+  of ".tar":
+    tarball.open(stream, tfUncompressed)
+  of ".gz", ".taz", ".tgz":
+    tarball.open(stream, tfGzip)
+  else:
+    raise newException(ZippyError, "Unsupported tarball extension " & ext)
 
 proc writeTarball*(tarball: Tarball, path: string) =
   ## Writes tarball.contents to a tarball file at path. Uses the path's file

@@ -50,11 +50,11 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted zip archive?"
   )
 
-proc open*(archive: ZipArchive, path: string) =
-  ## Opens the zip archive file located at path and reads its contents into
+proc open*(archive: ZipArchive, stream: Stream) =
+  ## Opens the zip archive from a stream and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
 
-  let data = readFile(path)
+  let data = stream.readAll() # TODO: actually treat as a stream
 
   archive.clear()
 
@@ -255,10 +255,10 @@ proc open*(archive: ZipArchive, path: string) =
     else:
       failOpen()
 
-proc open*(archive: ZipArchive, stream: StringStream) =
-  ## Opens the zip archive from a stream (in-memory) and reads its contents into
+proc open*(archive: ZipArchive, path: string) =
+  ## Opens the zip archive file located at path and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
-  archive.open(stream.readAll())
+  archive.open(newStringStream(readFile(path)))
 
 proc writeZipArchive*(archive: ZipArchive, path: string) =
   ## Writes archive.contents to a zip file at path.
