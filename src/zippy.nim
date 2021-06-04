@@ -219,6 +219,6 @@ func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
 template uncompress*(src: string, dataFormat = dfDetect): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
-    vmSeq2Str(uncompress(vmStr2Seq(src)))
+    vmSeq2Str(uncompress(vmStr2Seq(src), dataFormat))
   else:
     cast[string](uncompress(cast[seq[uint8]](src), dataFormat))
