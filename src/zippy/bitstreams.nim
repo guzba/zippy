@@ -38,6 +38,9 @@ func readBits*(b: var BitStream, bits: uint): uint16 =
   b.bitBuf = b.bitBuf shr bits
   b.bitCount -= bits.int # bitCount can go negative if we've read past the end
 
+func readBits*(b: var BitStream, bits: int): uint16 {.inline.} =
+  readBits(b, bits.uint) # TODO remove
+
 func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   assert b.bitPos == 0
   assert b.bitCount mod 8 == 0
