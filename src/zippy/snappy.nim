@@ -39,7 +39,7 @@ func encodeFragment(
 
     encoded[op] = length.uint16
     inc op
-    inc(literalsTotal, length)
+    literalsTotal += length
 
   template addCopy(offset: int, length: int) =
     if op + 3 > encoded.len:
@@ -56,7 +56,7 @@ func encodeFragment(
     encoded[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
     encoded[op + 1] = offset.uint16
     encoded[op + 2] = length.uint16
-    inc(op, 3)
+    op += 3
 
   template emitRemainder() =
     if nextEmit < ipEnd:
@@ -105,7 +105,7 @@ func encodeFragment(
           limit = min(ipEnd, ip + maxMatchLen)
           matched = 4 + findMatchLength(src, candidate + 4, ip + 4, limit)
           offset = ip - candidate
-        inc(ip, matched)
+        ip += matched
         addCopy(offset, matched)
 
         let insertTail = ip - 1
@@ -166,7 +166,7 @@ func snappyEncode*(
       freqDist,
       literalsTotal
     )
-    inc(ip, bytesToRead)
+    ip += bytesToRead
 
   encoded.setLen(op)
   (encoded, freqLitLen, freqDist, literalsTotal)

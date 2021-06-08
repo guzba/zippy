@@ -184,7 +184,7 @@ func inflateBlock(
       if totalLength <= 16 and totalDist >= 8:
         copy64(dst, dst, op, op - totalDist)
         copy64(dst, dst, op + 8, op - totalDist + 8)
-        inc(op, totalLength)
+        op += totalLength
       else:
         var
           src = op - totalDist
@@ -192,14 +192,14 @@ func inflateBlock(
           remaining = totalLength
         while pos - src < 8:
           copy64(dst, dst, pos, src)
-          dec(remaining, pos - src)
-          inc(pos, pos - src)
+          remaining -= pos - src
+          pos += pos - src
         while remaining > 0:
           copy64(dst, dst, pos, src)
-          inc(src, 8)
-          inc(pos, 8)
-          dec(remaining, 8)
-        inc(op, totalLength)
+          src += 8
+          pos += 8
+          remaining -= 8
+        op += totalLength
 
 func inflateNoCompression(b: var BitStream, dst: var seq[uint8], op: var int) =
   b.skipRemainingBitsInCurrentByte()

@@ -24,7 +24,7 @@ func lz77Encode*(
 
     encoded[op] = length.uint16
     inc op
-    inc(literalsTotal, length)
+    literalsTotal += length
 
   template addCopy(offset, length: int) =
     if op + 3 > encoded.len:
@@ -41,7 +41,7 @@ func lz77Encode*(
     encoded[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
     encoded[op + 1] = offset.uint16
     encoded[op + 2] = length.uint16
-    inc(op, 3)
+    op += 3
 
   if minMatchLen >= src.len:
     for c in src:

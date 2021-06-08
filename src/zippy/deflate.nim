@@ -125,7 +125,7 @@ func huffmanCodeLengths(
         break
 
       addSymbolCoins(coins, numCoins)
-      inc(numCoins, numSymbolsUsed)
+      numCoins += numSymbolsUsed
 
       quickSort(coins, 0, numCoins - 1)
 
@@ -268,8 +268,8 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
           else:
             repeatCount = min(repeatCount, 138) # Max of 138 zeros for code 18
             bitLensRle.add([18.uint8, repeatCount.uint8 - 11])
-          inc(i, repeatCount - 1)
-          inc(bitCount, 7)
+          i += repeatCount - 1
+          bitCount += 7
         elif repeatCount >= 3: # Repeat code for non-zero, must be >= 3 times
           var
             a = repeatCount div 6
@@ -282,13 +282,13 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
           if b >= 3:
             bitLensRle.add([16.uint8, b.uint8 - 3])
           else:
-            dec(repeatCount, b)
-          inc(i, repeatCount)
-          inc(bitCount, (a + b) * 2)
+            repeatCount -= b
+          i += repeatCount
+          bitCount += (a + b) * 2
         else:
           bitLensRle.add(bitLens[i])
         inc i
-        inc(bitCount, 7)
+        bitCount += 7
 
     var clFreq = newSeq[int](19)
     block count_cl_frequencies:
@@ -361,8 +361,8 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
           lengthExtra = length - baseLengths[lengthIndex]
           distExtraBits = baseDistanceExtraBits[distIndex]
           distExtra = offset - baseDistances[distIndex]
-        inc(encPos, 3)
-        inc(srcPos, length.int)
+        encPos += 3
+        srcPos += length.int
 
         if b.pos + 6 > b.data.len:
           b.data.setLen(b.data.len * 2)
