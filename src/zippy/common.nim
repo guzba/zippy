@@ -46,7 +46,7 @@ const
   ]
 
   baseLengthsExtraBits* = [
-    0.int8, 0, 0, 0, 0, 0, 0, 0, # 257 - 264
+    0.uint16, 0, 0, 0, 0, 0, 0, 0, # 257 - 264
     1, 1, 1, 1, # 265 - 268
     2, 2, 2, 2, # 269 - 273
     3, 3, 3, 3, # 274 - 276
@@ -56,7 +56,7 @@ const
   ]
 
   baseLengthIndices* = [
-    0.uint8, 1, 2, 3, 4, 5, 6, 7, 8, 8,
+    0.uint16, 1, 2, 3, 4, 5, 6, 7, 8, 8,
     9, 9, 10, 10, 11, 11, 12, 12, 12, 12,
     13, 13, 13, 13, 14, 14, 14, 14, 15, 15,
     15, 15, 16, 16, 16, 16, 16, 16, 16, 16,
@@ -102,7 +102,7 @@ const
   ]
 
   baseDistanceExtraBits* = [
-    0.int8, 0, 0, 0, # 0-3
+    0.uint16, 0, 0, 0, # 0-3
     1, 1, # 4-5
     2, 2, # 6-7
     3, 3, # 8-9
@@ -119,7 +119,7 @@ const
   ]
 
   clclOrder* = [
-    16.int8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
+    16.uint16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
   bitReverseTable* = block:
@@ -228,7 +228,7 @@ func copy64*(dst: var seq[uint8], src: seq[uint8], op, ip: int) {.inline.} =
 
 func distanceCodeIndex*(value: uint16): uint16 =
   const distanceCodes = [
-    0.uint8, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7,
+    0.uint16, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7,
     8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9,
     10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
@@ -253,9 +253,7 @@ func distanceCodeIndex*(value: uint16): uint16 =
   else:
     distanceCodes[value shr 14] + 28
 
-func findMatchLength*(
-  src: seq[uint8], s1, s2, limit: int
-): int {.inline.} =
+func findMatchLength*(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
   var
     s1 = s1
     s2 = s2

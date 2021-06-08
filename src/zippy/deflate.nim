@@ -241,7 +241,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
   var b: BitStream
   if useFixedCodes:
     b.data.setLen(1024)
-    b.addBit(1)
+    b.addBits(1, 1)
     b.addBits(1, 2) # Fixed Huffman codes
   else:
     var bitLens = newSeqOfCap[uint8](llCodes.len + distCodes.len)
@@ -321,7 +321,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
       bitLensRle.len * 2
     )
 
-    b.addBit(1)
+    b.addBits(1, 1)
     b.addBits(2, 2) # Dynamic Huffman codes
 
     b.addBits(hlit, 5)
@@ -335,7 +335,7 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
       var i: int
       while i < bitLensRle.len:
         let symbol = bitLensRle[i]
-        b.addBits(clCodes[symbol], clLengths[symbol].int)
+        b.addBits(clCodes[symbol], clLengths[symbol])
         inc i
         if symbol == 16:
           b.addBits(bitLensRle[i], 2)
@@ -369,10 +369,10 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
 
         b.addBits(
           llCodes[lengthIndex + firstLengthCodeIndex],
-          llLengths[lengthIndex + firstLengthCodeIndex].int
+          llLengths[lengthIndex + firstLengthCodeIndex]
         )
         b.addBits(lengthExtra, lengthExtraBits)
-        b.addBits(distCodes[distIndex], distLengths[distIndex].int)
+        b.addBits(distCodes[distIndex], distLengths[distIndex])
         b.addBits(distExtra, distExtraBits)
       else:
         let length = encoded[encPos].int
@@ -383,13 +383,13 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
           b.data.setLen(max(b.pos + worstCaseBytesNeeded, b.data.len * 2))
 
         for j in 0 ..< length:
-          b.addBits(llCodes[src[srcPos]], llLengths[src[srcPos]].int)
+          b.addBits(llCodes[src[srcPos]], llLengths[src[srcPos]])
           inc srcPos
 
   if llLengths[256] == 0:
     failCompress()
 
-  b.addBits(llCodes[256], llLengths[256].int) # End of block
+  b.addBits(llCodes[256], llLengths[256]) # End of block
 
   b.skipRemainingBitsInCurrentByte()
 

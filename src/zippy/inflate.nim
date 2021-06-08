@@ -7,7 +7,7 @@ const
 type
   Huffman = ref object
     firstCode, firstSymbol: array[16, uint16]
-    maxCodes: array[17, int]
+    maxCodes: array[17, uint]
     lengths: array[288, uint8]
     values: array[288, uint16]
     fast: array[1 shl fastBits, uint16]
@@ -15,43 +15,42 @@ type
 when defined(release):
   {.push checks: off.}
 
-func reverse16Bits(n: int): int {.inline.} =
-  result = n
-  result = ((result and 0xAAAA) shr 1) or ((result and 0x5555) shl 1)
+func reverse16Bits(n: uint16): uint16 {.inline.} =
+  result = ((n and 0xAAAA) shr 1) or ((n and 0x5555) shl 1)
   result = ((result and 0xCCCC) shr 2) or ((result and 0x3333) shl 2)
   result = ((result and 0xF0F0) shr 4) or ((result and 0x0F0F) shl 4)
   result = ((result and 0xFF00) shr 8) or ((result and 0x00FF) shl 8)
 
-func reverseBits(n, bits: int): int {.inline.} =
+func reverseBits(n, bits: uint16): uint16 {.inline.} =
   assert bits <= 16
-  reverse16Bits(n) shr (16 - bits)
+  (reverse16Bits(n.uint16) shr (16 - bits))
 
 func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
 
   result = Huffman()
 
-  var sizes: array[17, int]
+  if lengths.len > maxNumCodes:
+    failUncompress()
+
+  var sizes: array[17, uint]
   for i in 0 ..< lengths.len:
     inc sizes[lengths[i]]
   sizes[0] = 0
 
-  if lengths.len > maxNumCodes:
-    failUncompress()
-
   for i in 1 ..< 16:
-    if sizes[i] > (1 shl i):
+    if sizes[i] > (1.uint shl i):
       failUncompress()
 
   var
-    code, k: int
-    nextCode: array[16, int]
+    code, k: uint
+    nextCode: array[16, uint]
   for i in 1 ..< 16:
     nextCode[i] = code
     result.firstCode[i] = code.uint16
     result.firstSymbol[i] = k.uint16
     code = code + sizes[i]
-    if sizes[i] > 0 and code - 1 >= (1 shl i):
+    if sizes[i] > 0 and code - 1 >= (1.uint shl i):
       failUncompress()
     result.maxCodes[i] = (code shl (16 - i))
     code = code shl 1
@@ -62,15 +61,15 @@ func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   for i, len in lengths:
     if len > 0:
       let symbolId =
-        nextCode[len] - result.firstCode[len].int + result.firstSymbol[len].int
+        nextCode[len] - result.firstCode[len] + result.firstSymbol[len]
       result.lengths[symbolId] = len
       result.values[symbolId] = i.uint16
       if len <= fastBits:
-        let fast = (len.uint16 shl 9) or i.uint16
-        var k = reverseBits(nextCode[len], len.int)
+        let fast = (len.uint shl 9) or i.uint
+        var k = reverseBits(nextCode[len].uint16, len).uint
         while k < (1 shl fastBits):
-          result.fast[k] = fast
-          k += (1 shl len)
+          result.fast[k] = fast.uint16
+          k += (1.uint16 shl len)
       inc nextCode[len]
 
 func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
@@ -80,31 +79,32 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   if b.bitCount < 16:
     b.fillBitBuf()
 
-  let fast = h.fast[b.bitBuf and fastMask]
-  var len: int
+  let
+    maxCodesLen = h.maxCodes.len.uint
+    fast = h.fast[b.bitBuf and fastMask]
+  var len: uint16
   if fast > 0:
-    len = (fast.int shr 9)
+    len = (fast shr 9)
     result = fast and 511
   else: # Slow path
-    let k = reverse16Bits(cast[int](b.bitBuf))
+    let k = reverse16Bits(b.bitBuf.uint16).uint
     len = 1
-    while len < h.maxCodes.len:
+    while len < maxCodesLen:
       if k < h.maxCodes[len]:
         break
       inc len
 
-    if len == 16:
+    if len >= 16:
       failUncompress()
 
-    let symbolId =
-      (k shr (16 - len)) - h.firstCode[len].int + h.firstSymbol[len].int
+    let symbolId = (k shr (16 - len)) - h.firstCode[len] + h.firstSymbol[len]
     result = h.values[symbolId]
 
-  if len > b.bitCount:
+  if len.int > b.bitCount:
     failEndOfBuffer()
 
   b.bitBuf = b.bitBuf shr len
-  b.bitCount -= len
+  b.bitCount -= len.int
 
 func inflateBlock(
   b: var BitStream, dst: var seq[uint8], op: var int, fixedCodes: bool
@@ -121,7 +121,7 @@ func inflateBlock(
       hclen = b.readBits(4).int + 4
 
     var clCodeLengths = newSeq[uint8](19)
-    for i in 0 ..< hclen.int:
+    for i in 0 ..< hclen:
       clCodeLengths[clclOrder[i]] = b.readBits(3).uint8
 
     let h = newHuffman(clCodeLengths, 19)

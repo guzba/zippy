@@ -8,7 +8,7 @@ type
     bitCount*: int
     bitBuf*: uint64
     # Writing
-    bitPos: int
+    bitPos: uint
 
 when defined(release):
   {.push checks: off.}
@@ -28,7 +28,7 @@ func fillBitBuf*(b: var BitStream) {.inline.} =
     inc b.pos
     b.bitCount += 8
 
-func readBits*(b: var BitStream, bits: int): uint16 =
+func readBits*(b: var BitStream, bits: uint): uint16 =
   assert bits <= 16
 
   if b.bitCount < 16:
@@ -36,7 +36,7 @@ func readBits*(b: var BitStream, bits: int): uint16 =
 
   result = (b.bitBuf and ((1.uint32 shl bits) - 1)).uint16
   b.bitBuf = b.bitBuf shr bits
-  b.bitCount -= bits
+  b.bitCount -= bits.int # bitCount can go negative if we've read past the end
 
 func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   assert b.bitPos == 0
@@ -57,9 +57,9 @@ func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   b.bitCount = 0
   b.bitBuf = 0
 
-func incPos(b: var BitStream, bits: int) {.inline.} =
+func incPos(b: var BitStream, bits: uint) {.inline.} =
   # Used when writing
-  b.pos += (bits + b.bitPos) shr 3
+  b.pos += ((bits + b.bitPos) shr 3).int
   b.bitPos = (bits + b.bitPos) and 7
 
 func skipRemainingBitsInCurrentByte*(b: var BitStream) =
@@ -85,13 +85,9 @@ func addBytes*(b: var BitStream, src: seq[uint8], start, len: int) =
   else:
     copyMem(b.data[b.pos].addr, src[start].unsafeAddr, len)
 
-  b.incPos(len * 8)
+  b.incPos(len.uint * 8)
 
-func addBit*(b: var BitStream, bit: uint8) =
-  b.data[b.pos] = b.data[b.pos] or (bit shl b.bitPos)
-  b.incPos(1)
-
-func addBits*(b: var BitStream, value: uint16, bits: int) =
+func addBits*(b: var BitStream, value: uint16, bits: uint) =
   assert bits <= 16
 
   var bitsRemaining = bits
@@ -102,7 +98,7 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
       bitsAdded = min(bitsLeftInByte, bitsRemaining) # Can be 0 which is fine
       bitsToAdd = (value shr (bits - bitsRemaining)) shl b.bitPos
     b.data[b.pos] = b.data[b.pos] or (bitsToAdd and 255).uint8
-    dec(bitsRemaining, bitsAdded)
+    bitsRemaining -= bitsAdded
     b.incPos(bitsAdded)
 
   # 16 bits cannot spread out across more than 3 bytes
