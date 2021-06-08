@@ -57,7 +57,7 @@ func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
   b.bitCount = 0
   b.bitBuf = 0
 
-func movePos(b: var BitStream, bits: int) {.inline.} =
+func incPos(b: var BitStream, bits: int) {.inline.} =
   # Used when writing
   b.pos += (bits + b.bitPos) shr 3
   b.bitPos = (bits + b.bitPos) and 7
@@ -65,7 +65,7 @@ func movePos(b: var BitStream, bits: int) {.inline.} =
 func skipRemainingBitsInCurrentByte*(b: var BitStream) =
   # If writing
   if b.bitPos > 0:
-    b.movePos(8 - b.bitPos)
+    b.incPos(8 - b.bitPos)
 
   # If reading
   let mod8 = b.bitCount mod 8
@@ -85,11 +85,11 @@ func addBytes*(b: var BitStream, src: seq[uint8], start, len: int) =
   else:
     copyMem(b.data[b.pos].addr, src[start].unsafeAddr, len)
 
-  b.movePos(len * 8)
+  b.incPos(len * 8)
 
 func addBit*(b: var BitStream, bit: uint8) =
   b.data[b.pos] = b.data[b.pos] or (bit shl b.bitPos)
-  b.movePos(1)
+  b.incPos(1)
 
 func addBits*(b: var BitStream, value: uint16, bits: int) =
   assert bits <= 16
@@ -103,7 +103,7 @@ func addBits*(b: var BitStream, value: uint16, bits: int) =
       bitsToAdd = (value shr (bits - bitsRemaining)) shl b.bitPos
     b.data[b.pos] = b.data[b.pos] or (bitsToAdd and 255).uint8
     dec(bitsRemaining, bitsAdded)
-    b.movePos(bitsAdded)
+    b.incPos(bitsAdded)
 
   # 16 bits cannot spread out across more than 3 bytes
   add()
