@@ -1,4 +1,4 @@
-import zippyerror
+import common, zippyerror
 
 type
   BitStream* = object
@@ -90,22 +90,13 @@ func addBytes*(b: var BitStream, src: seq[uint8], start, len: int) =
 func addBits*(b: var BitStream, value: uint16, bits: uint) =
   assert bits <= 16
 
-  var bitsRemaining = bits
+  if b.pos + 8 > b.data.len:
+    # Make sure we have room to read64
+    b.data.setLen(max(b.data.len * 2, 64))
 
-  template add() =
-    let
-      bitsLeftInByte = 8 - b.bitPos
-      bitsAdded = min(bitsLeftInByte, bitsRemaining) # Can be 0 which is fine
-      bitsToAdd = (value shr (bits - bitsRemaining)) shl b.bitPos
-    b.data[b.pos] = b.data[b.pos] or (bitsToAdd and 255).uint8
-    bitsRemaining -= bitsAdded
-    b.incPos(bitsAdded)
+  write64(b.data, b.pos, read64(b.data, b.pos) or (value.uint64 shl b.bitPos))
 
-  # 16 bits cannot spread out across more than 3 bytes
-  add()
-  add()
-  if bitsRemaining > 0:
-    add()
+  b.incPos(bits)
 
 when defined(release):
   {.pop.}

@@ -219,12 +219,25 @@ func read64*(s: seq[uint8], pos: int): uint64 {.inline.} =
   else:
     cast[ptr uint64](s[pos].unsafeAddr)[]
 
+func write64*(dst: var seq[uint8], pos: int, value: uint64) {.inline.} =
+  when nimvm:
+    dst[pos + 0] = (value shr 0 and 255).uint8
+    dst[pos + 1] = (value shr 8 and 255).uint8
+    dst[pos + 2] = (value shr 16 and 255).uint8
+    dst[pos + 3] = (value shr 24 and 255).uint8
+    dst[pos + 4] = (value shr 32 and 255).uint8
+    dst[pos + 5] = (value shr 40 and 255).uint8
+    dst[pos + 6] = (value shr 48 and 255).uint8
+    dst[pos + 7] = (value shr 56 and 255).uint8
+  else:
+    cast[ptr uint64](dst[pos].addr)[] = value
+
 func copy64*(dst: var seq[uint8], src: seq[uint8], op, ip: int) {.inline.} =
   when nimvm:
     for i in 0 .. 7:
       dst[op + i] = src[ip + i]
   else:
-    cast[ptr uint64](dst[op].addr)[] = read64(src, ip)
+    write64(dst, op, read64(src, ip))
 
 func distanceCodeIndex*(value: uint16): uint16 =
   const distanceCodes = [

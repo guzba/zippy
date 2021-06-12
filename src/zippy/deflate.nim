@@ -187,8 +187,6 @@ func deflateNoCompression(src: seq[uint8]): seq[uint8] =
 
   var b: BitStream
   for i in 0 ..< blockCount:
-    b.data.setLen(b.data.len + 6)
-
     let finalBlock = i == blockCount - 1
     b.addBits(finalBlock.uint8, 8)
 
@@ -240,7 +238,6 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
 
   var b: BitStream
   if useFixedCodes:
-    b.data.setLen(1024)
     b.addBits(1, 1)
     b.addBits(1, 2) # Fixed Huffman codes
   else:
@@ -314,13 +311,6 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
       hdist = distCodes.len.uint8 - 1
       hclen = bitLensCodeLen.len.uint8 - 4
 
-    # TODO: Improve the b.data.setLens
-    b.data.setLen(
-      b.data.len +
-      (((hclen.int + 4) * 3 + 7) div 8) + # hclen rle
-      bitLensRle.len * 2
-    )
-
     b.addBits(1, 1)
     b.addBits(2, 2) # Dynamic Huffman codes
 
@@ -364,9 +354,6 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         encPos += 3
         srcPos += length.int
 
-        if b.pos + 6 > b.data.len:
-          b.data.setLen(b.data.len * 2)
-
         b.addBits(
           llCodes[lengthIndex + firstLengthCodeIndex],
           llLengths[lengthIndex + firstLengthCodeIndex]
@@ -377,11 +364,6 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
       else:
         let length = encoded[encPos].int
         inc encPos
-
-        let worstCaseBytesNeeded = (length * maxCodeLength + 7) div 8
-        if b.pos + worstCaseBytesNeeded >= b.data.len:
-          b.data.setLen(max(b.pos + worstCaseBytesNeeded, b.data.len * 2))
-
         for j in 0 ..< length:
           b.addBits(llCodes[src[srcPos]], llLengths[src[srcPos]])
           inc srcPos
