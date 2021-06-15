@@ -188,7 +188,7 @@ func deflateNoCompression(src: seq[uint8]): seq[uint8] =
   var b: BitStream
   for i in 0 ..< blockCount:
     let finalBlock = i == blockCount - 1
-    b.addBits(finalBlock.uint8, 8)
+    b.addBits(finalBlock.uint16, 8)
 
     let
       pos = i * maxUncompressedBlockSize

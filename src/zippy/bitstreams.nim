@@ -34,7 +34,7 @@ func readBits*(b: var BitStream, bits: uint): uint16 =
   if b.bitCount < 16:
     b.fillBitBuf()
 
-  result = (b.bitBuf and ((1.uint32 shl bits) - 1)).uint16
+  result = (b.bitBuf and ((1.uint64 shl bits) - 1)).uint16
   b.bitBuf = b.bitBuf shr bits
   b.bitCount -= bits.int # bitCount can go negative if we've read past the end
 
