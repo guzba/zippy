@@ -87,12 +87,14 @@ func addBytes*(b: var BitStream, src: seq[uint8], start, len: int) =
 
   b.incPos(len.uint * 8)
 
-func addBits*(b: var BitStream, value: uint16, bits: uint) =
-  assert bits <= 16
+func addBits*(b: var BitStream, value: uint32, bits: uint32) {.inline.} =
+  assert bits <= 32
 
   if b.pos + 8 > b.data.len:
     # Make sure we have room to read64
     b.data.setLen(max(b.data.len * 2, 64))
+
+  let value = value.uint64 and ((1.uint64 shl bits) - 1)
 
   write64(b.data, b.pos, read64(b.data, b.pos) or (value.uint64 shl b.bitPos))
 

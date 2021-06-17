@@ -354,17 +354,41 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         encPos += 3
         srcPos += length.int
 
-        b.addBits(
-          llCodes[lengthIndex + firstLengthCodeIndex],
-          llLengths[lengthIndex + firstLengthCodeIndex]
-        )
-        b.addBits(lengthExtra, lengthExtraBits)
-        b.addBits(distCodes[distIndex], distLengths[distIndex])
-        b.addBits(distExtra, distExtraBits)
+        var
+          buf = llCodes[lengthIndex + firstLengthCodeIndex].uint32
+          len = llLengths[lengthIndex + firstLengthCodeIndex].uint32
+
+        buf = buf or (lengthExtra.uint32 shl len)
+        len += lengthExtraBits
+
+        b.addBits(buf, len)
+
+        buf = distCodes[distIndex].uint32
+        len = distLengths[distIndex].uint32
+
+        buf = buf or (distExtra.uint32 shl len)
+        len += distExtraBits
+
+        b.addBits(buf, len)
       else:
         let length = encoded[encPos].int
         inc encPos
-        for j in 0 ..< length:
+
+        var j: int
+        for _ in 0 ..< length div 2:
+          var
+            buf = llCodes[src[srcPos + 0]].uint32
+            len = llLengths[src[srcPos + 0]].uint32
+
+          buf = buf or (llCodes[src[srcPos + 1]].uint32 shl len)
+          len += llLengths[src[srcPos + 1]]
+
+          b.addBits(buf, len)
+
+          srcPos += 2
+          j += 2
+
+        if j != length:
           b.addBits(llCodes[src[srcPos]], llLengths[src[srcPos]])
           inc srcPos
 
