@@ -31,22 +31,27 @@ func encodeFragment(
     zeroMem(compressTable[0].addr, tableSize * sizeof(uint16))
 
   template addLiteral(start, length: int) =
-    if op + 1 > encoded.len:
-      encoded.setLen(encoded.len * 2)
-
     for i in 0 ..< length:
       inc freqLitLen[src[start + i]]
 
-    encoded[op] = length.uint16
-    inc op
     literalsTotal += length
+
+    var remaining = length
+    while remaining > 0:
+      if op + 1 > encoded.len:
+        encoded.setLen(encoded.len * 2)
+
+      let added = min(remaining, (1 shl 15) - 1)
+      encoded[op] = added.uint16
+      inc op
+      remaining -= added
 
   template addCopy(offset: int, length: int) =
     if op + 3 > encoded.len:
       encoded.setLen(encoded.len * 2)
 
     let
-      lengthIndex = baseLengthIndices[length - baseMatchLen].uint16
+      lengthIndex = baseLengthIndices[length - baseMatchLen]
       distIndex = distanceCodeIndex((offset - 1).uint16)
     inc freqLitLen[lengthIndex + firstLengthCodeIndex]
     inc freqDist[distIndex]
