@@ -225,40 +225,30 @@ proc extractAll*(tarball: Tarball, dest: string) =
       ZippyError, "Path to destination " & dest & " does not exist"
     )
 
-  proc randomString(len: int): string =
-    for _ in 0 ..< len:
-      result.add(rand('a'.int .. 'z'.int).char)
+  try:
+    for path, entry in tarball.contents:
+      if path.isAbsolute():
+        raise newException(
+          ZippyError,
+          "Extracting absolute paths is not supported (" & path & ")"
+        )
+      if path.contains(".."):
+        raise newException(
+          ZippyError,
+          "Extracting paths containing `...` is not supported (" & path & ")"
+        )
 
-  let tmpDir =
-    when defined(windows):
-      getHomeDir() / r"AppData\Local\Temp" / "tarball_" & randomString(10)
-    else:
-      getTempDir() / "tarball_" & randomString(10)
-  removeDir(tmpDir)
-  createDir(tmpDir)
-
-  for path, entry in tarball.contents:
-    if path.isAbsolute():
-      raise newException(
-        ZippyError,
-        "Extracting absolute paths is not supported (" & path & ")"
-      )
-    if path.contains(".."):
-      raise newException(
-        ZippyError,
-        "Extracting paths containing `...` is not supported (" & path & ")"
-      )
-
-    case entry.kind:
-    of ekNormalFile:
-      createDir(tmpDir / splitFile(path).dir)
-      writeFile(tmpDir / path, entry.contents)
-      if entry.lastModified > Time():
-        setLastModificationTime(tmpDir / path, entry.lastModified)
-    of ekDirectory:
-      createDir(tmpDir / path)
-
-  moveDir(tmpDir, dest)
+      case entry.kind:
+      of ekNormalFile:
+        createDir(dest / splitFile(path).dir)
+        writeFile(dest / path, entry.contents)
+        if entry.lastModified > Time():
+          setLastModificationTime(dest / path, entry.lastModified)
+      of ekDirectory:
+        createDir(dest / path)
+  except:
+    removeDir(dest)
+    raise
 
 proc extractAll*(tarPath, dest: string) =
   ## Extracts the files in the tarball located at tarPath into the destination
