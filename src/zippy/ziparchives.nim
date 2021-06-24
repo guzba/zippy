@@ -1,4 +1,4 @@
-import os, random, streams, strutils, tables, zippy, zippy/common, zippy/crc,
+import os, streams, strutils, tables, zippy, zippy/common, zippy/crc,
     zippy/zippyerror
 
 export zippyerror
@@ -383,38 +383,28 @@ proc extractAll*(archive: ZipArchive, dest: string) =
       ZippyError, "Path to destination " & dest & " does not exist"
     )
 
-  proc randomString(len: int): string =
-    for _ in 0 ..< len:
-      result.add(rand('a'.int .. 'z'.int).char)
+  try:
+    for path, entry in archive.contents:
+      if path.isAbsolute():
+        raise newException(
+          ZippyError,
+          "Extracting absolute paths is not supported (" & path & ")"
+        )
+      if path.contains(".."):
+        raise newException(
+          ZippyError,
+          "Extracting paths containing `...` is not supported (" & path & ")"
+        )
 
-  let tmpDir =
-    when defined(windows):
-      getHomeDir() / r"AppData\Local\Temp" / "ziparchive_" & randomString(10)
-    else:
-      getTempDir() / "ziparchive_" & randomString(10)
-  removeDir(tmpDir)
-  createDir(tmpDir)
-
-  for path, entry in archive.contents:
-    if path.isAbsolute():
-      raise newException(
-        ZippyError,
-        "Extracting absolute paths is not supported (" & path & ")"
-      )
-    if path.contains(".."):
-      raise newException(
-        ZippyError,
-        "Extracting paths containing `...` is not supported (" & path & ")"
-      )
-
-    case entry.kind:
-    of ekDirectory:
-      createDir(tmpDir / path)
-    of ekFile:
-      createDir(tmpDir / splitFile(path).dir)
-      writeFile(tmpDir / path, entry.contents)
-
-  moveDir(tmpDir, dest)
+      case entry.kind:
+      of ekDirectory:
+        createDir(dest / path)
+      of ekFile:
+        createDir(dest / splitFile(path).dir)
+        writeFile(dest / path, entry.contents)
+  except:
+    removeDir(dest)
+    raise
 
 proc extractAll*(zipPath, dest: string) =
   ## Extracts the files in the archive located at zipPath into the destination
