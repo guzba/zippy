@@ -14,8 +14,10 @@ type
     dfDetect, dfZlib, dfGzip, dfDeflate
 
 func compress*(
-  src: seq[uint8], level = DefaultCompression, dataFormat = dfGzip
-): seq[uint8] =
+  src: seq[uint8],
+  level = DefaultCompression,
+  dataFormat = dfGzip
+): seq[uint8] {.raises: [ZippyError].} =
   ## Compresses src and returns the compressed data.
 
   if dataFormat == dfDetect:
@@ -75,7 +77,9 @@ func compress*(
     result = deflate(src, level)
 
 template compress*(
-  src: string, level = DefaultCompression, dataFormat = dfGzip
+  src: string,
+  level = DefaultCompression,
+  dataFormat = dfGzip
 ): string =
   ## Helper for when preferring to work with strings.
   when nimvm:
@@ -84,7 +88,9 @@ template compress*(
     cast[string](compress(cast[seq[uint8]](src), level, dataFormat))
 
 func uncompress(
-  dst: var seq[uint8], src: seq[uint8], dataFormat: CompressedDataFormat
+  dst: var seq[uint8],
+  src: seq[uint8],
+  dataFormat: CompressedDataFormat
 ) =
   case dataFormat:
   of dfGzip:
@@ -191,7 +197,10 @@ func uncompress(
     # Should never happen
     failUncompress()
 
-func uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
+func uncompress*(
+  src: seq[uint8],
+  dataFormat = dfDetect
+): seq[uint8] {.raises: [ZippyError].} =
   ## Uncompresses src and returns the uncompressed data seq.
 
   result = newSeqOfCap[uint8](src.len)
