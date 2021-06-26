@@ -1,4 +1,4 @@
-import os, random, streams, strutils, tables, times, zippy, zippy/common,
+import os, streams, strutils, tables, times, zippy, zippy/common,
     zippy/zippyerror
 
 export zippyerror
@@ -36,7 +36,9 @@ proc addDir(tarball: Tarball, base, relative: string) =
     else:
       discard
 
-proc addDir*(tarball: Tarball, dir: string) =
+proc addDir*(
+  tarball: Tarball, dir: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Recursively adds all of the files and directories inside dir to tarball.
   if splitFile(dir).ext.len > 0:
     raise newException(
@@ -47,7 +49,7 @@ proc addDir*(tarball: Tarball, dir: string) =
   let (head, tail) = splitPath(dir)
   tarball.addDir(head, tail)
 
-proc clear*(tarball: Tarball) =
+proc clear*(tarball: Tarball) {.raises: [].} =
   tarball.contents.clear()
 
 template failEOF() =
@@ -55,7 +57,9 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted tarball?"
   )
 
-proc open*(tarball: Tarball, stream: Stream, tarballFormat = tfDetect) =
+proc open*(
+  tarball: Tarball, stream: Stream, tarballFormat = tfDetect
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Opens the zip archive from a stream and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
 
@@ -135,7 +139,9 @@ proc open*(tarball: Tarball, stream: Stream, tarballFormat = tfDetect) =
     # Move pos by fileSize, where fileSize is 512 byte aligned
     pos += (fileSize + 511) and not 511
 
-proc open*(tarball: Tarball, path: string) =
+proc open*(
+  tarball: Tarball, path: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Opens the tarball file located at path and reads its contents into
   ## tarball.contents (clears any existing tarball.contents entries).
   ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
@@ -150,7 +156,9 @@ proc open*(tarball: Tarball, path: string) =
   else:
     raise newException(ZippyError, "Unsupported tarball extension " & ext)
 
-proc writeTarball*(tarball: Tarball, path: string) =
+proc writeTarball*(
+  tarball: Tarball, path: string
+) {.raises: [IOError, ZippyError].} =
   ## Writes tarball.contents to a tarball file at path. Uses the path's file
   ## extension to determine the tarball format. Supports .tar, .tar.gz, .taz
   ## and .tgz file extensions.
@@ -210,22 +218,27 @@ proc writeTarball*(tarball: Tarball, path: string) =
   else:
     raise newException(ZippyError, "Unsupported tarball extension " & ext)
 
-proc extractAll*(tarball: Tarball, dest: string) =
+proc extractAll*(
+  tarball: Tarball, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Extracts the files stored in tarball to the destination directory.
   ## The path to the destination directory must exist.
   ## The destination directory itself must not exist (it is not overwitten).
-
   if dirExists(dest):
     raise newException(
       ZippyError, "Destination " & dest & " already exists"
     )
+
   let (head, tail) = splitPath(dest)
   if tail != "" and not dirExists(head):
     raise newException(
       ZippyError, "Path to destination " & dest & " does not exist"
     )
 
-  try:
+  # Ensure we only raise exceptions we handle below
+  proc writeContents(
+    tarball: Tarball, dest: string
+  ) {.raises: [IOError, OSError, ZippyError].} =
     for path, entry in tarball.contents:
       if path.isAbsolute():
         raise newException(
@@ -246,18 +259,31 @@ proc extractAll*(tarball: Tarball, dest: string) =
           setLastModificationTime(dest / path, entry.lastModified)
       of ekDirectory:
         createDir(dest / path)
-  except:
-    removeDir(dest)
-    raise
 
-proc extractAll*(tarPath, dest: string) =
+  try:
+    tarball.writeContents(dest)
+  except IOError as e:
+    removeDir(dest)
+    raise e
+  except OSError as e:
+    removeDir(dest)
+    raise e
+  except ZippyError as e:
+    removeDir(dest)
+    raise e
+
+proc extractAll*(
+  tarPath, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Extracts the files in the tarball located at tarPath into the destination
   ## directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
   let tarball = Tarball()
   tarball.open(tarPath)
   tarball.extractAll(dest)
 
-proc createTarball*(source, dest: string) =
+proc createTarball*(
+  source, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Creates a tarball containing all of the files and directories inside
   ## source and writes the tarball file to dest. Uses the dest path's file
   ## extension to determine the tarball format. Supports .tar, .tar.gz, .taz

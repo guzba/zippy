@@ -31,7 +31,9 @@ proc addDir(archive: ZipArchive, base, relative: string) =
     else:
       discard
 
-proc addDir*(archive: ZipArchive, dir: string) =
+proc addDir*(
+  archive: ZipArchive, dir: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Recursively adds all of the files and directories inside dir to archive.
   if splitFile(dir).ext.len > 0:
     raise newException(
@@ -42,7 +44,7 @@ proc addDir*(archive: ZipArchive, dir: string) =
   let (head, tail) = splitPath(dir)
   archive.addDir(head, tail)
 
-proc clear*(archive: ZipArchive) =
+proc clear*(archive: ZipArchive) {.raises: [].} =
   archive.contents.clear()
 
 template failEOF() =
@@ -50,7 +52,9 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted zip archive?"
   )
 
-proc open*(archive: ZipArchive, stream: Stream) =
+proc open*(
+  archive: ZipArchive, stream: Stream
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Opens the zip archive from a stream and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
 
@@ -255,12 +259,14 @@ proc open*(archive: ZipArchive, stream: Stream) =
     else:
       failOpen()
 
-proc open*(archive: ZipArchive, path: string) =
+proc open*(archive: ZipArchive, path: string) {.inline.} =
   ## Opens the zip archive file located at path and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
   archive.open(newStringStream(readFile(path)))
 
-proc writeZipArchive*(archive: ZipArchive, path: string) =
+proc writeZipArchive*(
+  archive: ZipArchive, path: string
+) {.raises: [IOError, ZippyError].} =
   ## Writes archive.contents to a zip file at path.
 
   if archive.contents.len == 0:
@@ -368,22 +374,27 @@ proc writeZipArchive*(archive: ZipArchive, path: string) =
 
   writeFile(path, data)
 
-proc extractAll*(archive: ZipArchive, dest: string) =
+proc extractAll*(
+  archive: ZipArchive, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Extracts the files stored in archive to the destination directory.
   ## The path to the destination directory must exist.
   ## The destination directory itself must not exist (it is not overwitten).
-
   if dirExists(dest):
     raise newException(
       ZippyError, "Destination " & dest & " already exists"
     )
+
   let (head, tail) = splitPath(dest)
   if tail != "" and not dirExists(head):
     raise newException(
       ZippyError, "Path to destination " & dest & " does not exist"
     )
 
-  try:
+  # Ensure we only raise exceptions we handle below
+  proc writeContents(
+    archive: ZipArchive, dest: string
+  ) {.raises: [IOError, OSError, ZippyError].} =
     for path, entry in archive.contents:
       if path.isAbsolute():
         raise newException(
@@ -402,18 +413,31 @@ proc extractAll*(archive: ZipArchive, dest: string) =
       of ekFile:
         createDir(dest / splitFile(path).dir)
         writeFile(dest / path, entry.contents)
-  except:
-    removeDir(dest)
-    raise
 
-proc extractAll*(zipPath, dest: string) =
+  try:
+    archive.writeContents(dest)
+  except IOError as e:
+    removeDir(dest)
+    raise e
+  except OSError as e:
+    removeDir(dest)
+    raise e
+  except ZippyError as e:
+    removeDir(dest)
+    raise e
+
+proc extractAll*(
+  zipPath, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Extracts the files in the archive located at zipPath into the destination
   ## directory.
   let archive = ZipArchive()
   archive.open(zipPath)
   archive.extractAll(dest)
 
-proc createZipArchive*(source, dest: string) =
+proc createZipArchive*(
+  source, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
   ## Creates an archive containing all of the files and directories inside
   ## source and writes the zip file to dest.
   let archive = ZipArchive()
