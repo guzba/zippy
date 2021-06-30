@@ -78,7 +78,7 @@ template compress*(
   level = DefaultCompression,
   dataFormat = dfGzip
 ): seq[uint8] =
-  ## Helper for when preferring to work with strings.
+  ## Helper for when preferring to work with seq[uint8].
   cast[seq[uint8]](compress(cast[string](src), level, dataFormat))
 
 func uncompress(
@@ -195,7 +195,7 @@ func uncompress*(
   src: string,
   dataFormat = dfDetect
 ): string {.raises: [ZippyError].} =
-  ## Uncompresses src and returns the uncompressed data seq.
+  ## Uncompresses src and returns the uncompressed data.
 
   result = newStringOfCap(src.len)
 
