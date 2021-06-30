@@ -3,7 +3,7 @@ import common, zippyerror
 type
   BitStream* = object
     pos*: int
-    data*: seq[uint8]
+    data*: string
     # Reading
     bitCount*: int
     bitBuf*: uint64
@@ -16,8 +16,13 @@ when defined(release):
 template failEndOfBuffer*() =
   raise newException(ZippyError, "Cannot read further, at end of buffer")
 
-func initBitStream*(data: seq[uint8], pos = 0): BitStream =
+func initBitStream*(data: string, pos = 0): BitStream =
   result.data = data
+  result.pos = pos
+
+# TMP
+func initBitStream*(data: seq[uint8], pos = 0): BitStream =
+  result.data = cast[string](data)
   result.pos = pos
 
 func fillBitBuf*(b: var BitStream) {.inline.} =
@@ -38,7 +43,7 @@ func readBits*(b: var BitStream, bits: uint): uint16 =
   b.bitBuf = b.bitBuf shr bits
   b.bitCount -= bits.int # bitCount can go negative if we've read past the end
 
-func readBytes*(b: var BitStream, dst: var seq[uint8], start, len: int) =
+func readBytes*(b: var BitStream, dst: var string, start, len: int) =
   assert b.bitPos == 0
   assert b.bitCount mod 8 == 0
 
@@ -73,7 +78,7 @@ func skipRemainingBitsInCurrentByte*(b: var BitStream) =
     b.bitCount -= mod8
     b.bitBuf = b.bitBuf shr mod8
 
-func addBytes*(b: var BitStream, src: seq[uint8], start, len: int) =
+func addBytes*(b: var BitStream, src: string, start, len: int) =
   assert b.bitPos == 0
 
   if b.pos + len > b.data.len:

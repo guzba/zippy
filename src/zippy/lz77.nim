@@ -5,7 +5,7 @@ const
   hashSize = 1 shl hashBits
 
 func lz77Encode*(
-  src: seq[uint8], config: CompressionConfig
+  src: string, config: CompressionConfig
 ): (seq[uint16], seq[int], seq[int], int) =
   var
     encoded = newSeq[uint16](src.len div 2)
@@ -17,7 +17,7 @@ func lz77Encode*(
 
   template addLiteral(start, length: int) =
     for i in 0 ..< length:
-      inc freqLitLen[src[start + i]]
+      inc freqLitLen[cast[uint8](src[start + i])]
 
     literalsTotal += length
 
@@ -50,7 +50,7 @@ func lz77Encode*(
 
   if minMatchLen >= src.len:
     for c in src:
-      inc freqLitLen[c]
+      inc freqLitLen[cast[uint8](c)]
     encoded.setLen(1)
     addLiteral(0, src.len)
     return (encoded, freqLitLen, freqDist, literalsTotal)

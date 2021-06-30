@@ -76,7 +76,7 @@ proc open*(
   var tarballFormat = tarballFormat
   if tarballFormat == tfDetect:
     if data[0] == 0x1F.char:
-      case data[1].uint8:
+      case cast[uint8](data[1]):
       of 0x8B:
         tarballFormat = tfGzip
       else:

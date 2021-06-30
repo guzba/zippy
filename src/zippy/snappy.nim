@@ -6,7 +6,7 @@ import zippy/common
 
 func encodeFragment(
   encoded: var seq[uint16],
-  src: seq[uint8],
+  src: string,
   op: var int,
   start, bytesToRead: int,
   compressTable: var seq[uint16],
@@ -32,7 +32,7 @@ func encodeFragment(
 
   template addLiteral(start, length: int) =
     for i in 0 ..< length:
-      inc freqLitLen[src[start + i]]
+      inc freqLitLen[cast[uint8](src[start + i])]
 
     literalsTotal += length
 
@@ -135,9 +135,7 @@ func encodeFragment(
 
   emitRemainder()
 
-func snappyEncode*(
-  src: seq[uint8]
-): (seq[uint16], seq[int], seq[int], int) =
+func snappyEncode*(src: string): (seq[uint16], seq[int], seq[int], int) =
   var
     encoded = newSeq[uint16](4096)
     freqLitLen = newSeq[int](286)

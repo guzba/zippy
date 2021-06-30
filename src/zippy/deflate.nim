@@ -159,9 +159,7 @@ func huffmanCodeLengths(
 
   (lengths, codes)
 
-func huffmanOnlyEncode(
-  src: seq[uint8]
-): (seq[uint16], seq[int], seq[int], int) =
+func huffmanOnlyEncode(src: string): (seq[uint16], seq[int], seq[int], int) =
   var
     encoded = newSeq[uint16]()
     freqLitLen = newSeq[int](286)
@@ -170,7 +168,7 @@ func huffmanOnlyEncode(
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
   for i, c in src:
-    inc freqLitLen[c]
+    inc freqLitLen[cast[uint8](c)]
 
   for i in 0 ..< src.len div maxLiteralLength:
     encoded.add(maxLiteralLength.uint16)
@@ -179,7 +177,7 @@ func huffmanOnlyEncode(
 
   (encoded, freqLitLen, freqDist, 0)
 
-func deflateNoCompression(src: seq[uint8]): seq[uint8] =
+func deflateNoCompression(src: string): string =
   let blockCount = max(
     (src.len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
     1
@@ -203,7 +201,7 @@ func deflateNoCompression(src: seq[uint8]): seq[uint8] =
   b.data.setLen(b.pos)
   b.data
 
-func deflate*(src: seq[uint8], level = -1): seq[uint8] =
+func deflate*(src: string, level = -1): string =
   if level < -2 or level > 9:
     raise newException(ZippyError, "Invalid compression level " & $level)
 
@@ -377,11 +375,11 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
         var j: int
         for _ in 0 ..< length div 2:
           var
-            buf = llCodes[src[srcPos + 0]].uint32
-            len = llLengths[src[srcPos + 0]].uint32
+            buf = llCodes[cast[uint8](src[srcPos + 0])].uint32
+            len = llLengths[cast[uint8](src[srcPos + 0])].uint32
 
-          buf = buf or (llCodes[src[srcPos + 1]].uint32 shl len)
-          len += llLengths[src[srcPos + 1]]
+          buf = buf or (llCodes[cast[uint8](src[srcPos + 1])].uint32 shl len)
+          len += llLengths[cast[uint8](src[srcPos + 1])]
 
           b.addBits(buf, len)
 
@@ -389,7 +387,10 @@ func deflate*(src: seq[uint8], level = -1): seq[uint8] =
           j += 2
 
         if j != length:
-          b.addBits(llCodes[src[srcPos]], llLengths[src[srcPos]])
+          b.addBits(
+            llCodes[cast[uint8](src[srcPos])],
+            llLengths[cast[uint8](src[srcPos])]
+          )
           inc srcPos
 
   if llLengths[256] == 0:

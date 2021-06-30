@@ -65,12 +65,6 @@ proc open*(
   template failOpen() =
     raise newException(ZippyError, "Unexpected error opening zip archive")
 
-  template read16(data: string, pos: int): uint16 =
-    read16(cast[seq[uint8]](data), pos)
-
-  template read32(data: string, pos: int): uint32 =
-    read32(cast[seq[uint8]](data), pos)
-
   var pos: int
   while true:
     if pos + 4 > data.len:
@@ -145,7 +139,7 @@ proc open*(
         else:
           uncompress(data[pos ..< pos + compressedSize], dfDeflate)
 
-      if crc32(cast[seq[uint8]](uncompressed)) != uncompressedCrc32:
+      if crc32(uncompressed) != uncompressedCrc32:
         raise newException(
           ZippyError,
           "Verifying archive entry " & fileName & " CRC-32 failed"
@@ -285,13 +279,12 @@ proc writeZipArchive*(
     var v: Values
     v.offset = data.len.uint32
 
-    let contents = cast[seq[uint8]](entry.contents)
     data.add(cast[array[4, uint8]](0x04034b50)) # Local file header signature
     data.add(cast[array[2, uint8]](20.uint16)) # Min version to extract
     data.add(cast[array[2, uint8]](1.uint16 shl 11)) # General purpose flag UTF-8
 
     # Compression method
-    if splitFile(path).name.len == 0 or contents.len == 0:
+    if splitFile(path).name.len == 0 or entry.contents.len == 0:
       v.compressionMethod = 0
     else:
       v.compressionMethod = 8
@@ -301,17 +294,17 @@ proc writeZipArchive*(
     data.add([0.uint8, 0]) # Last modified time
     data.add([0.uint8, 0]) # Last modified date
 
-    v.crc32 = crc32(contents)
+    v.crc32 = crc32(entry.contents)
     data.add(cast[array[4, uint8]](v.crc32))
 
     let compressed =
-      if contents.len > 0:
-        compress(contents, DefaultCompression, dfDeflate)
+      if entry.contents.len > 0:
+        compress(entry.contents, DefaultCompression, dfDeflate)
       else:
-        newSeq[uint8]()
+        ""
 
     v.compressedLen = compressed.len.uint32
-    v.uncompressedLen = contents.len.uint32
+    v.uncompressedLen = entry.contents.len.uint32
 
     data.add(cast[array[4, uint8]](v.compressedLen))
     data.add(cast[array[4, uint8]](v.uncompressedLen))
@@ -321,7 +314,8 @@ proc writeZipArchive*(
 
     data.add(cast[seq[uint8]](path))
 
-    data.add(compressed)
+    data.add(cast[seq[uint8]](compressed))
+
     values[path] = v
 
   # Write the central directory

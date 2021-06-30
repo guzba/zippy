@@ -1,6 +1,6 @@
 import benchy, zippy/common, zippy/crc
 
-let data = cast[seq[uint8]](readFile("tests/data/fireworks.jpg"))
+let data = readFile("tests/data/fireworks.jpg")
 
 timeIt "crc32":
   discard crc32(data)

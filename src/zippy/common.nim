@@ -190,14 +190,14 @@ template failCompress*() =
     ZippyError, "Unexpected error while compressing"
   )
 
-func read16*(s: seq[uint8], pos: int): uint16 {.inline.} =
+func read16*(s: string, pos: int): uint16 {.inline.} =
   when nimvm:
     (s[pos + 0].uint16 shl 0) or
     (s[pos + 1].uint16 shl 8)
   else:
     cast[ptr uint16](s[pos].unsafeAddr)[]
 
-func read32*(s: seq[uint8], pos: int): uint32 {.inline.} =
+func read32*(s: seq[uint8] | string, pos: int): uint32 {.inline.} =
   when nimvm:
     (s[pos + 0].uint32 shl 0) or
     (s[pos + 1].uint32 shl 8) or
@@ -206,7 +206,7 @@ func read32*(s: seq[uint8], pos: int): uint32 {.inline.} =
   else:
     cast[ptr uint32](s[pos].unsafeAddr)[]
 
-func read64*(s: seq[uint8], pos: int): uint64 {.inline.} =
+func read64*(s: seq[uint8] | string, pos: int): uint64 {.inline.} =
   when nimvm:
     (s[pos + 0].uint64 shl 0) or
     (s[pos + 1].uint64 shl 8) or
@@ -219,20 +219,20 @@ func read64*(s: seq[uint8], pos: int): uint64 {.inline.} =
   else:
     cast[ptr uint64](s[pos].unsafeAddr)[]
 
-func write64*(dst: var seq[uint8], pos: int, value: uint64) {.inline.} =
+func write64*(dst: var string, pos: int, value: uint64) {.inline.} =
   when nimvm:
-    dst[pos + 0] = (value shr 0 and 255).uint8
-    dst[pos + 1] = (value shr 8 and 255).uint8
-    dst[pos + 2] = (value shr 16 and 255).uint8
-    dst[pos + 3] = (value shr 24 and 255).uint8
-    dst[pos + 4] = (value shr 32 and 255).uint8
-    dst[pos + 5] = (value shr 40 and 255).uint8
-    dst[pos + 6] = (value shr 48 and 255).uint8
-    dst[pos + 7] = (value shr 56 and 255).uint8
+    dst[pos + 0] = (value shr 0 and 255).char
+    dst[pos + 1] = (value shr 8 and 255).char
+    dst[pos + 2] = (value shr 16 and 255).char
+    dst[pos + 3] = (value shr 24 and 255).char
+    dst[pos + 4] = (value shr 32 and 255).char
+    dst[pos + 5] = (value shr 40 and 255).char
+    dst[pos + 6] = (value shr 48 and 255).char
+    dst[pos + 7] = (value shr 56 and 255).char
   else:
     cast[ptr uint64](dst[pos].addr)[] = value
 
-func copy64*(dst: var seq[uint8], src: seq[uint8], op, ip: int) {.inline.} =
+func copy64*(dst: var string, src: string, op, ip: int) {.inline.} =
   when nimvm:
     for i in 0 .. 7:
       dst[op + i] = src[ip + i]
@@ -266,7 +266,7 @@ func distanceCodeIndex*(value: uint16): uint16 =
   else:
     distanceCodes[value shr 14] + 28
 
-func findMatchLength*(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
+func findMatchLength*(src: string, s1, s2, limit: int): int {.inline.} =
   var
     s1 = s1
     s2 = s2
@@ -284,7 +284,7 @@ func findMatchLength*(src: seq[uint8], s1, s2, limit: int): int {.inline.} =
     inc s2
     inc result
 
-func adler32*(data: seq[uint8]): uint32 =
+func adler32*(data: string): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
 
   const nmax = 5552
@@ -296,7 +296,7 @@ func adler32*(data: seq[uint8]): uint32 =
     pos: int
 
   template do1(i: int) =
-    s1 += data[pos + i]
+    s1 += cast[uint8](data[pos + i])
     s2 += s1
 
   template do8(i: int) =
@@ -328,23 +328,13 @@ func adler32*(data: seq[uint8]): uint32 =
     pos += 16
 
   for i in 0 ..< l:
-    s1 += data[pos + i]
+    s1 += cast[uint8](data[pos + i])
     s2 += s1
 
   s1 = s1 mod 65521
   s2 = s2 mod 65521
 
   result = (s2 shl 16) or s1
-
-func vmSeq2Str*(src: seq[uint8]): string =
-  result = newStringOfCap(src.len)
-  for i, c in src:
-    result.add(c.char)
-
-func vmStr2Seq*(src: string): seq[uint8] =
-  result.setLen(src.len)
-  for i, c in src:
-    result[i] = c.uint8
 
 func toUnixPath*(path: string): string =
   path.replace('\\', '/')

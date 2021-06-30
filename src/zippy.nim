@@ -14,10 +14,10 @@ type
     dfDetect, dfZlib, dfGzip, dfDeflate
 
 func compress*(
-  src: seq[uint8],
+  src: string,
   level = DefaultCompression,
   dataFormat = dfGzip
-): seq[uint8] {.raises: [ZippyError].} =
+): string {.raises: [ZippyError].} =
   ## Compresses src and returns the compressed data.
 
   if dataFormat == dfDetect:
@@ -28,9 +28,9 @@ func compress*(
 
   if dataFormat == dfGzip:
     result.setLen(10)
-    result[0] = 31
-    result[1] = 139
-    result[2] = 8
+    result[0] = 31.char
+    result[1] = 139.char
+    result[2] = 8.char
 
     let
       checksum = crc32(src)
@@ -39,18 +39,16 @@ func compress*(
     # Last to touch src
     result.add(deflate(src, level))
 
-    result.add([
-      ((checksum shr 0) and 255).uint8,
-      ((checksum shr 8) and 255).uint8,
-      ((checksum shr 16) and 255).uint8,
-      ((checksum shr 24) and 255).uint8
-    ])
-    result.add([
-      ((isize shr 0) and 255).uint8,
-      ((isize shr 8) and 255).uint8,
-      ((isize shr 16) and 255).uint8,
-      ((isize shr 24) and 255).uint8
-    ])
+    result.add(((checksum shr 0) and 255).char)
+    result.add(((checksum shr 8) and 255).char)
+    result.add(((checksum shr 16) and 255).char)
+    result.add(((checksum shr 24) and 255).char)
+
+    result.add(((isize shr 0) and 255).char)
+    result.add(((isize shr 8) and 255).char)
+    result.add(((isize shr 16) and 255).char)
+    result.add(((isize shr 24) and 255).char)
+
   elif dataFormat == dfZlib:
     const
       cm = 8.uint8
@@ -59,37 +57,33 @@ func compress*(
       fcheck = (31 - (cmf.uint32 * 256) mod 31).uint8
 
     result.setLen(2)
-    result[0] = cmf
-    result[1] = fcheck
+    result[0] = cmf.char
+    result[1] = fcheck.char
 
     let checksum = adler32(src)
 
     # Last to touch src
     result.add(deflate(src, level))
 
-    result.add([
-      ((checksum shr 24) and 255).uint8,
-      ((checksum shr 16) and 255).uint8,
-      ((checksum shr 8) and 255).uint8,
-      ((checksum shr 0) and 255).uint8
-    ])
+    result.add(((checksum shr 24) and 255).char)
+    result.add(((checksum shr 16) and 255).char)
+    result.add(((checksum shr 8) and 255).char)
+    result.add(((checksum shr 0) and 255).char)
+
   else:
     result = deflate(src, level)
 
 template compress*(
-  src: string,
+  src: seq[uint8],
   level = DefaultCompression,
   dataFormat = dfGzip
-): string =
+): seq[uint8] =
   ## Helper for when preferring to work with strings.
-  when nimvm:
-    vmSeq2Str(compress(vmStr2Seq(src), level, dataFormat))
-  else:
-    cast[string](compress(cast[seq[uint8]](src), level, dataFormat))
+  cast[seq[uint8]](compress(cast[string](src), level, dataFormat))
 
 func uncompress(
-  dst: var seq[uint8],
-  src: seq[uint8],
+  dst: var string,
+  src: string,
   dataFormat: CompressedDataFormat
 ) =
   case dataFormat:
@@ -100,10 +94,10 @@ func uncompress(
       failUncompress()
 
     let
-      id1 = src[0]
-      id2 = src[1]
-      cm = src[2]
-      flg = src[3]
+      id1 = cast[uint8](src[0])
+      id2 = cast[uint8](src[1])
+      cm = cast[uint8](src[2])
+      flg = cast[uint8](src[3])
       # mtime = src[4 .. 7]
       # xfl = src[8]
       # os = src[9]
@@ -124,9 +118,9 @@ func uncompress(
 
     var pos = 10
 
-    func nextZeroByte(s: seq[uint8], start: int): int =
+    func nextZeroByte(s: string, start: int): int =
       for i in start ..< s.len:
-        if s[i] == 0:
+        if s[i] == 0.char:
           return i
       failUncompress()
 
@@ -173,8 +167,8 @@ func uncompress(
     )
 
     let
-      cmf = src[0]
-      flg = src[1]
+      cmf = cast[uint8](src[0])
+      flg = cast[uint8](src[1])
       cm = cmf and 0b00001111
       cinfo = cmf shr 4
 
@@ -198,25 +192,25 @@ func uncompress(
     failUncompress()
 
 func uncompress*(
-  src: seq[uint8],
+  src: string,
   dataFormat = dfDetect
-): seq[uint8] {.raises: [ZippyError].} =
+): string {.raises: [ZippyError].} =
   ## Uncompresses src and returns the uncompressed data seq.
 
-  result = newSeqOfCap[uint8](src.len)
+  result = newStringOfCap(src.len)
 
   case dataFormat:
   of dfDetect:
     if (
       src.len >= 18 and
-      src[0 .. 2] == [31.uint8, 139, 8] and
-      (src[3] and 0b11100000) == 0
+      src[0 .. 2] == [31.char, 139.char, 8.char,] and
+      (cast[uint8](src[3]) and 0b11100000) == 0
     ): # This looks like gzip
       uncompress(result, src, dfGzip)
     elif (
       src.len >= 6 and
-      (src[0] and 0b00001111) == 8 and
-      (src[0] shr 4) <= 7 and
+      (cast[uint8](src[0]) and 0b00001111) == 8 and
+      (cast[uint8](src[0]) shr 4) <= 7 and
       ((src[0].uint16 * 256) + src[1].uint16) mod 31 == 0
     ): # This looks like zlib
       uncompress(result, src, dfZlib)
@@ -225,9 +219,6 @@ func uncompress*(
   else:
     uncompress(result, src, dataFormat)
 
-template uncompress*(src: string, dataFormat = dfDetect): string =
-  ## Helper for when preferring to work with strings.
-  when nimvm:
-    vmSeq2Str(uncompress(vmStr2Seq(src), dataFormat))
-  else:
-    cast[string](uncompress(cast[seq[uint8]](src), dataFormat))
+template uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
+  ## Helper for when preferring to work with seq[uint8].
+  cast[seq[uint8]](uncompress(cast[string](src), dataFormat))

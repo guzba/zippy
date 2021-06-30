@@ -107,7 +107,7 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   b.bitCount -= len.int
 
 func inflateBlock(
-  b: var BitStream, dst: var seq[uint8], op: var int, fixedCodes: bool
+  b: var BitStream, dst: var string, op: var int, fixedCodes: bool
 ) =
   var literalHuffman, distanceHuffman: Huffman
 
@@ -152,7 +152,7 @@ func inflateBlock(
     if symbol <= 255:
       if op >= dst.len:
         dst.setLen((op + 1) * 2)
-      dst[op] = symbol.uint8
+      dst[op] = symbol.char
       inc op
     elif symbol == 256:
       break
@@ -201,7 +201,7 @@ func inflateBlock(
           remaining -= 8
         op += totalLength
 
-func inflateNoCompression(b: var BitStream, dst: var seq[uint8], op: var int) =
+func inflateNoCompression(b: var BitStream, dst: var string, op: var int) =
   b.skipRemainingBitsInCurrentByte()
   let
     len = b.readBits(16).int
@@ -213,7 +213,7 @@ func inflateNoCompression(b: var BitStream, dst: var seq[uint8], op: var int) =
     b.readBytes(dst, op, len)
   op += len
 
-func inflate*(dst: var seq[uint8], src: seq[uint8], pos = 0) =
+func inflate*(dst: var string, src: string, pos = 0) =
   var
     b = initBitStream(src, pos)
     op: int
@@ -237,8 +237,8 @@ func inflate*(dst: var seq[uint8], src: seq[uint8], pos = 0) =
 
   dst.setLen(op)
 
-func inflate*(src: seq[uint8]): seq[uint8] =
-  result = newSeqOfCap[uint8](src.len)
+func inflate*(src: string): string =
+  result = newStringOfCap(src.len)
   inflate(result, src)
 
 when defined(release):

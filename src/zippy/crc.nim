@@ -22,7 +22,7 @@ const
       tables[7][i] = (tables[6][i] shr 8) xor tables[0][tables[6][i] and 255]
     tables
 
-func crc32*(v: uint32, data: seq[uint8]): uint32 =
+func crc32*(v: uint32, data: seq[uint8] | string): uint32 =
   result = v
 
   var pos: int
@@ -42,8 +42,8 @@ func crc32*(v: uint32, data: seq[uint8]): uint32 =
     pos += 8
 
   while pos < data.len:
-    result = crcTables[0][(result xor data[pos]) and 255] xor (result shr 8)
+    result = crcTables[0][(result xor cast[uint8](data[pos])) and 255] xor (result shr 8)
     inc pos
 
-func crc32*(data: seq[uint8]): uint32 {.inline.} =
+func crc32*(data: seq[uint8] | string): uint32 {.inline.} =
   not crc32(0xffffffff.uint32, data)
