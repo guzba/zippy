@@ -203,7 +203,7 @@ func uncompress*(
   of dfDetect:
     if (
       src.len >= 18 and
-      src[0 .. 2] == [31.char, 139.char, 8.char,] and
+      src[0 .. 2] == [31.char, 139.char, 8.char] and
       (cast[uint8](src[3]) and 0b11100000) == 0
     ): # This looks like gzip
       uncompress(result, src, dfGzip)
