@@ -30,18 +30,19 @@ const
 block nimlang_zip: # Requires zlib1.dll
   echo "https://github.com/nim-lang/zip"
   for gold in golds:
-    let original = readFile(&"tests/data/{gold}")
-    doAssert zlib.uncompress(
-      zippy.compress(original, dataFormat = dfZlib), stream = ZLIB_STREAM
-    ) == original
-    doAssert zlib.uncompress(
-      zippy.compress(
-        original, level = BestSpeed, dataFormat = dfZlib
-      ), stream = ZLIB_STREAM
-    ) == original
-    doassert zippy.uncompress(
-      zlib.compress(original, stream = ZLIB_STREAM)
-    ) == original
+    let
+      original = readFile(&"tests/data/{gold}")
+      default = zippy.compress(original, dataFormat = dfZlib)
+      bestSpeed = zippy.compress(original, BestSpeed, dfZlib)
+      zlibCompressed = zlib.compress(original, stream = ZLIB_STREAM)
+    doAssert zlib.uncompress(default, stream = ZLIB_STREAM) == original
+    doAssert zlib.uncompress(bestSpeed, stream = ZLIB_STREAM) == original
+    doassert zippy.uncompress(zlibCompressed) == original
+    let
+      defaultRatio = (default.len.float32 / original.len.float32) * 100
+      bestSpeedRatio = (bestSpeed.len.float32 / original.len.float32) * 100
+      zlibRatio = (zlibCompressed.len.float32 / original.len.float32) * 100
+    echo &"{gold} zlib: {zlibRatio:.1f}% default: {defaultRatio:.1f}% bestspeed: {bestSpeedRatio:.1f}%"
   echo "pass!"
 
 block treeform_miniz:
