@@ -114,6 +114,12 @@ proc open*(
           raise newException(
             ZippyError, "Unexpected error while opening tarball"
           )
+      lastModified = try:
+          parseOctInt(header[136 .. 146])
+        except ValueError:
+          raise newException(
+            ZippyError, "Unexpected error while opening tarball"
+          )
       typeFlag = header[156]
       fileNamePrefix =
         if header[257 ..< 263] == "ustar\0":
@@ -128,7 +134,8 @@ proc open*(
       tarball.contents[(fileNamePrefix / fileName).toUnixPath()] =
         TarballEntry(
           kind: ekNormalFile,
-          contents: data[pos ..< pos + fileSize]
+          contents: data[pos ..< pos + fileSize],
+          lastModified: initTime(lastModified, 0)
         )
     elif typeFlag == '5':
       tarball.contents[(fileNamePrefix / fileName).toUnixPath()] =

@@ -1,5 +1,19 @@
 import os, streams, tables, zippy/tarballs
 
+# proc testTempDir(): string =
+#   when defined(windows):
+#     getHomeDir() / r"AppData\Local\Temp" / "tarballs"
+#   else:
+#     getTempDir() / "tarballs"
+
+# block:
+#   let tarball = Tarball()
+#   tarball.open("tests/data/tarballs/basic.tar.gz")
+
+#   removeDir(testTempDir())
+
+#   tarball.extractAll(testTempDir())
+
 block: # .tar
   let tarball = Tarball()
   tarball.open("tests/data/tarballs/basic.tar")
