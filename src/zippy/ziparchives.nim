@@ -132,7 +132,7 @@ proc open*(
           hours.HourRange,
           minutes.MinuteRange,
           seconds.SecondRange,
-          utc()
+          local()
         ).toTime()
 
       if compressionMethod notin [0.uint16, 8]:
@@ -285,7 +285,7 @@ proc open*(archive: ZipArchive, path: string) {.inline.} =
 
 proc toMsDos(time: times.Time): (uint16, uint16) =
   let
-    dateTime = time.utc()
+    dateTime = time.local()
     seconds = (dateTime.second div 2).uint16
     minutes = (dateTime.minute).uint16
     hours = (dateTime.hour).uint16
