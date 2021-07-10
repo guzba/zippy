@@ -1,4 +1,4 @@
-import os, streams, strutils, tables, zippy, zippy/common, zippy/crc,
+import os, streams, strutils, tables, times, zippy, zippy/common, zippy/crc,
     zippy/zippyerror
 
 export zippyerror
@@ -10,6 +10,7 @@ type
   ArchiveEntry* = object
     kind*: EntryKind
     contents*: string
+    lastModified*: times.Time
 
   ZipArchive* = ref object
     contents*: OrderedTable[string, ArchiveEntry]
@@ -80,8 +81,8 @@ proc open*(
         # minVersionToExtract = read16(data, pos + 4)
         generalPurposeFlag = read16(data, pos + 6)
         compressionMethod = read16(data, pos + 8)
-        # lastModifiedTime = read16(data, pos + 10)
-        # lastModifiedDate = read16(data, pos + 12)
+        lastModifiedTime = read16(data, pos + 10)
+        lastModifiedDate = read16(data, pos + 12)
         uncompressedCrc32 = read32(data, pos + 14)
         compressedSize = read32(data, pos + 18).int
         uncompressedSize = read32(data, pos + 22).int
@@ -112,6 +113,26 @@ proc open*(
       # echo uncompressedSize
       # echo fileNameLength
       # echo extraFieldLength
+
+      let
+        seconds = (lastModifiedTime and 0b0000000000011111).int * 2
+        minutes = ((lastModifiedTime shr 5) and 0b0000000000111111).int
+        hours = ((lastModifiedTime shr 11) and 0b0000000000011111).int
+        days = (lastModifiedDate and 0b0000000000011111).int
+        months = ((lastModifiedDate shr 5) and 0b0000000000001111).int
+        years = ((lastModifiedDate shr 9) and 0b0000000001111111).int
+
+      var lastModified: times.Time
+      if seconds <= 59 and minutes <= 59 and hours <= 23:
+        lastModified = initDateTime(
+          days.MonthdayRange,
+          months.Month,
+          years + 1980,
+          hours.HourRange,
+          minutes.MinuteRange,
+          seconds.SecondRange,
+          utc()
+        ).toTime()
 
       if compressionMethod notin [0.uint16, 8]:
         raise newException(
@@ -151,7 +172,10 @@ proc open*(
         )
 
       archive.contents[fileName.toUnixPath()] =
-        ArchiveEntry(contents: uncompressed)
+        ArchiveEntry(
+          contents: uncompressed,
+          lastModified: lastModified
+        )
 
       pos += compressedSize
 
@@ -258,6 +282,26 @@ proc open*(archive: ZipArchive, path: string) {.inline.} =
   ## archive.contents (clears any existing archive.contents entries).
   archive.open(newStringStream(readFile(path)))
 
+proc toMsDos(time: times.Time): (uint16, uint16) =
+  let
+    dateTime = time.utc()
+    seconds = (dateTime.second div 2).uint16
+    minutes = (dateTime.minute).uint16
+    hours = (dateTime.hour).uint16
+    days = (dateTime.monthday).uint16
+    months = (dateTime.month).uint16
+    years = (max(0, dateTime.year - 1980)).uint16
+
+  var lastModifiedTime = seconds
+  lastModifiedTime = (minutes shl 5) or lastModifiedTime
+  lastModifiedTime = (hours shl 11) or lastModifiedTime
+
+  var lastModifiedDate = days
+  lastModifiedDate = (months shl 5) or lastModifiedDate
+  lastModifiedDate = (years shl 9) or lastModifiedDate
+
+  (lastModifiedTime, lastModifiedDate)
+
 proc writeZipArchive*(
   archive: ZipArchive, path: string
 ) {.raises: [IOError, ZippyError].} =
@@ -291,8 +335,9 @@ proc writeZipArchive*(
 
     data.add(cast[array[2, uint8]](v.compressionMethod))
 
-    data.add([0.uint8, 0]) # Last modified time
-    data.add([0.uint8, 0]) # Last modified date
+    let (lastModifiedTime, lastModifiedDate) = entry.lastModified.toMsDos()
+    data.add(cast[array[2, uint8]](lastModifiedTime))
+    data.add(cast[array[2, uint8]](lastModifiedDate))
 
     v.crc32 = crc32(entry.contents)
     data.add(cast[array[4, uint8]](v.crc32))
@@ -333,8 +378,11 @@ proc writeZipArchive*(
     data.add(cast[array[2, uint8]](20.uint16)) # Min version to extract
     data.add(cast[array[2, uint8]](1.uint16 shl 11)) # General purpose flag UTF-8
     data.add(cast[array[2, uint8]](v.compressionMethod))
-    data.add([0.uint8, 0]) # Last modified time
-    data.add([0.uint8, 0]) # Last modified date
+
+    let (lastModifiedTime, lastModifiedDate) = entry.lastModified.toMsDos()
+    data.add(cast[array[2, uint8]](lastModifiedTime))
+    data.add(cast[array[2, uint8]](lastModifiedDate))
+
     data.add(cast[array[4, uint8]](v.crc32))
     data.add(cast[array[4, uint8]](v.compressedLen))
     data.add(cast[array[4, uint8]](v.uncompressedLen))
@@ -407,7 +455,8 @@ proc extractAll*(
       of ekFile:
         createDir(dest / splitFile(path).dir)
         writeFile(dest / path, entry.contents)
-
+        if entry.lastModified > Time():
+          setLastModificationTime(dest / path, entry.lastModified)
   try:
     archive.writeContents(dest)
   except IOError as e:
