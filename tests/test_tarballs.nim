@@ -1,18 +1,40 @@
 import os, streams, tables, zippy/tarballs
 
-# proc testTempDir(): string =
-#   when defined(windows):
-#     getHomeDir() / r"AppData\Local\Temp" / "tarballs"
-#   else:
-#     getTempDir() / "tarballs"
+proc testTempDir(): string =
+  when defined(windows):
+    getHomeDir() / r"AppData\Local\Temp" / "tarballs"
+  else:
+    getTempDir() / "tarballs"
 
-# block:
-#   let tarball = Tarball()
-#   tarball.open("tests/data/tarballs/basic.tar.gz")
+block:
+  let tarball = Tarball()
+  tarball.open("tests/data/tarballs/basic.tar.gz")
 
-#   removeDir(testTempDir())
+  removeDir(testTempDir())
 
-#   tarball.extractAll(testTempDir())
+  tarball.extractAll(testTempDir())
+
+  for path, entry in tarball.contents:
+    if entry.kind == ekNormalFile:
+      doAssert fileExists(testTempDir() / path)
+      doAssert readFile("tests/data/" & path) == entry.contents
+    else:
+      doAssert dirExists(testTempDir() / path)
+
+block:
+  let tarball = Tarball()
+  tarball.addDir("src/")
+
+  removeDir(testTempDir())
+
+  tarball.extractAll(testTempDir())
+
+  for path, entry in tarball.contents:
+    if entry.kind == ekNormalFile:
+      doAssert fileExists(testTempDir() / path)
+      doAssert readFile("src/" & path) == entry.contents
+    else:
+      doAssert dirExists(testTempDir() / path)
 
 block: # .tar
   let tarball = Tarball()
