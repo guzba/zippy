@@ -25,7 +25,8 @@ proc addDir(archive: ZipArchive, base, relative: string) =
     of pcFile:
       archive.contents[(relative / path).toUnixPath()] = ArchiveEntry(
         kind: ekFile,
-        contents: readFile(base / relative / path)
+        contents: readFile(base / relative / path),
+        lastModified: getLastModificationTime(base / relative / path)
       )
     of pcDir:
       archive.addDir(base, relative / path)
@@ -457,6 +458,7 @@ proc extractAll*(
         writeFile(dest / path, entry.contents)
         if entry.lastModified > Time():
           setLastModificationTime(dest / path, entry.lastModified)
+
   try:
     archive.writeContents(dest)
   except IOError as e:
