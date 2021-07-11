@@ -9,7 +9,6 @@ timeIt "untar":
   keep i
 
 timeIt "zippy":
-# for i in 0 ..< 100:
   let tarball = Tarball()
   tarball.open("tests/data/tarballs/Nim-1.4.2.tar.gz")
 
