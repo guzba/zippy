@@ -88,13 +88,13 @@ block: # .tar.gz
     if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
-block:
-  let tarball = Tarball()
-  tarball.addDir("tests/data/tarballs/longpath")
+# block:
+#   let tarball = Tarball()
+#   tarball.addDir("tests/data/tarballs/longpath")
 
-  doAssert tarball.contents.len == 3
+#   doAssert tarball.contents.len == 3
 
-  tarball.writeTarball("tmp/tb.tar")
+#   tarball.writeTarball("tmp/tb.tar")
 
 # block:
 #   removeFile("examples.tar.gz")
