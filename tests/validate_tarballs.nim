@@ -1,4 +1,4 @@
-import os, tables, untar, zippy/tarballs
+import os, tables, untar, zippy/common, zippy/tarballs
 
 proc trim(s: string): string =
   for i in 0 ..< s.len:
@@ -17,4 +17,5 @@ tarball.open("tmp/tarball.tar")
 let tarFile = newTarFile("tmp/tarball.tar")
 
 for info, contents in tarFile.walk:
-  doAssert tarball.contents[info.filename.trim()].contents == contents
+  let path = info.filename.trim().toUnixPath()
+  doAssert tarball.contents[path].contents == contents
