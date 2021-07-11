@@ -176,14 +176,21 @@ proc writeTarball*(
   var data = ""
 
   for path, entry in tarball.contents:
-    if path.len >= 100:
+    let (head, tail) = splitPath(path)
+
+    if head.len >= 155:
       raise newException(
         ZippyError,
-        "File names >= 100 characters long are currently unsupported"
+        "File path " & head & " too long, must be < 155 characters"
+      )
+    if tail.len >= 100:
+      raise newException(
+        ZippyError,
+        "File name " & tail & " too long, must be < 100 characters"
       )
 
     var header = newStringOfCap(512)
-    header.add(path)
+    header.add(tail)
     header.setLen(100)
     header.add("000777 \0") # File mode
     header.add(toOct(0, 6) & " \0") # Owner's numeric user ID
@@ -199,6 +206,7 @@ proc writeTarball*(
     header.setLen(329)
     header.add(toOct(0, 6) & "\0 ") # Device major number
     header.add(toOct(0, 6) & "\0 ") # Device minor number
+    header.add(head)
     header.setLen(512)
 
     var checksum: int
