@@ -20,6 +20,12 @@ type
     tfDetect, tfUncompressed, tfGzip
 
 proc addDir(tarball: Tarball, base, relative: string) =
+  if not (fileExists(base / relative) or dirExists(base / relative)):
+    raise newException(
+      ZippyError,
+      "Path " & (base / relative) & " does not exist"
+    )
+
   if relative.len > 0 and relative notin tarball.contents:
     tarball.contents[relative.toUnixPath()] = TarballEntry(kind: ekDirectory)
 
