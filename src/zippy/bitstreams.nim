@@ -70,7 +70,7 @@ func incPos(b: var BitStream, bits: uint) {.inline.} =
 func skipRemainingBitsInCurrentByte*(b: var BitStream) =
   # If writing
   if b.bitPos > 0.uint:
-    b.incPos(8 - b.bitPos)
+    b.incPos(8.uint - b.bitPos)
 
   # If reading
   let mod8 = b.bitCount mod 8

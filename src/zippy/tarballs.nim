@@ -363,14 +363,24 @@ proc extractAll*(
     removeDir(dest)
     raise e
 
-proc extractAll*(
-  tarPath, dest: string
-) {.raises: [IOError, OSError, ZippyError].} =
-  ## Extracts the files in the tarball located at tarPath into the destination
-  ## directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
-  let tarball = Tarball()
-  tarball.open(tarPath)
-  tarball.extractAll(dest)
+when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
+  proc extractAll*(
+    tarPath, dest: string
+  ) {.raises: [IOError, OSError, ZippyError].} =
+    ## Extracts the files in the tarball located at tarPath into the destination
+    ## directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
+    let tarball = Tarball()
+    tarball.open(tarPath)
+    tarball.extractAll(dest)
+else:
+  proc extractAll*(
+    tarPath, dest: string
+  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
+    ## Extracts the files in the tarball located at tarPath into the destination
+    ## directory. Supports .tar, .tar.gz, .taz and .tgz file extensions.
+    let tarball = Tarball()
+    tarball.open(tarPath)
+    tarball.extractAll(dest)
 
 proc createTarball*(
   source, dest: string
