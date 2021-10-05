@@ -474,10 +474,10 @@ proc extractAll*(
           ZippyError,
           "Extracting absolute paths is not supported (" & path & ")"
         )
-      if "/../" in path or r"\..\" in path:
+      if path.startsWith("../") or path.startsWith(r"..\"):
         raise newException(
           ZippyError,
-          "Extracting paths containing `/../` is not supported (" & path & ")"
+          "Extracting paths starting with `..` is not supported (" & path & ")"
         )
 
       case entry.kind:
