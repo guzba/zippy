@@ -6,56 +6,58 @@ proc testTempDir(): string =
   else:
     getTempDir() / "ziparchives"
 
-# block:
-#   let archive = ZipArchive()
-#   archive.open("tests/data/ziparchives/basic.zip")
+block:
+  let archive = ZipArchive()
+  archive.open("tests/data/ziparchives/basic.zip")
 
-#   removeDir(testTempDir())
+  removeDir(testTempDir())
 
-#   archive.extractAll(testTempDir())
+  archive.extractAll(testTempDir())
 
-#   for path, entry in archive.contents:
-#     if entry.kind == ekFile:
-#       doAssert fileExists(testTempDir() / path)
-#       doAssert readFile("tests/data/" & path) == entry.contents
-#     else:
-#       doAssert dirExists(testTempDir() / path)
-
-# block:
-#   let archive = ZipArchive()
-#   archive.addDir("src/")
-
-#   removeDir(testTempDir())
-
-#   archive.extractAll(testTempDir())
-
-#   for path, entry in archive.contents:
-#     if entry.kind == ekFile:
-#       doAssert fileExists(testTempDir() / path)
-#       doAssert readFile("src/" & path) == entry.contents
-#     else:
-#       doAssert dirExists(testTempDir() / path)
+  for path, entry in archive.contents:
+    if entry.kind == ekFile:
+      doAssert fileExists(testTempDir() / path)
+      doAssert readFile("tests/data/" & path) == entry.contents
+    else:
+      doAssert dirExists(testTempDir() / path)
 
 block:
   let archive = ZipArchive()
-  archive.open("tests/data/ziparchives/permissions.zip")
+  archive.addDir("src/")
 
-  let tmpdir = testTempDir()
-  removeDir(tmpdir)
-  createDir(tmpdir)
+  removeDir(testTempDir())
 
-  let
-    tmpdir_a = tmpdir / "zippy"
-    tmpdir_b = tmpdir / "unzip"
+  archive.extractAll(testTempDir())
 
-  # use zippy
-  archive.extractAll(tmpdir_a)
+  for path, entry in archive.contents:
+    if entry.kind == ekFile:
+      doAssert fileExists(testTempDir() / path)
+      doAssert readFile("src/" & path) == entry.contents
+    else:
+      doAssert dirExists(testTempDir() / path)
 
-  # use zip
-  createDir(tmpdir_b)
-  doAssert execShellCmd(&"unzip tests/data/ziparchives/permissions.zip -d {tmpdir_b}") == 0
-  doAssert dirExists(tmpdir_b)
+when not defined(windows):
+  # Somehow GitHub Actions has unzip on windows-latest, but I do not.
+  block:
+    let archive = ZipArchive()
+    archive.open("tests/data/ziparchives/permissions.zip")
 
-  # compare the two
-  for path in walkDirRec(tmpdir_b, relative = true):
-    doAssert getFilePermissions(tmpdir_a / path) == getFilePermissions(tmpdir_b / path), "Permissions didn't match for " & path
+    let tmpdir = testTempDir()
+    removeDir(tmpdir)
+    createDir(tmpdir)
+
+    let
+      tmpdir_a = tmpdir / "zippy"
+      tmpdir_b = tmpdir / "unzip"
+
+    # use zippy
+    archive.extractAll(tmpdir_a)
+
+    # use zip
+    createDir(tmpdir_b)
+    doAssert execShellCmd(&"unzip tests/data/ziparchives/permissions.zip -d {tmpdir_b}") == 0
+    doAssert dirExists(tmpdir_b)
+
+    # compare the two
+    for path in walkDirRec(tmpdir_b, relative = true):
+      doAssert getFilePermissions(tmpdir_a / path) == getFilePermissions(tmpdir_b / path), &"Permissions didn't match for {path}"
