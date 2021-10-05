@@ -191,7 +191,7 @@ func deflateNoCompression(src: string): string =
     let
       pos = i * maxUncompressedBlockSize
       len = min(src.len - pos, maxUncompressedBlockSize).uint16
-      nlen = (maxUncompressedBlockSize - len).uint16
+      nlen = maxUncompressedBlockSize.uint16 - len
 
     b.addBits(len, 16)
     b.addBits(nlen, 16)

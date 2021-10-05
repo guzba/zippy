@@ -77,12 +77,7 @@ proc extractPermissions(externalFileAttr: uint32): set[FilePermission] =
     if (permissions and 0o00002) != 0: result.incl fpOthersWrite
     if (permissions and 0o00001) != 0: result.incl fpOthersExec
 
-proc open*(
-  archive: ZipArchive, stream: Stream
-) {.raises: [IOError, OSError, ZippyError].} =
-  ## Opens the zip archive from a stream and reads its contents into
-  ## archive.contents (clears any existing archive.contents entries).
-
+proc openStreamImpl*(archive: ZipArchive, stream: Stream) =
   let data = stream.readAll() # TODO: actually treat as a stream
 
   archive.clear()
@@ -307,6 +302,21 @@ proc open*(
 
     else:
       failOpen()
+
+when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
+  proc open*(
+    archive: ZipArchive, stream: Stream
+  ) {.raises: [IOError, OSError, ZippyError].} =
+    ## Opens the zip archive from a stream and reads its contents into
+    ## archive.contents (clears any existing archive.contents entries).
+    openStreamImpl(archive, stream)
+else:
+  proc open*(
+    archive: ZipArchive, stream: Stream
+  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
+    ## Opens the zip archive from a stream and reads its contents into
+    ## archive.contents (clears any existing archive.contents entries).
+    openStreamImpl(archive, stream)
 
 proc open*(archive: ZipArchive, path: string) {.inline.} =
   ## Opens the zip archive file located at path and reads its contents into

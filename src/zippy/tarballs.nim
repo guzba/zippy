@@ -204,7 +204,12 @@ else:
     ## archive.contents (clears any existing archive.contents entries).
     openStreamImpl(tarball, stream, tarballFormat)
 
-proc openPathImpl*(tarball: Tarball, path: string) =
+proc open*(
+  tarball: Tarball, path: string
+) {.raises: [IOError, OSError, ZippyError].} =
+  ## Opens the tarball file located at path and reads its contents into
+  ## tarball.contents (clears any existing tarball.contents entries).
+  ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
   let
     stream = newStringStream(readFile(path))
     ext = splitFile(path).ext
@@ -215,23 +220,6 @@ proc openPathImpl*(tarball: Tarball, path: string) =
     tarball.open(stream, tfGzip)
   else:
     raise newException(ZippyError, "Unsupported tarball extension " & ext)
-
-when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
-  proc open*(
-    tarball: Tarball, path: string
-  ) {.raises: [IOError, OSError, ZippyError].} =
-    ## Opens the tarball file located at path and reads its contents into
-    ## tarball.contents (clears any existing tarball.contents entries).
-    ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
-    openPathImpl(tarball, path)
-else:
-  proc open*(
-    tarball: Tarball, path: string
-  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
-    ## Opens the tarball file located at path and reads its contents into
-    ## tarball.contents (clears any existing tarball.contents entries).
-    ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
-    openPathImpl(tarball, path)
 
 proc writeTarball*(
   tarball: Tarball, path: string
