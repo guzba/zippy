@@ -1,4 +1,4 @@
-import os, streams, tables, zippy/tarballs
+import os, streams, strformat, tables, zippy/tarballs
 
 proc testTempDir(): string =
   when defined(windows):
@@ -87,6 +87,30 @@ block: # .tar.gz
   for path, entry in tarball.contents:
     if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
+
+block: # permissions
+  let tarball = Tarball()
+  tarball.open("tests/data/tarballs/permissions.tgz")
+
+  let tmpdir = testTempDir()
+  removeDir(tmpdir)
+  createDir(tmpdir)
+
+  let
+    tmpdir_a = tmpdir / "zippy"
+    tmpdir_b = tmpdir / "tar"
+  
+  # use zippy
+  tarball.extractAll(tmpdir_a)
+
+  # use tar
+  createDir(tmpdir_b)
+  discard execShellCmd(&"tar xf tests/data/tarballs/permissions.tgz -C {tmpdir_b}")
+  doAssert dirExists(tmpdir_b)
+
+  # compare the two
+  for path in walkDirRec(tmpdir_b, relative = true):
+    doAssert getFilePermissions(tmpdir_a / path) == getFilePermissions(tmpdir_b / path), "Permissions didn't match for " & path
 
 # block:
 #   let tarball = Tarball()

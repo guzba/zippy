@@ -1,4 +1,4 @@
-import os, tables, zippy/ziparchives
+import os, strformat, tables, zippy/ziparchives
 
 proc testTempDir(): string =
   when defined(windows):
@@ -35,3 +35,28 @@ block:
       doAssert readFile("src/" & path) == entry.contents
     else:
       doAssert dirExists(testTempDir() / path)
+
+block:
+  let archive = ZipArchive()
+  archive.open("tests/data/ziparchives/permissions.zip")
+
+  let tmpdir = testTempDir()
+  removeDir(tmpdir)
+  echo "tmpdir: ", tmpdir
+  createDir(tmpdir)
+
+  let
+    tmpdir_a = tmpdir / "zippy"
+    tmpdir_b = tmpdir / "unzip"
+  
+  # use zippy
+  archive.extractAll(tmpdir_a)
+
+  # use zip
+  createDir(tmpdir_b)
+  discard execShellCmd(&"unzip tests/data/ziparchives/permissions.zip -d {tmpdir_b}")
+  doAssert dirExists(tmpdir_b)
+
+  # compare the two
+  for path in walkDirRec(tmpdir_b, relative = true):
+    doAssert getFilePermissions(tmpdir_a / path) == getFilePermissions(tmpdir_b / path), "Permissions didn't match for " & path
