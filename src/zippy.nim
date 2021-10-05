@@ -54,7 +54,7 @@ func compress*(
       cm = 8.uint8
       cinfo = 7.uint8
       cmf = (cinfo shl 4) or cm
-      fcheck = (31 - (cmf.uint32 * 256) mod 31).uint8
+      fcheck = (31.uint32 - (cmf.uint32 * 256) mod 31).uint8
 
     result.setLen(2)
     result[0] = cmf.char
@@ -106,15 +106,15 @@ func uncompress(
       raise newException(ZippyError, "Failed gzip identification values check")
     if cm != 8: # DEFLATE
       raise newException(ZippyError, "Unsupported compression method")
-    if (flg and 0b11100000) > 0:
+    if (flg and 0b11100000) > 0.uint8:
       raise newException(ZippyError, "Reserved flag bits set")
 
     let
       # ftext = (flg and (1.uint8 shl 0)) > 0
-      fhcrc = (flg and (1.uint8 shl 1)) > 0
-      fextra = (flg and (1.uint8 shl 2)) > 0
-      fname = (flg and (1.uint8 shl 3)) > 0
-      fcomment = (flg and (1.uint8 shl 4)) > 0
+      fhcrc = (flg and (1.uint8 shl 1)) > 0.uint8
+      fextra = (flg and (1.uint8 shl 2)) > 0.uint8
+      fname = (flg and (1.uint8 shl 3)) > 0.uint8
+      fcomment = (flg and (1.uint8 shl 4)) > 0.uint8
 
     var pos = 10
 
@@ -174,7 +174,7 @@ func uncompress(
 
     if cm != 8: # DEFLATE
       raise newException(ZippyError, "Unsupported compression method")
-    if cinfo > 7:
+    if cinfo > 7.uint8:
       raise newException(ZippyError, "Invalid compression info")
     if ((cmf.uint16 * 256) + flg.uint16) mod 31 != 0:
       raise newException(ZippyError, "Invalid header")

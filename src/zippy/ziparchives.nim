@@ -455,7 +455,7 @@ proc writeZipArchive*(
   data.add(cast[array[4, uint8]](centralDirectoryOffset.uint32))
   data.add([0.uint8, 0])
 
-  writeFile(path, data)
+  writeFile(path, cast[string](data))
 
 proc extractAll*(
   archive: ZipArchive, dest: string

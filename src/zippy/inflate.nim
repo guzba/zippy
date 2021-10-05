@@ -83,21 +83,21 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
     maxCodesLen = h.maxCodes.len.uint
     fast = h.fast[b.bitBuf and fastMask]
   var len: uint16
-  if fast > 0:
+  if fast > 0.uint16:
     len = (fast shr 9)
     result = fast and 511
   else: # Slow path
-    let k = reverse16Bits(b.bitBuf.uint16).uint
+    let k = reverse16Bits(cast[uint16](b.bitBuf)).uint
     len = 1
-    while len < maxCodesLen:
+    while len < maxCodesLen.uint16:
       if k < h.maxCodes[len]:
         break
       inc len
 
-    if len >= 16:
+    if len >= 16.uint16:
       failUncompress()
 
-    let symbolId = (k shr (16 - len)) - h.firstCode[len] + h.firstSymbol[len]
+    let symbolId = (k shr (16.uint16 - len)) - h.firstCode[len] + h.firstSymbol[len]
     result = h.values[symbolId]
 
   if len.int > b.bitCount:
@@ -158,7 +158,7 @@ func inflateBlock(
       break
     else:
       let lengthIndex = symbol - firstLengthCodeIndex
-      if lengthIndex >= baseLengths.len:
+      if lengthIndex >= baseLengths.len.uint16:
         failUncompress()
 
       let totalLength = (
@@ -167,7 +167,7 @@ func inflateBlock(
       ).int
 
       let distIndex = decodeSymbol(b, distanceHuffman)
-      if distIndex >= baseDistances.len:
+      if distIndex >= baseDistances.len.uint16:
         failUncompress()
 
       let totalDist = (
@@ -222,7 +222,7 @@ func inflate*(dst: var string, src: string, pos = 0) =
     let
       bfinal = b.readBits(1)
       btype = b.readBits(2)
-    if bfinal > 0:
+    if bfinal > 0.uint16:
       finalBlock = true
 
     case btype:
