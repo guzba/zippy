@@ -134,7 +134,7 @@ when defined(release):
 func reverseUint16*(code: uint16, length: uint8): uint16 {.inline.} =
   (
     (bitReverseTable[(code and 255)] shl 8) or bitReverseTable[(code shr 8)]
-  ) shr (16 - length)
+  ) shr (16 - length.int)
 
 func makeCodes(lengths: seq[uint8]): seq[uint16] =
   result = newSeq[uint16](lengths.len)
