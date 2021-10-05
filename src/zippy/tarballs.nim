@@ -36,15 +36,20 @@ type
 
 proc toPermissions(fileMode: int): set[FilePermission] =
   ## Convert from a fileMode integer to FilePermission
-  if (fileMode and TUREAD) != 0: result.incl(fpUserRead)
-  if (fileMode and TUWRITE) != 0: result.incl(fpUserWrite)
-  if (fileMode and TUEXEC) != 0: result.incl(fpUserExec)
-  if (fileMode and TGREAD) != 0: result.incl(fpGroupRead)
-  if (fileMode and TGWRITE) != 0: result.incl(fpGroupWrite)
-  if (fileMode and TGEXEC) != 0: result.incl(fpGroupExec)
-  if (fileMode and TOREAD) != 0: result.incl(fpOthersRead)
-  if (fileMode and TOWRITE) != 0: result.incl(fpOthersWrite)
-  if (fileMode and TOEXEC) != 0: result.incl(fpOthersExec)
+  when defined(windows):
+    # Ignore file permissions on Windows, incl fpUserWrite so the file is
+    # not read only.
+    result.incl fpUserWrite
+  else:
+    if (fileMode and TUREAD) != 0: result.incl(fpUserRead)
+    if (fileMode and TUWRITE) != 0: result.incl(fpUserWrite)
+    if (fileMode and TUEXEC) != 0: result.incl(fpUserExec)
+    if (fileMode and TGREAD) != 0: result.incl(fpGroupRead)
+    if (fileMode and TGWRITE) != 0: result.incl(fpGroupWrite)
+    if (fileMode and TGEXEC) != 0: result.incl(fpGroupExec)
+    if (fileMode and TOREAD) != 0: result.incl(fpOthersRead)
+    if (fileMode and TOWRITE) != 0: result.incl(fpOthersWrite)
+    if (fileMode and TOEXEC) != 0: result.incl(fpOthersExec)
 
 proc addDir(tarball: Tarball, base, relative: string) =
   if not (fileExists(base / relative) or dirExists(base / relative)):
