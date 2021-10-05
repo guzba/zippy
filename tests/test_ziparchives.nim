@@ -35,3 +35,14 @@ block:
       doAssert readFile("src/" & path) == entry.contents
     else:
       doAssert dirExists(testTempDir() / path)
+
+block:
+  let archive = ZipArchive()
+  archive.open("tests/data/ziparchives/permissions.zip")
+
+  let tmpdir = testTempDir()
+  removeDir(tmpdir)
+
+  archive.extractAll(tmpdir)
+  doAssert fileExists(tmpdir/"tmp"/"script.sh")
+  doassert fpUserExec in getFilePermissions(tmpdir/"tmp"/"script.sh")

@@ -88,6 +88,17 @@ block: # .tar.gz
     if entry.kind == ekNormalFile:
       doAssert readFile("tests/data/" & splitPath(path).tail) == entry.contents
 
+block: # permissions
+  let tarball = Tarball()
+  tarball.open("tests/data/tarballs/permissions.tgz")
+
+  let tmpdir = testTempDir()
+  removeDir(tmpdir)
+
+  tarball.extractAll(tmpdir)
+  doAssert fileExists(tmpdir/"tmp"/"script.sh")
+  doassert fpUserExec in getFilePermissions(tmpdir/"tmp"/"script.sh")
+
 # block:
 #   let tarball = Tarball()
 #   tarball.addDir("tests/data/tarballs/longpath")
