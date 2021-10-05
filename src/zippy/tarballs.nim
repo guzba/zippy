@@ -37,17 +37,15 @@ type
 
 proc toPermissions(filemode: int): set[FilePermission] =
   ## Convert from a filemode integer to FilePermission
-  if filemode.masked(TUREAD) != 0: result.incl(fpUserRead)
-  if filemode.masked(TUWRITE) != 0: result.incl(fpUserWrite)
-  if filemode.masked(TUEXEC) != 0: result.incl(fpUserExec)
-
-  if filemode.masked(TGREAD) != 0: result.incl(fpGroupRead)
-  if filemode.masked(TGWRITE) != 0: result.incl(fpGroupWrite)
-  if filemode.masked(TGEXEC) != 0: result.incl(fpGroupExec)
-
-  if filemode.masked(TOREAD) != 0: result.incl(fpOthersRead)
-  if filemode.masked(TOWRITE) != 0: result.incl(fpOthersWrite)
-  if filemode.masked(TOEXEC) != 0: result.incl(fpOthersExec)
+  if (filemode and TUREAD) != 0: result.incl(fpUserRead)
+  if (filemode and TUWRITE) != 0: result.incl(fpUserWrite)
+  if (filemode and TUEXEC) != 0: result.incl(fpUserExec)
+  if (filemode and TGREAD) != 0: result.incl(fpGroupRead)
+  if (filemode and TGWRITE) != 0: result.incl(fpGroupWrite)
+  if (filemode and TGEXEC) != 0: result.incl(fpGroupExec)
+  if (filemode and TOREAD) != 0: result.incl(fpOthersRead)
+  if (filemode and TOWRITE) != 0: result.incl(fpOthersWrite)
+  if (filemode and TOEXEC) != 0: result.incl(fpOthersExec)
 
 proc addDir(tarball: Tarball, base, relative: string) =
   if not (fileExists(base / relative) or dirExists(base / relative)):

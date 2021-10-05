@@ -1,4 +1,4 @@
-import os, streams, strutils, tables, times, zippy, zippy/common, zippy/crc,
+import os, bitops, streams, strutils, tables, times, zippy, zippy/common, zippy/crc,
     zippy/zippyerror
 
 export zippyerror
@@ -11,6 +11,7 @@ type
     kind*: EntryKind
     contents*: string
     lastModified*: times.Time
+    permissions: set[FilePermission]
 
   ZipArchive* = ref object
     contents*: OrderedTable[string, ArchiveEntry]
@@ -26,7 +27,8 @@ proc addDir(archive: ZipArchive, base, relative: string) =
       archive.contents[(relative / path).toUnixPath()] = ArchiveEntry(
         kind: ekFile,
         contents: readFile(base / relative / path),
-        lastModified: getLastModificationTime(base / relative / path)
+        lastModified: getLastModificationTime(base / relative / path),
+        permissions: getFilePermissions(base / relative / path),
       )
     of pcDir:
       archive.addDir(base, relative / path)
@@ -53,6 +55,18 @@ template failEOF() =
   raise newException(
     ZippyError, "Attempted to read past end of file, corrupted zip archive?"
   )
+
+proc extractPermissions(filedata: uint32): set[FilePermission] =
+  let slice = filedata.bitsliced(16 ..< 32)
+  if (slice and 0o00400) != 0: result.incl fpUserRead
+  if (slice and 0o00200) != 0: result.incl fpUserWrite
+  if (slice and 0o00100) != 0: result.incl fpUserExec
+  if (slice and 0o00040) != 0: result.incl fpGroupRead
+  if (slice and 0o00020) != 0: result.incl fpGroupWrite
+  if (slice and 0o00010) != 0: result.incl fpGroupExec
+  if (slice and 0o00004) != 0: result.incl fpOthersRead
+  if (slice and 0o00002) != 0: result.incl fpOthersWrite
+  if (slice and 0o00001) != 0: result.incl fpOthersExec
 
 proc open*(
   archive: ZipArchive, stream: Stream
@@ -146,6 +160,7 @@ proc open*(
 
       let fileName = data[pos ..< pos + fileNameLength]
       pos += fileNameLength
+      
       # let extraField = data[pos ..< pos + extraFieldLength]
       pos += extraFieldLength
 
@@ -175,7 +190,7 @@ proc open*(
       archive.contents[fileName.toUnixPath()] =
         ArchiveEntry(
           contents: uncompressed,
-          lastModified: lastModified
+          lastModified: lastModified,
         )
 
       pos += compressedSize
@@ -199,7 +214,7 @@ proc open*(
         fileCommentLength = read16(data, pos + 32).int
         # diskNumber = read16(data, pos + 34)
         # internalFileAttr = read16(data, pos + 36)
-        externalFileAttr = read32(data, pos + 38) and uint16.high
+        externalFileAttr = read32(data, pos + 38) and uint32.high
         # relativeOffsetOfLocalFileHeader = read32(data, pos + 42)
 
       # echo versionMadeBy
@@ -239,6 +254,12 @@ proc open*(
         # Update the entry kind for directories
         if (externalFileAttr and 0x10) == 0x10:
           archive.contents[fileName].kind = ekDirectory
+      except KeyError:
+        failOpen()
+      
+      try:
+        # Update file permissions
+        archive.contents[fileName].permissions = externalFileAttr.extractPermissions()
       except KeyError:
         failOpen()
 
@@ -458,6 +479,7 @@ proc extractAll*(
         writeFile(dest / path, entry.contents)
         if entry.lastModified > Time():
           setLastModificationTime(dest / path, entry.lastModified)
+        setFilePermissions(dest / path, entry.permissions)
 
   try:
     archive.writeContents(dest)
