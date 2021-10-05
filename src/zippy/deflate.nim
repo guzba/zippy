@@ -195,7 +195,7 @@ func deflateNoCompression(src: string): string =
 
     b.addBits(len, 16)
     b.addBits(nlen, 16)
-    if len > 0:
+    if len > 0.uint16:
       b.addBytes(src, pos, len.int)
 
   b.data.setLen(b.pos)
