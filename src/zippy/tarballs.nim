@@ -311,6 +311,11 @@ proc extractAll*(
           ZippyError,
           "Extracting paths starting with `..` is not supported (" & path & ")"
         )
+      if "/../" in path or r"\..\" in path:
+        raise newException(
+          ZippyError,
+          "Extracting paths containing `/../` is not supported (" & path & ")"
+        )
 
       case entry.kind:
       of ekNormalFile:
