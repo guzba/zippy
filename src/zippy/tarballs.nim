@@ -96,7 +96,9 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted tarball?"
   )
 
-proc openImpl(tarball: Tarball, stream: Stream, tarballFormat: TarballFormat) =
+proc openStreamImpl(
+  tarball: Tarball, stream: Stream, tarballFormat: TarballFormat
+) =
   tarball.clear()
 
   proc trim(s: string): string =
@@ -193,21 +195,16 @@ when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
   ) {.raises: [IOError, OSError, ZippyError].} =
     ## Opens the zip archive from a stream and reads its contents into
     ## archive.contents (clears any existing archive.contents entries).
-    openImpl(tarball, stream, tarballFormat)
+    openStreamImpl(tarball, stream, tarballFormat)
 else:
   proc open*(
     tarball: Tarball, stream: Stream, tarballFormat = tfDetect
   ) {.raises: [Defect, IOError, OSError, ZippyError].} =
     ## Opens the zip archive from a stream and reads its contents into
     ## archive.contents (clears any existing archive.contents entries).
-    openImpl(tarball, stream, tarballFormat)
+    openStreamImpl(tarball, stream, tarballFormat)
 
-proc open*(
-  tarball: Tarball, path: string
-) {.raises: [IOError, OSError, ZippyError].} =
-  ## Opens the tarball file located at path and reads its contents into
-  ## tarball.contents (clears any existing tarball.contents entries).
-  ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
+proc openPathImpl*(tarball: Tarball, path: string) =
   let
     stream = newStringStream(readFile(path))
     ext = splitFile(path).ext
@@ -218,6 +215,23 @@ proc open*(
     tarball.open(stream, tfGzip)
   else:
     raise newException(ZippyError, "Unsupported tarball extension " & ext)
+
+when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
+  proc open*(
+    tarball: Tarball, path: string
+  ) {.raises: [IOError, OSError, ZippyError].} =
+    ## Opens the tarball file located at path and reads its contents into
+    ## tarball.contents (clears any existing tarball.contents entries).
+    ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
+    openPathImpl(tarball, path)
+else:
+  proc open*(
+    tarball: Tarball, path: string
+  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
+    ## Opens the tarball file located at path and reads its contents into
+    ## tarball.contents (clears any existing tarball.contents entries).
+    ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
+    openPathImpl(tarball, path)
 
 proc writeTarball*(
   tarball: Tarball, path: string
