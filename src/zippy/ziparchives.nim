@@ -517,14 +517,24 @@ proc extractAll*(
     removeDir(dest)
     raise e
 
-proc extractAll*(
-  zipPath, dest: string
-) {.raises: [IOError, OSError, ZippyError].} =
-  ## Extracts the files in the archive located at zipPath into the destination
-  ## directory.
-  let archive = ZipArchive()
-  archive.open(zipPath)
-  archive.extractAll(dest)
+when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
+  proc extractAll*(
+    zipPath, dest: string
+  ) {.raises: [IOError, OSError, ZippyError].} =
+    ## Extracts the files in the archive located at zipPath into the destination
+    ## directory.
+    let archive = ZipArchive()
+    archive.open(zipPath)
+    archive.extractAll(dest)
+else:
+  proc extractAll*(
+    zipPath, dest: string
+  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
+    ## Extracts the files in the archive located at zipPath into the destination
+    ## directory.
+    let archive = ZipArchive()
+    archive.open(zipPath)
+    archive.extractAll(dest)
 
 proc createZipArchive*(
   source, dest: string

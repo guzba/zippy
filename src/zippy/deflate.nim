@@ -291,7 +291,7 @@ func deflate*(src: string, level = -1): string =
       while i < bitLensRle.len:
         inc clFreq[bitLensRle[i]]
         # Skip the number of times codes are repeated
-        if bitLensRle[i] >= 16:
+        if bitLensRle[i] >= 16.uint8:
           inc i
         inc i
 
