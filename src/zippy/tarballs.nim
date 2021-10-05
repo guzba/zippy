@@ -1,7 +1,22 @@
-import os, streams, strutils, tables, times, zippy, zippy/common,
+import os, bitops, streams, strutils, tables, times, zippy, zippy/common,
     zippy/zippyerror
 
 export zippyerror
+
+const
+  TSUID   =  0o04000  # set UID on execution */
+  TSGID   =  0o02000  # set GID on execution */
+  TSVTX   =  0o01000  # reserved */
+                      # file permissions */
+  TUREAD  =  0o00400  # read by owner */
+  TUWRITE =  0o00200  # write by owner */
+  TUEXEC  =  0o00100  # execute/search by owner */
+  TGREAD  =  0o00040  # read by group */
+  TGWRITE =  0o00020  # write by group */
+  TGEXEC  =  0o00010  # execute/search by group */
+  TOREAD  =  0o00004  # read by other */
+  TOWRITE =  0o00002  # write by other */
+  TOEXEC  =  0o00001  # execute/search by other */
 
 type
   EntryKind* = enum
@@ -12,12 +27,27 @@ type
     kind*: EntryKind
     contents*: string
     lastModified*: times.Time
+    permissions*: set[FilePermission]
 
   Tarball* = ref object
     contents*: OrderedTable[string, TarballEntry]
 
   TarballFormat* = enum
     tfDetect, tfUncompressed, tfGzip
+
+proc toPermissions(filemode: int): set[FilePermission] =
+  ## Convert from a filemode integer to FilePermission
+  if filemode.masked(TUREAD) != 0: result.incl(fpUserRead)
+  if filemode.masked(TUWRITE) != 0: result.incl(fpUserWrite)
+  if filemode.masked(TUEXEC) != 0: result.incl(fpUserExec)
+
+  if filemode.masked(TGREAD) != 0: result.incl(fpGroupRead)
+  if filemode.masked(TGWRITE) != 0: result.incl(fpGroupWrite)
+  if filemode.masked(TGEXEC) != 0: result.incl(fpGroupExec)
+
+  if filemode.masked(TOREAD) != 0: result.incl(fpOthersRead)
+  if filemode.masked(TOWRITE) != 0: result.incl(fpOthersWrite)
+  if filemode.masked(TOEXEC) != 0: result.incl(fpOthersExec)
 
 proc addDir(tarball: Tarball, base, relative: string) =
   if not (fileExists(base / relative) or dirExists(base / relative)):
@@ -35,7 +65,8 @@ proc addDir(tarball: Tarball, base, relative: string) =
       tarball.contents[(relative / path).toUnixPath()] = TarballEntry(
         kind: ekNormalFile,
         contents: readFile(base / relative / path),
-        lastModified: getLastModificationTime(base / relative / path)
+        lastModified: getLastModificationTime(base / relative / path),
+        permissions: getFilePermissions(base / relative / path),
       )
     of pcDir:
       tarball.addDir(base, relative / path)
@@ -127,6 +158,12 @@ proc open*(
             ZippyError, "Unexpected error while opening tarball"
           )
       typeFlag = header[156]
+      fileMode = try:
+          parseOctInt(header[100 ..< 106])
+        except ValueError:
+          raise newException(
+            ZippyError, "Unexpected error while opening tarball (mode)"
+          )
       fileNamePrefix =
         if header[257 ..< 263] == "ustar\0":
           header[345 ..< 500].trim()
@@ -141,7 +178,8 @@ proc open*(
         TarballEntry(
           kind: ekNormalFile,
           contents: data[pos ..< pos + fileSize],
-          lastModified: initTime(lastModified, 0)
+          lastModified: initTime(lastModified, 0),
+          permissions: fileMode.toPermissions(),
         )
     elif typeFlag == '5':
       tarball.contents[(fileNamePrefix / fileName).toUnixPath()] =
@@ -278,6 +316,7 @@ proc extractAll*(
         writeFile(dest / path, entry.contents)
         if entry.lastModified > Time():
           setLastModificationTime(dest / path, entry.lastModified)
+        setFilePermissions(dest / path, entry.permissions)
       of ekDirectory:
         createDir(dest / path)
 
