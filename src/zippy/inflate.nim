@@ -59,7 +59,7 @@ func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   result.maxCodes[16] = 1 shl 16
 
   for i, len in lengths:
-    if len > 0:
+    if len > 0.uint8:
       let symbolId =
         nextCode[len] - result.firstCode[len] + result.firstSymbol[len]
       result.lengths[symbolId] = len
