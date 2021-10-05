@@ -50,7 +50,7 @@ func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
     result.firstCode[i] = code.uint16
     result.firstSymbol[i] = k.uint16
     code = code + sizes[i]
-    if sizes[i] > 0 and code - 1 >= (1.uint shl i):
+    if sizes[i] > 0.uint and code - 1 >= (1.uint shl i):
       failUncompress()
     result.maxCodes[i] = (code shl (16 - i))
     code = code shl 1
