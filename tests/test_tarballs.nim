@@ -99,13 +99,13 @@ block: # permissions
   let
     tmpdir_a = tmpdir / "zippy"
     tmpdir_b = tmpdir / "tar"
-  
+
   # use zippy
   tarball.extractAll(tmpdir_a)
 
   # use tar
   createDir(tmpdir_b)
-  discard execShellCmd(&"tar xf tests/data/tarballs/permissions.tgz -C {tmpdir_b}")
+  doAssert execShellCmd(&"tar xf tests/data/tarballs/permissions.tgz -C {tmpdir_b}") == 0
   doAssert dirExists(tmpdir_b)
 
   # compare the two

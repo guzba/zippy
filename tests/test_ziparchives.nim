@@ -6,35 +6,35 @@ proc testTempDir(): string =
   else:
     getTempDir() / "ziparchives"
 
-block:
-  let archive = ZipArchive()
-  archive.open("tests/data/ziparchives/basic.zip")
+# block:
+#   let archive = ZipArchive()
+#   archive.open("tests/data/ziparchives/basic.zip")
 
-  removeDir(testTempDir())
+#   removeDir(testTempDir())
 
-  archive.extractAll(testTempDir())
+#   archive.extractAll(testTempDir())
 
-  for path, entry in archive.contents:
-    if entry.kind == ekFile:
-      doAssert fileExists(testTempDir() / path)
-      doAssert readFile("tests/data/" & path) == entry.contents
-    else:
-      doAssert dirExists(testTempDir() / path)
+#   for path, entry in archive.contents:
+#     if entry.kind == ekFile:
+#       doAssert fileExists(testTempDir() / path)
+#       doAssert readFile("tests/data/" & path) == entry.contents
+#     else:
+#       doAssert dirExists(testTempDir() / path)
 
-block:
-  let archive = ZipArchive()
-  archive.addDir("src/")
+# block:
+#   let archive = ZipArchive()
+#   archive.addDir("src/")
 
-  removeDir(testTempDir())
+#   removeDir(testTempDir())
 
-  archive.extractAll(testTempDir())
+#   archive.extractAll(testTempDir())
 
-  for path, entry in archive.contents:
-    if entry.kind == ekFile:
-      doAssert fileExists(testTempDir() / path)
-      doAssert readFile("src/" & path) == entry.contents
-    else:
-      doAssert dirExists(testTempDir() / path)
+#   for path, entry in archive.contents:
+#     if entry.kind == ekFile:
+#       doAssert fileExists(testTempDir() / path)
+#       doAssert readFile("src/" & path) == entry.contents
+#     else:
+#       doAssert dirExists(testTempDir() / path)
 
 block:
   let archive = ZipArchive()
@@ -42,19 +42,18 @@ block:
 
   let tmpdir = testTempDir()
   removeDir(tmpdir)
-  echo "tmpdir: ", tmpdir
   createDir(tmpdir)
 
   let
     tmpdir_a = tmpdir / "zippy"
     tmpdir_b = tmpdir / "unzip"
-  
+
   # use zippy
   archive.extractAll(tmpdir_a)
 
   # use zip
   createDir(tmpdir_b)
-  discard execShellCmd(&"unzip tests/data/ziparchives/permissions.zip -d {tmpdir_b}")
+  doAssert execShellCmd(&"unzip tests/data/ziparchives/permissions.zip -d {tmpdir_b}") == 0
   doAssert dirExists(tmpdir_b)
 
   # compare the two

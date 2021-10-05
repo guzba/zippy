@@ -1,13 +1,12 @@
-import os, bitops, streams, strutils, tables, times, zippy, zippy/common,
-    zippy/zippyerror
+import os, streams, strutils, tables, times, zippy, zippy/common, zippy/zippyerror
 
 export zippyerror
 
 const
-  TSUID   =  0o04000  # set UID on execution */
-  TSGID   =  0o02000  # set GID on execution */
-  TSVTX   =  0o01000  # reserved */
-                      # file permissions */
+  # TSUID   =  0o04000  # set UID on execution */
+  # TSGID   =  0o02000  # set GID on execution */
+  # TSVTX   =  0o01000  # reserved */
+  #                     # file permissions */
   TUREAD  =  0o00400  # read by owner */
   TUWRITE =  0o00200  # write by owner */
   TUEXEC  =  0o00100  # execute/search by owner */
