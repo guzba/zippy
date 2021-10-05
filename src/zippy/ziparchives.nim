@@ -1,4 +1,4 @@
-import os, bitops, streams, strutils, tables, times, zippy, zippy/common, zippy/crc,
+import os, streams, strutils, tables, times, zippy, zippy/common, zippy/crc,
     zippy/zippyerror
 
 export zippyerror
@@ -56,17 +56,26 @@ template failEOF() =
     ZippyError, "Attempted to read past end of file, corrupted zip archive?"
   )
 
-proc extractPermissions(filedata: uint32): set[FilePermission] =
-  let slice = filedata.bitsliced(16 ..< 32)
-  if (slice and 0o00400) != 0: result.incl fpUserRead
-  if (slice and 0o00200) != 0: result.incl fpUserWrite
-  if (slice and 0o00100) != 0: result.incl fpUserExec
-  if (slice and 0o00040) != 0: result.incl fpGroupRead
-  if (slice and 0o00020) != 0: result.incl fpGroupWrite
-  if (slice and 0o00010) != 0: result.incl fpGroupExec
-  if (slice and 0o00004) != 0: result.incl fpOthersRead
-  if (slice and 0o00002) != 0: result.incl fpOthersWrite
-  if (slice and 0o00001) != 0: result.incl fpOthersExec
+proc extractPermissions(externalFileAttr: uint32): set[FilePermission] =
+  let permissions = externalFileAttr shr 16
+  if defined(windows) or permissions == 0:
+    # Ignore file permissions on Windows. If they are absent (.zip made on
+    # Windows for example), set default permissions.
+    result.incl fpUserRead
+    result.incl fpUserWrite
+    result.incl fpGroupRead
+    result.incl fpGroupWrite
+    result.incl fpOthersRead
+  else:
+    if (permissions and 0o00400) != 0: result.incl fpUserRead
+    if (permissions and 0o00200) != 0: result.incl fpUserWrite
+    if (permissions and 0o00100) != 0: result.incl fpUserExec
+    if (permissions and 0o00040) != 0: result.incl fpGroupRead
+    if (permissions and 0o00020) != 0: result.incl fpGroupWrite
+    if (permissions and 0o00010) != 0: result.incl fpGroupExec
+    if (permissions and 0o00004) != 0: result.incl fpOthersRead
+    if (permissions and 0o00002) != 0: result.incl fpOthersWrite
+    if (permissions and 0o00001) != 0: result.incl fpOthersExec
 
 proc open*(
   archive: ZipArchive, stream: Stream
@@ -160,7 +169,7 @@ proc open*(
 
       let fileName = data[pos ..< pos + fileNameLength]
       pos += fileNameLength
-      
+
       # let extraField = data[pos ..< pos + extraFieldLength]
       pos += extraFieldLength
 
@@ -256,7 +265,7 @@ proc open*(
           archive.contents[fileName].kind = ekDirectory
       except KeyError:
         failOpen()
-      
+
       try:
         # Update file permissions
         archive.contents[fileName].permissions = externalFileAttr.extractPermissions()

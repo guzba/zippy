@@ -35,17 +35,17 @@ type
   TarballFormat* = enum
     tfDetect, tfUncompressed, tfGzip
 
-proc toPermissions(filemode: int): set[FilePermission] =
-  ## Convert from a filemode integer to FilePermission
-  if (filemode and TUREAD) != 0: result.incl(fpUserRead)
-  if (filemode and TUWRITE) != 0: result.incl(fpUserWrite)
-  if (filemode and TUEXEC) != 0: result.incl(fpUserExec)
-  if (filemode and TGREAD) != 0: result.incl(fpGroupRead)
-  if (filemode and TGWRITE) != 0: result.incl(fpGroupWrite)
-  if (filemode and TGEXEC) != 0: result.incl(fpGroupExec)
-  if (filemode and TOREAD) != 0: result.incl(fpOthersRead)
-  if (filemode and TOWRITE) != 0: result.incl(fpOthersWrite)
-  if (filemode and TOEXEC) != 0: result.incl(fpOthersExec)
+proc toPermissions(fileMode: int): set[FilePermission] =
+  ## Convert from a fileMode integer to FilePermission
+  if (fileMode and TUREAD) != 0: result.incl(fpUserRead)
+  if (fileMode and TUWRITE) != 0: result.incl(fpUserWrite)
+  if (fileMode and TUEXEC) != 0: result.incl(fpUserExec)
+  if (fileMode and TGREAD) != 0: result.incl(fpGroupRead)
+  if (fileMode and TGWRITE) != 0: result.incl(fpGroupWrite)
+  if (fileMode and TGEXEC) != 0: result.incl(fpGroupExec)
+  if (fileMode and TOREAD) != 0: result.incl(fpOthersRead)
+  if (fileMode and TOWRITE) != 0: result.incl(fpOthersWrite)
+  if (fileMode and TOEXEC) != 0: result.incl(fpOthersExec)
 
 proc addDir(tarball: Tarball, base, relative: string) =
   if not (fileExists(base / relative) or dirExists(base / relative)):
