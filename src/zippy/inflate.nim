@@ -23,7 +23,7 @@ func reverse16Bits(n: uint16): uint16 {.inline.} =
 
 func reverseBits(n, bits: uint16): uint16 {.inline.} =
   assert bits <= 16
-  (reverse16Bits(n.uint16) shr (16 - bits))
+  (reverse16Bits(n.uint16) shr (16.uint16 - bits))
 
 func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
