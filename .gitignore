@@ -11,3 +11,4 @@ nimcache
 .*
 *.dll
 tmp/
+dump.txt
