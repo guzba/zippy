@@ -1,4 +1,4 @@
-import common
+import internal
 
 const
   hashBits = 17

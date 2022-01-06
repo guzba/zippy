@@ -1,4 +1,4 @@
-import os, streams, strutils, tables, times, zippy, zippy/common, zippy/zippyerror
+import os, streams, strutils, tables, times, zippy, zippy/internal, zippy/zippyerror
 
 export zippyerror
 

@@ -1,4 +1,4 @@
-import os, streams, strutils, tables, times, zippy, zippy/common, zippy/crc,
+import os, streams, strutils, tables, times, zippy, zippy/internal, zippy/crc,
     zippy/zippyerror
 
 export zippyerror

@@ -1,4 +1,4 @@
-import bitstreams, common, zippy/lz77, zippy/snappy, zippyerror
+import bitstreams, internal, zippy/lz77, zippy/snappy, zippyerror
 
 when defined(release):
   {.push checks: off.}

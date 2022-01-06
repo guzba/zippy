@@ -1,4 +1,4 @@
-import common
+import internal
 
 ## See https://create.stephan-brumme.com/crc32/
 

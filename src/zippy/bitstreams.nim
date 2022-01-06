@@ -1,4 +1,4 @@
-import common, zippyerror
+import internal, zippyerror
 
 type
   BitStream* = object
