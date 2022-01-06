@@ -1,40 +1,20 @@
-import bitstreams, internal, zippy/lz77, zippy/snappy, zippyerror
+import bitstreams, heapqueue, internal, zippy/lz77, zippy/snappy, zippyerror
 
 when defined(release):
   {.push checks: off.}
+
+type Node = ref object
+  symbol, freq: int
+  left, right: Node
+
+proc `<`(a, b: Node): bool {.inline.} =
+  a.freq < b.freq
 
 func huffmanCodeLengths(
   frequencies: seq[int], minCodes, maxCodeLen: int
 ): (seq[uint8], seq[uint16]) =
   ## https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
-  ## https://en.wikipedia.org/wiki/Package-merge_algorithm#Reduction_of_length-limited_Huffman_coding_to_the_coin_collector%27s_problem
   ## https://en.wikipedia.org/wiki/Canonical_Huffman_code
-
-  # This is the slow part of deflating small files.
-
-  type Coin = object
-    symbols: seq[uint16]
-    numSymbols, weight: int
-
-  proc quickSort(a: var seq[Coin], inl, inr: int) =
-    var
-      r = inr
-      l = inl
-    let n = r - l + 1
-    if n < 2:
-      return
-    let p = a[l + 3 * n div 4].weight
-    while l <= r:
-      if a[l].weight < p:
-        inc l
-      elif a[r].weight > p:
-        dec r
-      else:
-        swap(a[l], a[r])
-        inc l
-        dec r
-    quickSort(a, inl, r)
-    quickSort(a, l, inr)
 
   var
     highestSymbol: int
@@ -62,76 +42,62 @@ func huffmanCodeLengths(
           lengths[0] = 1
         break
   else:
-    func addSymbolCoins(coins: var seq[Coin], start: int) =
-      var idx = start
-      for i in 0 ..< numCodes:
-        let freq = frequencies[i]
-        if freq > 0:
-          coins[idx].symbols[0] = i.uint16
-          coins[idx].numSymbols = 1
-          coins[idx].weight = freq
-          inc idx
+    var nodes: seq[Node]
+    for symbol, freq in frequencies:
+      if freq > 0:
+        nodes.add(Node(
+          symbol: symbol,
+          freq: freq
+        ))
 
-    var
-      coins = newSeq[Coin](numSymbolsUsed * 2)
-      prevCoins = newSeq[Coin](coins.len)
+    proc buildTree(nodes: seq[Node]): bool =
+      var needsLengthLimiting: bool
 
-    for i in 0 ..< coins.len:
-      coins[i].symbols.setLen(32)
-      prevCoins[i].symbols.setLen(32)
+      var heap: HeapQueue[Node]
+      for node in nodes:
+        heap.push(node)
 
-    addSymbolCoins(coins, 0)
+      while heap.len >= 2:
+        let node = Node(
+          symbol: -1,
+          left: heap.pop(),
+          right: heap.pop()
+        )
+        node.freq = node.left.freq + node.right.freq
+        heap.push(node)
 
-    quickSort(coins, 0, numSymbolsUsed - 1)
+      proc walk(node: Node, level: int) =
+        if node.symbol == -1:
+          heap.push(node.left)
+          heap.push(node.right)
+          walk(node.left, level + 1)
+          walk(node.right, level + 1)
+        else:
+          node.freq = level # Re-use freq for level
+          if level > maxCodeLen:
+            needsLengthLimiting = true
 
-    var
-      numCoins = numSymbolsUsed
-      numCoinsPrev = 0
-      lastTime: bool
-    while true:
-      swap(prevCoins, coins)
-      swap(numCoinsPrev, numCoins)
+      walk(heap[0], 0)
 
-      for i in 0 ..< numCoins:
-        coins[i].numSymbols = 0
-        coins[i].weight = 0
+      needsLengthLimiting
 
-      numCoins = 0
+    var needsLengthLimiting = buildTree(nodes)
 
-      for i in countup(0, numCoinsPrev - 2, 2):
-        let mergedNumSymbols =
-          prevCoins[i + 0].numSymbols + prevCoins[i + 1].numSymbols
-        if mergedNumSymbols > coins[numCoins].symbols.len:
-          coins[numCoins].symbols.setLen(
-            max(mergedNumSymbols, coins[numCoins].symbols.len) * 2
-          )
+    if needsLengthLimiting:
+      # One or more code length is longer than maxCodeLen
+      # Set all nodes with code length > maxCodeLen to maxCodeLen, then
+      # rebuild the tree.
+      for i in countdown(nodes.high, 0):
+        if nodes[i].freq > maxCodeLen:
+          nodes[i].freq = maxCodeLen
 
-        var symbolIdx: int
-        for j in 0 ..< prevCoins[i + 0].numSymbols:
-          coins[numCoins].symbols[symbolIdx] = prevCoins[i + 0].symbols[j]
-          inc symbolIdx
-        for j in 0 ..< prevCoins[i + 1].numSymbols:
-          coins[numCoins].symbols[symbolIdx] = prevCoins[i + 1].symbols[j]
-          inc symbolIdx
+      needsLengthLimiting = buildTree(nodes)
 
-        coins[numCoins].numSymbols = mergedNumSymbols
-        coins[numCoins].weight =
-          prevCoins[i + 0].weight + prevCoins[i + 1].weight
-        inc numCoins
+    if needsLengthLimiting: # Confirm this new tree is valid
+      raise newException(ZippyError, "Unexpected issue length-limiting codes")
 
-      if lastTime:
-        break
-
-      addSymbolCoins(coins, numCoins)
-      numCoins += numSymbolsUsed
-
-      quickSort(coins, 0, numCoins - 1)
-
-      lastTime = numCoins == numCoinsPrev
-
-    for i in 0 ..< numSymbolsUsed - 1:
-      for j in 0 ..< coins[i].numSymbols:
-        inc lengths[coins[i].symbols[j]]
+    for node in nodes:
+      lengths[node.symbol] = node.freq.uint8
 
   var lengthCounts: array[maxCodeLength + 1, uint8]
   for l in lengths:
