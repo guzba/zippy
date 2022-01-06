@@ -4,14 +4,13 @@ when defined(release):
   {.push checks: off.}
 
 func huffmanCodeLengths(
-  level: int, frequencies: seq[int], minCodes, maxCodeLen: int
+  frequencies: seq[int], minCodes, maxCodeLen: int
 ): (seq[uint8], seq[uint16]) =
   ## https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
   ## https://en.wikipedia.org/wiki/Package-merge_algorithm#Reduction_of_length-limited_Huffman_coding_to_the_coin_collector%27s_problem
   ## https://en.wikipedia.org/wiki/Canonical_Huffman_code
 
   # When to use the fixed Huffman codes? If ever.
-  # Fast-path for when using best speed level?
   # This is the slow part of deflating small files.
 
   type Coin = object
@@ -227,12 +226,12 @@ func deflate*(src: string, level = -1): string =
       if useFixedCodes:
         (fixedCodeLengths, fixedCodes)
       else:
-        huffmanCodeLengths(level, freqLitLen, 257, maxCodeLength)
+        huffmanCodeLengths(freqLitLen, 257, maxCodeLength)
     (distLengths, distCodes) = block:
       if useFixedCodes:
         (fixedDistLengths, fixedDistCodes)
       else:
-        huffmanCodeLengths(level, freqDist, 2, maxCodeLength)
+        huffmanCodeLengths(freqDist, 2, maxCodeLength)
 
   var b: BitStream
   if useFixedCodes:
@@ -295,7 +294,7 @@ func deflate*(src: string, level = -1): string =
           inc i
         inc i
 
-    let (clLengths, clCodes) = huffmanCodeLengths(level, clFreq, clFreq.len, 7)
+    let (clLengths, clCodes) = huffmanCodeLengths(clFreq, clFreq.len, 7)
 
     var bitLensCodeLen = newSeq[uint8](clFreq.len)
     for i in 0 ..< bitLensCodeLen.len:
