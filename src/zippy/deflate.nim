@@ -13,8 +13,9 @@ proc `<`(a, b: Node): bool {.inline.} =
 func huffmanCodeLengths(
   frequencies: seq[int], minCodes, maxCodeLen: int
 ): (seq[uint8], seq[uint16]) =
-  ## https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
-  ## https://en.wikipedia.org/wiki/Canonical_Huffman_code
+  # https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
+  # https://en.wikipedia.org/wiki/Canonical_Huffman_code
+  # https://create.stephan-brumme.com/length-limited-prefix-codes/
 
   var
     highestSymbol: int
@@ -81,23 +82,68 @@ func huffmanCodeLengths(
 
       needsLengthLimiting
 
-    var needsLengthLimiting = buildTree(nodes)
+    let needsLengthLimiting = buildTree(nodes)
 
-    if needsLengthLimiting:
-      # One or more code length is longer than maxCodeLen
-      # Set all nodes with code length > maxCodeLen to maxCodeLen, then
-      # rebuild the tree.
-      for i in countdown(nodes.high, 0):
-        if nodes[i].freq > maxCodeLen:
-          nodes[i].freq = maxCodeLen
+    if not needsLengthLimiting:
+      for node in nodes:
+        lengths[node.symbol] = node.freq.uint8
+    else:
+      var maxLength: int
+      for node in nodes:
+        maxLength = max(maxLength, node.freq)
 
-      needsLengthLimiting = buildTree(nodes)
+      var histogramNumBits = newSeq[int](maxLength + 1)
+      for node in nodes:
+        inc histogramNumBits[node.freq]
 
-    if needsLengthLimiting: # Confirm this new tree is valid
-      raise newException(ZippyError, "Unexpected issue length-limiting codes")
+      var i = maxLength
+      while i > maxCodeLen:
+        if histogramNumBits[i] == 0:
+          dec i
+          continue
 
-    for node in nodes:
-      lengths[node.symbol] = node.freq.uint8
+        var j = i - 2
+        while j > 0 and histogramNumBits[j] == 0:
+          dec j
+
+        histogramNumBits[i] -= 2
+        inc histogramNumBits[i - 1]
+
+        histogramNumBits[j + 1] += 2
+        dec histogramNumBits[j]
+
+      proc quickSort(a: var seq[Node], inl, inr: int) =
+        var
+          r = inr
+          l = inl
+        let n = r - l + 1
+        if n < 2:
+          return
+        let p = a[l + 3 * n div 4].freq
+        while l <= r:
+          if a[l].freq < p:
+            inc l
+          elif a[r].freq > p:
+            dec r
+          else:
+            swap(a[l], a[r])
+            inc l
+            dec r
+        quickSort(a, inl, r)
+        quickSort(a, l, inr)
+
+      quicksort(nodes, 0, nodes.high)
+
+      var bitLen = 1
+      for node in nodes:
+        while histogramNumBits[bitLen] == 0:
+          inc bitLen
+          continue
+        node.freq = bitLen
+        dec histogramNumBits[bitLen]
+
+      for node in nodes:
+        lengths[node.symbol] = node.freq.uint8
 
   var lengthCounts: array[maxCodeLength + 1, uint8]
   for l in lengths:
