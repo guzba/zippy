@@ -158,7 +158,7 @@ proc openStreamImpl(
           )
       typeFlag = header[156]
       fileMode = try:
-          parseOctInt(header[100 ..< 106])
+          parseOctInt(header[100 ..< 107])
         except ValueError:
           raise newException(
             ZippyError, "Unexpected error while opening tarball (mode)"
