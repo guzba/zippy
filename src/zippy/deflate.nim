@@ -163,7 +163,9 @@ proc huffmanCodes(
 
   (codes, lengths)
 
-proc huffmanOnlyEncode(src: string): (seq[uint16], seq[int], seq[int], int) =
+proc huffmanOnlyEncode(
+  src: ptr UncheckedArray[uint8], len: int
+): (seq[uint16], seq[int], seq[int], int) =
   var
     encoded = newSeq[uint16]()
     freqLitLen = newSeq[int](286)
@@ -171,13 +173,13 @@ proc huffmanOnlyEncode(src: string): (seq[uint16], seq[int], seq[int], int) =
 
   freqLitLen[256] = 1 # Alway 1 end-of-block symbol
 
-  for i, c in src:
-    inc freqLitLen[cast[uint8](c)]
+  for i in 0 ..< len:
+    inc freqLitLen[src[i]]
 
-  for i in 0 ..< src.len div maxLiteralLength:
+  for i in 0 ..< len div maxLiteralLength:
     encoded.add(maxLiteralLength.uint16)
 
-  encoded.add((src.len mod maxLiteralLength).uint16)
+  encoded.add((len mod maxLiteralLength).uint16)
 
   (encoded, freqLitLen, freqDist, 0)
 
@@ -212,14 +214,22 @@ proc deflate*(src: string, level = -1): string =
   if level == 0:
     return deflateNoCompression(src)
 
+  let
+    len = src.len
+    sp =
+      if len > 0:
+        cast[ptr UncheckedArray[uint8]](src[0].unsafeAddr)
+      else:
+        nil
+
   let (encoded, freqLitLen, freqDist, literalsTotal) = block:
     if level == -2:
-      huffmanOnlyEncode(src)
+      huffmanOnlyEncode(sp, len)
     elif level == 1:
-      snappyEncode(src)
+      snappyEncode(sp, len)
     else:
       # -1 or [2, 9]
-      lz77Encode(src, configurationTable[if level == -1: 6 else: level])
+      lz77Encode(sp, len, configurationTable[if level == -1: 6 else: level])
 
   # If encoding returned almost all literals then write uncompressed.
   if literalsTotal >= (src.len.float32 * 0.98).int:

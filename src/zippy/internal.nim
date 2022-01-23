@@ -227,7 +227,10 @@ proc distanceCodeIndex*(value: uint16): uint16 =
   else:
     distanceCodes[value shr 14] + 28
 
-proc findMatchLength*(src: string, s1, s2, limit: int): int {.inline.} =
+proc determineMatchLength*(
+  src: ptr UncheckedArray[uint8],
+  s1, s2, limit: int
+): int {.inline.} =
   var
     s1 = s1
     s2 = s2

@@ -6,7 +6,7 @@ import common, internal
 
 proc encodeFragment(
   encoded: var seq[uint16],
-  src: string,
+  src: ptr UncheckedArray[uint8],
   op: var int,
   start, bytesToRead: int,
   compressTable: var seq[uint16],
@@ -104,7 +104,7 @@ proc encodeFragment(
       while true:
         let
           limit = min(ipEnd, ip + maxMatchLen)
-          matched = 4 + findMatchLength(src, candidate + 4, ip + 4, limit)
+          matched = 4 + determineMatchLength(src, candidate + 4, ip + 4, limit)
           offset = ip - candidate
         ip += matched
         addCopy(offset, matched)
@@ -131,7 +131,9 @@ proc encodeFragment(
 
   emitRemainder()
 
-proc snappyEncode*(src: string): (seq[uint16], seq[int], seq[int], int) =
+proc snappyEncode*(
+  src: ptr UncheckedArray[uint8], len: int
+): (seq[uint16], seq[int], seq[int], int) =
   var
     encoded = newSeq[uint16](4096)
     freqLitLen = newSeq[int](286)
@@ -147,9 +149,9 @@ proc snappyEncode*(src: string): (seq[uint16], seq[int], seq[int], int) =
   var
     ip, op: int
     compressTable = newSeq[uint16](maxCompressTableSize)
-  while ip < src.len:
+  while ip < len:
     let
-      fragmentSize = src.len - ip
+      fragmentSize = len - ip
       bytesToRead = min(fragmentSize, maxBlockSize)
     if bytesToRead <= 0:
       failCompress()

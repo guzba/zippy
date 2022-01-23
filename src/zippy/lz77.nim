@@ -5,10 +5,10 @@ const
   hashSize = 1 shl hashBits
 
 proc lz77Encode*(
-  src: string, config: CompressionConfig
+  src: ptr UncheckedArray[uint8], len: int, config: CompressionConfig
 ): (seq[uint16], seq[int], seq[int], int) =
   var
-    encoded = newSeq[uint16](src.len div 2)
+    encoded = newSeq[uint16](len div 2)
     freqLitLen = newSeq[int](286)
     freqDist = newSeq[int](baseDistances.len)
     op, literalsTotal: int
@@ -48,11 +48,11 @@ proc lz77Encode*(
     encoded[op + 2] = length.uint16
     op += 3
 
-  if minMatchLen >= src.len:
-    for c in src:
-      inc freqLitLen[cast[uint8](c)]
+  if minMatchLen >= len:
+    for i in 0 ..< len:
+      inc freqLitLen[src[i]]
     encoded.setLen(1)
-    addLiteral(0, src.len)
+    addLiteral(0, len)
     return (encoded, freqLitLen, freqDist, literalsTotal)
 
   encoded.setLen(4096)
@@ -71,9 +71,9 @@ proc lz77Encode*(
     chain[windowPos] = head[hash]
     head[hash] = windowPos
 
-  while pos < src.len:
-    if pos + minMatchLen >= src.len:
-      addLiteral(pos - literalLen, src.len - pos + literalLen)
+  while pos < len:
+    if pos + minMatchLen >= len:
+      addLiteral(pos - literalLen, len - pos + literalLen)
       break
 
     windowPos = (pos and (maxWindowSize - 1)).uint16
@@ -83,7 +83,7 @@ proc lz77Encode*(
 
     var
       hashPos = chain[windowPos]
-      limit = min(src.len, pos + maxMatchLen)
+      limit = min(len, pos + maxMatchLen)
       tries = config.chain
       prevOffset, longestMatchOffset, longestMatchLen: int
     while tries > 0 and hashPos != 0:
@@ -100,7 +100,7 @@ proc lz77Encode*(
 
       prevOffset = offset
 
-      let matchLen = findMatchLength(src, pos - offset, pos, limit)
+      let matchLen = determineMatchLength(src, pos - offset, pos, limit)
       if matchLen > longestMatchLen:
         if matchLen >= config.good:
           tries = tries shr 2
@@ -121,7 +121,7 @@ proc lz77Encode*(
       for i in 1 ..< longestMatchLen:
         inc pos
         windowPos = (pos and (maxWindowSize - 1)).uint16
-        if pos + minMatchLen < src.len:
+        if pos + minMatchLen < len:
           hash = hash4(pos)
           updateChain()
     else:
