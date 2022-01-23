@@ -4,61 +4,61 @@ const
   fastBits = 9
   fastMask = (1 shl 9) - 1
 
-type
-  Huffman = ref object
-    firstCode, firstSymbol: array[16, uint16]
-    maxCodes: array[17, uint]
-    lengths: array[288, uint8]
-    values: array[288, uint16]
-    fast: array[1 shl fastBits, uint16]
+type Huffman = ref object
+  firstCode, firstSymbol: array[16, uint16]
+  maxCodes: array[17, uint32]
+  lengths: array[288, uint8]
+  values: array[288, uint16]
+  fast: array[1 shl fastBits, uint16]
 
 when defined(release):
   {.push checks: off.}
 
-proc newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
+proc newHuffman(codeLengths: seq[uint8], maxNumCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
 
   result = Huffman()
 
-  if lengths.len > maxNumCodes:
+  if codeLengths.len > maxNumCodes:
     failUncompress()
 
-  var sizes: array[17, uint]
-  for i in 0 ..< lengths.len:
-    inc sizes[lengths[i]]
-  sizes[0] = 0
+  var histogram: array[17, uint16]
+  for i in 0 ..< codeLengths.len:
+    inc histogram[codeLengths[i]]
+  histogram[0] = 0
 
   for i in 1 ..< 16:
-    if sizes[i] > (1.uint shl i):
+    if histogram[i] > (1.uint16 shl i):
       failUncompress()
 
   var
-    code, k: uint
-    nextCode: array[16, uint]
+    code: uint32
+    k: uint16
+    nextCode: array[16, uint32]
   for i in 1 ..< 16:
     nextCode[i] = code
     result.firstCode[i] = code.uint16
-    result.firstSymbol[i] = k.uint16
-    code = code + sizes[i]
-    if sizes[i] > 0.uint and code - 1 >= (1.uint shl i):
+    result.firstSymbol[i] = k
+    code = code + histogram[i]
+    if histogram[i] > 0 and code - 1 >= (1.uint32 shl i):
       failUncompress()
     result.maxCodes[i] = (code shl (16 - i))
     code = code shl 1
-    k += sizes[i]
+    k += histogram[i]
 
   result.maxCodes[16] = 1 shl 16
 
-  for i, len in lengths:
+  for i, len in codeLengths:
     if len > 0.uint8:
       let symbolId =
         nextCode[len] - result.firstCode[len] + result.firstSymbol[len]
       result.lengths[symbolId] = len
       result.values[symbolId] = i.uint16
       if len <= fastBits:
-        let fast = (len.uint shl 9) or i.uint
-        var k = reverseBits(nextCode[len].uint16) shr (16.uint8 - len)
+        let fast = (len.uint16 shl 9) or i.uint16
+        var k = reverseBits(nextCode[len].uint16) shr (16.uint16 - len)
         while k < (1 shl fastBits):
-          result.fast[k] = fast.uint16
+          result.fast[k] = fast
           k += (1.uint16 shl len)
       inc nextCode[len]
 
