@@ -37,22 +37,21 @@ proc readBits*(b: var BitStreamReader, bits: uint): uint16 =
   b.bitBuffer = b.bitBuffer shr bits
   b.bitsBuffered -= bits.int # bitCount can go negative if we've read past the end
 
-proc readBytes*(b: var BitStreamReader, dst: var string, start, len: int) =
-  assert b.bitsBuffered mod 8 == 0
+proc readBytes*(b: var BitStreamReader, dst: pointer, len: int) =
+  if b.bitsBuffered mod 8 != 0:
+    raise newException(ZippyError, "Must be at a byte boundary")
 
-  let posOffset = b.bitsBuffered div 8
-
-  if b.pos - posOffset + len > b.len:
+  let offset = b.bitsBuffered div 8
+  if b.pos - offset + len > b.len:
     failEndOfBuffer()
 
-  copyMem(dst[start].addr, b.src[b.pos - posOffset].addr, len)
+  copyMem(dst, b.src[b.pos - offset].addr, len)
 
-  b.pos = b.pos - posOffset + len
+  b.pos = b.pos - offset + len
   b.bitsBuffered = 0
   b.bitBuffer = 0
 
 proc skipRemainingBitsInCurrentByte*(b: var BitStreamReader) =
-  # If reading
   let mod8 = b.bitsBuffered mod 8
   if mod8 != 0:
     b.bitsBuffered -= mod8

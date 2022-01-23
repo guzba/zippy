@@ -228,7 +228,7 @@ proc inflateNoCompression(
     failUncompress()
   if len > 0:
     dst.setLen(op + len) # Make room for the bytes to be copied to
-    b.readBytes(dst, op, len)
+    b.readBytes(dst[op].addr, len)
   op += len
 
 proc inflate*(dst: var string, src: string, pos: int) =
