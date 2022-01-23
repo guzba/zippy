@@ -247,19 +247,21 @@ func findMatchLength*(src: string, s1, s2, limit: int): int {.inline.} =
     inc s2
     inc result
 
-func adler32*(data: string): uint32 =
+proc adler32*(src: pointer, len: int): uint32 =
   ## See https://github.com/madler/zlib/blob/master/adler32.c
+
+  let src = cast[ptr UncheckedArray[uint8]](src)
 
   const nmax = 5552
 
   var
     s1 = 1.uint32
     s2 = 0.uint32
-    l = data.len
+    l = len
     pos: int
 
   template do1(i: int) =
-    s1 += cast[uint8](data[pos + i])
+    s1 += src[pos + i]
     s2 += s1
 
   template do8(i: int) =
@@ -291,13 +293,19 @@ func adler32*(data: string): uint32 =
     pos += 16
 
   for i in 0 ..< l:
-    s1 += cast[uint8](data[pos + i])
+    s1 += src[pos + i]
     s2 += s1
 
   s1 = s1 mod 65521
   s2 = s2 mod 65521
 
   result = (s2 shl 16) or s1
+
+proc adler32*(src: string): uint32 {.inline.} =
+  if src.len > 0:
+    adler32(src[0].unsafeAddr, src.len)
+  else:
+    adler32(nil, 0)
 
 func toUnixPath*(path: string): string =
   path.replace('\\', '/')
