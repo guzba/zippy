@@ -183,36 +183,47 @@ proc huffmanOnlyEncode(
 
   (encoded, freqLitLen, freqDist, 0)
 
-proc deflateNoCompression(src: ptr UncheckedArray[uint8], len: int): string =
+proc deflateNoCompression(
+  b: var BitStreamWriter,
+  dst: var string,
+  src: ptr UncheckedArray[uint8],
+  len: int
+) =
   let blockCount = max(
     (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
     1
   )
 
-  var b: BitStreamWriter
   for i in 0 ..< blockCount:
     let finalBlock = i == blockCount - 1
-    b.addBits(finalBlock.uint16, 8)
+    b.addBits(dst, finalBlock.uint16, 8)
 
     let
       pos = i * maxUncompressedBlockSize
       len = min(len - pos, maxUncompressedBlockSize).uint16
       nlen = maxUncompressedBlockSize.uint16 - len
 
-    b.addBits(len, 16)
-    b.addBits(nlen, 16)
+    b.addBits(dst, len, 16)
+    b.addBits(dst, nlen, 16)
     if len > 0.uint16:
-      b.addBytes(src, pos, len.int)
+      b.addBytes(dst, src, pos, len.int)
 
-  b.dst.setLen(b.pos)
-  b.dst
+  dst.setLen(b.pos)
 
-proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
+proc deflate*(
+  dst: var string,
+  src: ptr UncheckedArray[uint8],
+  len, level: int
+) =
   if level < -2 or level > 9:
     raise newException(ZippyError, "Invalid compression level " & $level)
 
+  var b: BitStreamWriter
+  b.pos = dst.len
+
   if level == 0:
-    return deflateNoCompression(src, len)
+    deflateNoCompression(b, dst, src, len)
+    return
 
   let (encoded, freqLitLen, freqDist, literalsTotal) = block:
     if level == -2:
@@ -225,7 +236,8 @@ proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
 
   # If encoding returned almost all literals then write uncompressed.
   if literalsTotal >= (len.float32 * 0.98).int:
-    return deflateNoCompression(src, len)
+    deflateNoCompression(b, dst, src, len)
+    return
 
   let
     useFixedCodes = len <= 2048
@@ -240,10 +252,9 @@ proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
       else:
         huffmanCodes(freqDist, 2, maxCodeLength)
 
-  var b: BitStreamWriter
   if useFixedCodes:
-    b.addBits(1, 1)
-    b.addBits(1, 2) # Fixed Huffman codes
+    b.addBits(dst, 1, 1)
+    b.addBits(dst, 1, 2) # Fixed Huffman codes
   else:
     var
       codeLengths: array[maxLitLenCodes + maxDistanceCodes, uint8]
@@ -319,30 +330,30 @@ proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
       hlit = litLenCodes.len - firstLengthCodeIndex
       hdist = distanceCodes.len - 1
 
-    b.addBits(1, 1)
-    b.addBits(2, 2) # Dynamic Huffman codes
+    b.addBits(dst, 1, 1)
+    b.addBits(dst, 2, 2) # Dynamic Huffman codes
 
-    b.addBits(hlit.uint32, 5)
-    b.addBits(hdist.uint32, 5)
-    b.addBits(hclen.uint32, 4)
+    b.addBits(dst, hlit.uint32, 5)
+    b.addBits(dst, hdist.uint32, 5)
+    b.addBits(dst, hclen.uint32, 4)
 
     for i in 0 ..< hclen + 4:
-      b.addBits(clclOrdered[i], 3)
+      b.addBits(dst, clclOrdered[i], 3)
 
     block:
       var i: int
       while i < codeLengthsRle.len:
         let symbol = codeLengthsRle[i]
-        b.addBits(clCodes[symbol], clCodeLengths[symbol].int)
+        b.addBits(dst, clCodes[symbol], clCodeLengths[symbol].int)
         inc i
         if symbol == 16:
-          b.addBits(codeLengthsRle[i], 2)
+          b.addBits(dst, codeLengthsRle[i], 2)
           inc i
         elif symbol == 17:
-          b.addBits(codeLengthsRle[i], 3)
+          b.addBits(dst, codeLengthsRle[i], 3)
           inc i
         elif symbol == 18:
-          b.addBits(codeLengthsRle[i], 7)
+          b.addBits(dst, codeLengthsRle[i], 7)
           inc i
 
   block write_encoded_data:
@@ -369,7 +380,7 @@ proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
         buf = buf or (lengthExtra.uint32 shl bitLen)
         bitLen += lengthExtraBits.int
 
-        b.addBits(buf, bitLen)
+        b.addBits(dst, buf, bitLen)
 
         buf = distanceCodes[distIndex].uint32
         bitLen = distanceCodeLengths[distIndex].int
@@ -377,7 +388,7 @@ proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
         buf = buf or (distExtra.uint32 shl bitLen)
         bitLen += distExtraBits.int
 
-        b.addBits(buf, bitLen)
+        b.addBits(dst, buf, bitLen)
       else:
         let length = encoded[encPos].int
         inc encPos
@@ -391,13 +402,14 @@ proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
           buf = buf or (litLenCodes[cast[uint8](src[srcPos + 1])].uint32 shl bitLen)
           bitLen += litLenCodeLengths[cast[uint8](src[srcPos + 1])].int
 
-          b.addBits(buf, bitLen)
+          b.addBits(dst, buf, bitLen)
 
           srcPos += 2
           j += 2
 
         if j != length:
           b.addBits(
+            dst,
             litLenCodes[cast[uint8](src[srcPos])],
             litLenCodeLengths[cast[uint8](src[srcPos])].int
           )
@@ -406,12 +418,11 @@ proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
   if litLenCodeLengths[256] == 0:
     failCompress()
 
-  b.addBits(litLenCodes[256], litLenCodeLengths[256].int) # End of block
+  b.addBits(dst, litLenCodes[256], litLenCodeLengths[256].int) # End of block
 
   b.skipRemainingBitsInCurrentByte()
 
-  b.dst.setLen(b.pos)
-  b.dst
+  dst.setLen(b.pos)
 
 when defined(release):
   {.pop.}

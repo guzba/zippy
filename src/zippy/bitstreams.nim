@@ -8,7 +8,6 @@ type
     bitsBuffered*: int
 
   BitStreamWriter* = object
-    dst*: string
     pos*, bitPos*: int
 
 template failEndOfBuffer*() =
@@ -63,30 +62,35 @@ func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
   b.bitPos = cast[int](cast[uint](bits + b.bitPos) and 7)
   # does this matter^?
 
-proc addBits*(b: var BitStreamWriter, value: uint32, bitLen: int) {.inline.} =
+proc addBits*(
+  b: var BitStreamWriter,
+  dst: var string,
+  value: uint32, bitLen: int
+) {.inline.} =
   assert bitLen <= 32
 
-  if b.pos + 8 > b.dst.len:
+  if b.pos + 8 > dst.len:
     # Make sure we have room to read64
-    b.dst.setLen(max(b.dst.len * 2, 64))
+    dst.setLen(max(dst.len * 2, 64))
 
   let value = value.uint64 and ((1.uint64 shl bitLen) - 1)
 
-  write64(b.dst, b.pos, read64(b.dst, b.pos) or (value.uint64 shl b.bitPos))
+  write64(dst, b.pos, read64(dst, b.pos) or (value.uint64 shl b.bitPos))
 
   b.incPos(bitLen)
 
 proc addBytes*(
   b: var BitStreamWriter,
+  dst: var string,
   src: ptr UncheckedArray[uint8],
   start, len: int
 ) =
   assert b.bitPos == 0
 
-  if b.pos + len > b.dst.len:
-    b.dst.setLen(b.pos + len)
+  if b.pos + len > dst.len:
+    dst.setLen(b.pos + len)
 
-  copyMem(b.dst[b.pos].addr, src[start].unsafeAddr, len)
+  copyMem(dst[b.pos].addr, src[start].unsafeAddr, len)
 
   b.incPos(len * 8)
 
