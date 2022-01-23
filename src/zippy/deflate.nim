@@ -235,12 +235,12 @@ proc deflate*(src: string, level = -1): string =
     useFixedCodes = src.len <= 2048
     (llLengths, llCodes) = block:
       if useFixedCodes:
-        (fixedCodeLengths, fixedCodes)
+        (fixedLitLenCodeLengths, fixedLitLenCodes)
       else:
         huffmanCodeLengths(freqLitLen, 257, maxCodeLength)
     (distLengths, distCodes) = block:
       if useFixedCodes:
-        (fixedDistLengths, fixedDistCodes)
+        (fixedDistanceCodeLengths, fixedDistanceCodes)
       else:
         huffmanCodeLengths(freqDist, 2, maxCodeLength)
 

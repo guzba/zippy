@@ -120,9 +120,6 @@ const
     16.uint16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
-when defined(release):
-  {.push checks: off.}
-
 proc makeCodes(lengths: seq[uint8]): seq[uint16] =
   result = newSeq[uint16](lengths.len)
 
@@ -142,7 +139,7 @@ proc makeCodes(lengths: seq[uint8]): seq[uint16] =
       inc nextCode[lengths[i]]
 
 const
-  fixedCodeLengths* = block:
+  fixedLitLenCodeLengths* = block:
     var lengths = newSeq[uint8](maxFixedLitLenCodes)
     for i in 0 ..< lengths.len:
       if i <= 143:
@@ -155,17 +152,17 @@ const
         lengths[i] = 8
     lengths
 
-  fixedCodes* = block:
-    makeCodes(fixedCodeLengths)
+  fixedLitLenCodes* = block:
+    makeCodes(fixedLitLenCodeLengths)
 
-  fixedDistLengths* = block:
+  fixedDistanceCodeLengths* = block:
     var lengths = newSeq[uint8](maxDistanceCodes)
     for i in 0 ..< lengths.len:
       lengths[i] = 5
     lengths
 
-  fixedDistCodes* = block:
-    makeCodes(fixedDistLengths)
+  fixedDistanceCodes* = block:
+    makeCodes(fixedDistanceCodeLengths)
 
 template failUncompress*() =
   raise newException(ZippyError, "Invalid buffer, unable to uncompress")
@@ -184,6 +181,9 @@ template write64*(dst: ptr UncheckedArray[uint8], op: int, value: uint64) =
 
 template copy64*(dst, src: ptr UncheckedArray[uint8], op, ip: int) =
   write64(dst, op, read64(src, ip))
+
+when defined(release):
+  {.push checks: off.}
 
 proc read16*(s: string, pos: int): uint16 {.inline.} =
   cast[ptr uint16](s[pos].unsafeAddr)[]

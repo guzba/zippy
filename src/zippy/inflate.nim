@@ -102,8 +102,8 @@ proc inflateBlock(
   var literalHuffman, distanceHuffman: Huffman
 
   if fixedCodes:
-    literalHuffman = newHuffman(fixedCodeLengths, maxFixedLitLenCodes)
-    distanceHuffman = newHuffman(fixedDistLengths, maxDistanceCodes)
+    literalHuffman = newHuffman(fixedLitLenCodeLengths, maxFixedLitLenCodes)
+    distanceHuffman = newHuffman(fixedDistanceCodeLengths, maxDistanceCodes)
   else:
     let
       hlit = b.readBits(5).int + firstLengthCodeIndex
