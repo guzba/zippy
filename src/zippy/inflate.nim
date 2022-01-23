@@ -134,7 +134,7 @@ proc inflateBlock(
         let
           prev = unpacked[i - 1]
           repeatCount = b.readBits(2).int + 3
-        if i + repeatCount > hlit + hdist:
+        if i + repeatCount > unpacked.len:
           failUncompress()
         for _ in 0 ..< repeatCount:
           unpacked[i] = prev
@@ -147,6 +147,9 @@ proc inflateBlock(
         i += repeatZeroCount
       else:
         raise newException(ZippyError, "Invalid symbol")
+
+      if i > hlit + hdist:
+        failUncompress()
 
     literalsHuffman.init(unpacked.toOpenArray(0, hlit - 1))
     distancesHuffman.init(unpacked.toOpenArray(hlit, hlit + hdist - 1))

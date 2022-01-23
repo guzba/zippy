@@ -2,7 +2,7 @@ import zippy/internal, zippy/crc, zippy/deflate, zippy/inflate, zippy/common
 
 export common
 
-func compress*(
+proc compress*(
   src: string,
   level = DefaultCompression,
   dataFormat = dfGzip
@@ -60,7 +60,7 @@ func compress*(
   else:
     raise newException(ZippyError, "Invalid data format " & $dataFormat)
 
-func uncompress*(
+proc uncompress*(
   src: string,
   dataFormat = dfDetect
 ): string {.raises: [ZippyError].} =
