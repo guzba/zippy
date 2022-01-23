@@ -62,12 +62,33 @@ func compress*(
   else:
     result = deflate(src, level)
 
-func uncompress(
-  dst: var string,
+func uncompress*(
   src: string,
-  dataFormat: CompressedDataFormat
-) =
+  dataFormat = dfDetect
+): string {.raises: [ZippyError].} =
+  ## Uncompresses src and returns the uncompressed data.
+
+  result = newStringOfCap(src.len)
+
   case dataFormat:
+  of dfDetect:
+    if (
+      src.len >= 18 and
+      src[0 .. 2] == [31.char, 139.char, 8.char] and
+      (cast[uint8](src[3]) and 0b11100000) == 0
+    ): # This looks like gzip
+      return uncompress(src, dfGzip)
+
+    if (
+      src.len >= 6 and
+      (cast[uint8](src[0]) and 0b00001111) == 8 and
+      (cast[uint8](src[0]) shr 4) <= 7 and
+      ((src[0].uint16 * 256) + src[1].uint16) mod 31 == 0
+    ): # This looks like zlib
+      return uncompress(src, dfZlib)
+
+    raise newException(ZippyError, "Unable to detect compressed data format")
+
   of dfGzip:
     # Assumes the gzip src data to uncompress contains only one member.
 
@@ -129,13 +150,14 @@ func uncompress(
       isize = read32(src, src.len - 4)
 
     # Last to touch src
-    inflate(dst, src, pos)
+    inflate(result, src, pos)
 
-    if checksum != crc32(dst):
+    if checksum != crc32(result):
       raise newException(ZippyError, "Checksum verification failed")
 
-    if isize != (dst.len mod (1 shl 31)).uint32:
+    if isize != (result.len mod (1 shl 31)).uint32:
       raise newException(ZippyError, "Size verification failed")
+
   of dfZlib:
     if src.len < 6:
       failUncompress()
@@ -162,40 +184,10 @@ func uncompress(
     if (flg and 0b00100000) != 0: # FDICT
       raise newException(ZippyError, "Preset dictionary is not yet supported")
 
-    inflate(dst, src, 2)
+    inflate(result, src, 2)
 
-    if checksum != adler32(dst):
+    if checksum != adler32(result):
       raise newException(ZippyError, "Checksum verification failed")
+
   of dfDeflate:
-    inflate(dst, src)
-  of dfDetect:
-    # Should never happen
-    failUncompress()
-
-func uncompress*(
-  src: string,
-  dataFormat = dfDetect
-): string {.raises: [ZippyError].} =
-  ## Uncompresses src and returns the uncompressed data.
-
-  result = newStringOfCap(src.len)
-
-  case dataFormat:
-  of dfDetect:
-    if (
-      src.len >= 18 and
-      src[0 .. 2] == [31.char, 139.char, 8.char] and
-      (cast[uint8](src[3]) and 0b11100000) == 0
-    ): # This looks like gzip
-      uncompress(result, src, dfGzip)
-    elif (
-      src.len >= 6 and
-      (cast[uint8](src[0]) and 0b00001111) == 8 and
-      (cast[uint8](src[0]) shr 4) <= 7 and
-      ((src[0].uint16 * 256) + src[1].uint16) mod 31 == 0
-    ): # This looks like zlib
-      uncompress(result, src, dfZlib)
-    else:
-      raise newException(ZippyError, "Unable to detect compressed data format")
-  else:
-    uncompress(result, src, dataFormat)
+    inflate(result, src, 0)
