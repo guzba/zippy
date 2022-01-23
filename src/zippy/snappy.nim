@@ -5,7 +5,7 @@ import common, internal
 ## See https://github.com/guzba/supersnappy
 
 proc encodeFragment(
-  encoded: var seq[uint16],
+  encoding: var seq[uint16],
   src: ptr UncheckedArray[uint8],
   op: var int,
   start, bytesToRead: int,
@@ -34,17 +34,17 @@ proc encodeFragment(
 
     var remaining = length
     while remaining > 0:
-      if op + 1 > encoded.len:
-        encoded.setLen(encoded.len * 2)
+      if op + 1 > encoding.len:
+        encoding.setLen(encoding.len * 2)
 
       let added = min(remaining, (1 shl 15) - 1)
-      encoded[op] = added.uint16
+      encoding[op] = added.uint16
       inc op
       remaining -= added
 
   template addCopy(offset: int, length: int) =
-    if op + 3 > encoded.len:
-      encoded.setLen(encoded.len * 2)
+    if op + 3 > encoding.len:
+      encoding.setLen(encoding.len * 2)
 
     let
       lengthIndex = baseLengthIndices[length - baseMatchLen]
@@ -54,9 +54,9 @@ proc encodeFragment(
 
     # The length and dist indices are packed into this value with the highest
     # bit set as a flag to indicate this starts a run.
-    encoded[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
-    encoded[op + 1] = offset.uint16
-    encoded[op + 2] = length.uint16
+    encoding[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
+    encoding[op + 1] = offset.uint16
+    encoding[op + 2] = length.uint16
     op += 3
 
   template emitRemainder() =

@@ -225,7 +225,7 @@ proc deflate*(
     deflateNoCompression(b, dst, src, len)
     return
 
-  let (encoded, freqLitLen, freqDist, literalsTotal) = block:
+  let (encoding, freqLitLen, freqDist, literalsTotal) = block:
     if level == -2:
       huffmanOnlyEncode(src, len)
     elif level == 1:
@@ -358,12 +358,12 @@ proc deflate*(
 
   block write_encoded_data:
     var srcPos, encPos: int
-    while encPos < encoded.len:
-      if (encoded[encPos] and (1 shl 15)) != 0:
+    while encPos < encoding.len:
+      if (encoding[encPos] and (1 shl 15)) != 0:
         let
-          value = encoded[encPos]
-          offset = encoded[encPos + 1]
-          length = encoded[encPos + 2]
+          value = encoding[encPos]
+          offset = encoding[encPos + 1]
+          length = encoding[encPos + 2]
           lengthIndex = (value shr 8) and (uint8.high shr 1)
           distIndex = value and uint8.high
           lengthExtraBits = baseLengthsExtraBits[lengthIndex]
@@ -390,7 +390,7 @@ proc deflate*(
 
         b.addBits(dst, buf, bitLen)
       else:
-        let length = encoded[encPos].int
+        let length = encoding[encPos].int
         inc encPos
 
         var j: int

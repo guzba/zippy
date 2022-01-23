@@ -128,7 +128,7 @@ type
   BlockMetadata* = object
     litLenFreq*: array[maxLitLenCodes, uint16]
     distanceFreq*: array[maxDistanceCodes, uint16]
-    literalsCount*: int
+    numLiterals*: int
 
 const
   fixedLitLenCodeLengths* = block:

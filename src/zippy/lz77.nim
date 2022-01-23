@@ -8,7 +8,7 @@ proc lz77Encode*(
   src: ptr UncheckedArray[uint8], len: int, config: CompressionConfig
 ): (seq[uint16], seq[int], seq[int], int) =
   var
-    encoded = newSeq[uint16](len div 2)
+    encoding = newSeq[uint16](len div 2)
     freqLitLen = newSeq[int](286)
     freqDist = newSeq[int](baseDistances.len)
     op, literalsTotal: int
@@ -23,17 +23,17 @@ proc lz77Encode*(
 
     var remaining = length
     while remaining > 0:
-      if op + 1 > encoded.len:
-        encoded.setLen(encoded.len * 2)
+      if op + 1 > encoding.len:
+        encoding.setLen(encoding.len * 2)
 
       let added = min(remaining, (1 shl 15) - 1)
-      encoded[op] = added.uint16
+      encoding[op] = added.uint16
       inc op
       remaining -= added
 
   template addCopy(offset, length: int) =
-    if op + 3 > encoded.len:
-      encoded.setLen(encoded.len * 2)
+    if op + 3 > encoding.len:
+      encoding.setLen(encoding.len * 2)
 
     let
       lengthIndex = baseLengthIndices[length - baseMatchLen]
@@ -43,19 +43,19 @@ proc lz77Encode*(
 
     # The length and dist indices are packed into this value with the highest
     # bit set as a flag to indicate this starts a run.
-    encoded[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
-    encoded[op + 1] = offset.uint16
-    encoded[op + 2] = length.uint16
+    encoding[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
+    encoding[op + 1] = offset.uint16
+    encoding[op + 2] = length.uint16
     op += 3
 
   if minMatchLen >= len:
     for i in 0 ..< len:
       inc freqLitLen[src[i]]
-    encoded.setLen(1)
+    encoding.setLen(1)
     addLiteral(0, len)
-    return (encoded, freqLitLen, freqDist, literalsTotal)
+    return (encoding, freqLitLen, freqDist, literalsTotal)
 
-  encoded.setLen(4096)
+  encoding.setLen(4096)
 
   var
     pos, literalLen: int
@@ -131,5 +131,5 @@ proc lz77Encode*(
         literalLen = 0
     inc pos
 
-  encoded.setLen(op)
-  (encoded, freqLitLen, freqDist, literalsTotal)
+  encoding.setLen(op)
+  (encoding, freqLitLen, freqDist, literalsTotal)
