@@ -203,7 +203,7 @@ proc inflateNoCompression(b: var BitStream, dst: var string, op: var int) =
     b.readBytes(dst, op, len)
   op += len
 
-proc inflate*(dst: var string, src: string, pos = 0) =
+proc inflate*(dst: var string, src: string, pos: int) =
   var
     b = initBitStream(src, pos)
     op: int
