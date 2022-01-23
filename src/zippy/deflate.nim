@@ -399,33 +399,31 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
     while encPos < encoding.len:
       if (encoding[encPos] and (1 shl 15)) != 0:
         let
-          value = encoding[encPos]
+          value = encoding[encPos + 0]
           offset = encoding[encPos + 1]
           length = encoding[encPos + 2]
           lengthIndex = (value shr 8) and (uint8.high shr 1)
-          distIndex = value and uint8.high
+          distanceIndex = value and uint8.high
           lengthExtraBits = baseLengthsExtraBits[lengthIndex]
           lengthExtra = length - baseLengths[lengthIndex]
-          distExtraBits = baseDistanceExtraBits[distIndex]
-          distExtra = offset - baseDistances[distIndex]
+          distanceExtraBits = baseDistanceExtraBits[distanceIndex]
+          distanceExtra = offset - baseDistances[distanceIndex]
 
         encPos += 3
         srcPos += length.int
 
         var
-          buf = litLenCodes[lengthIndex + firstLengthCodeIndex].uint32
-          bitLen = litLenCodeLengths[lengthIndex + firstLengthCodeIndex].int
-
+          buf = litLenCodes[lengthIndex + 257].uint32
+          bitLen = litLenCodeLengths[lengthIndex + 257].int
         buf = buf or (lengthExtra.uint32 shl bitLen)
         bitLen += lengthExtraBits.int
 
         b.addBits(dst, buf, bitLen)
 
-        buf = distanceCodes[distIndex].uint32
-        bitLen = distanceCodeLengths[distIndex].int
-
-        buf = buf or (distExtra.uint32 shl bitLen)
-        bitLen += distExtraBits.int
+        buf = distanceCodes[distanceIndex].uint32
+        bitLen = distanceCodeLengths[distanceIndex].int
+        buf = buf or (distanceExtra.uint32 shl bitLen)
+        bitLen += distanceExtraBits.int
 
         b.addBits(dst, buf, bitLen)
       else:
