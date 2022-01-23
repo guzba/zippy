@@ -9,13 +9,8 @@ func compress*(
 ): string {.raises: [ZippyError].} =
   ## Compresses src and returns the compressed data.
 
-  if dataFormat == dfDetect:
-    raise newException(
-      ZippyError,
-      "A data format must be specified to compress"
-    )
-
-  if dataFormat == dfGzip:
+  case dataFormat:
+  of dfGzip:
     result.setLen(10)
     result[0] = 31.char
     result[1] = 139.char
@@ -38,7 +33,7 @@ func compress*(
     result.add(((isize shr 16) and 255).char)
     result.add(((isize shr 24) and 255).char)
 
-  elif dataFormat == dfZlib:
+  of dfZlib:
     const
       cm = 8.uint8
       cinfo = 7.uint8
@@ -59,8 +54,11 @@ func compress*(
     result.add(((checksum shr 8) and 255).char)
     result.add(((checksum shr 0) and 255).char)
 
-  else:
+  of dfDeflate:
     result = deflate(src, level)
+
+  else:
+    raise newException(ZippyError, "Invalid data format " & $dataFormat)
 
 func uncompress*(
   src: string,
