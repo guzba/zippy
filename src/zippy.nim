@@ -134,10 +134,7 @@ func uncompress*(
     if fhcrc:
       if pos + 2 >= src.len:
         failUncompress()
-      # TODO: Need to verify this works with a test file
-      # let checksum =
-      # if checksum != crc32(src[0 ..< pos]):
-      #   raise newException(ZippyError, "Header checksum verification failed")
+      # TODO: Need to implement this with a test file
       pos += 2
 
     if pos + 8 >= src.len:
@@ -175,10 +172,13 @@ func uncompress*(
 
     if cm != 8: # DEFLATE
       raise newException(ZippyError, "Unsupported compression method")
+
     if cinfo > 7.uint8:
       raise newException(ZippyError, "Invalid compression info")
+
     if ((cmf.uint16 * 256) + flg.uint16) mod 31 != 0:
       raise newException(ZippyError, "Invalid header")
+
     if (flg and 0b00100000) != 0: # FDICT
       raise newException(ZippyError, "Preset dictionary is not yet supported")
 
