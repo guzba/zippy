@@ -1,4 +1,4 @@
-import bitops, bitstreams, internal, common
+import bitstreams, common, internal, std/bitops
 
 const
   fastBits = 9
@@ -58,41 +58,45 @@ proc init(huffman: var Huffman, codeLengths: openArray[uint8]) =
       inc nextCode[len]
 
 proc decodeSymbol(b: var BitStream, h: var Huffman): uint16 {.inline.} =
-  ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
   ## This function is the most important for inflate performance.
 
   if b.bitCount < 16:
     b.fillBitBuf()
 
-  let
-    maxCodesLen = h.maxCodes.len.uint
-    fast = h.fast[b.bitBuf and fastMask]
-  var len: uint16
+  let fast = h.fast[b.bitBuf and fastMask]
+  var codeLength: uint16
   if fast > 0.uint16:
-    len = (fast shr 9)
+    codeLength = (fast shr 9)
     result = fast and 511
   else: # Slow path
-    let k = reverseBits(cast[uint16](b.bitBuf)).uint
-    len = 1
-    while len < maxCodesLen.uint16:
-      if k < h.maxCodes[len]:
+    let k = reverseBits(cast[uint16](b.bitBuf))
+    codeLength = 1
+    let maxCodeLength = h.maxCodes.len.uint16
+    while codeLength < maxCodeLength:
+      if k.uint32 < h.maxCodes[codeLength]:
         break
-      inc len
+      inc codeLength
 
-    if len >= 16.uint16:
+    if codeLength >= 16.uint16:
       failUncompress()
 
-    let symbolId = (k shr (16.uint16 - len)) - h.firstCode[len] + h.firstSymbol[len]
+    let symbolId =
+      (k shr (16.uint16 - codeLength)) -
+      h.firstCode[codeLength] +
+      h.firstSymbol[codeLength]
     result = h.values[symbolId]
 
-  if len.int > b.bitCount:
+  if codeLength.int > b.bitCount:
     failEndOfBuffer()
 
-  b.bitBuf = b.bitBuf shr len
-  b.bitCount -= len.int
+  b.bitBuf = b.bitBuf shr codeLength
+  b.bitCount -= codeLength.int
 
 proc inflateBlock(
-  dst: var string, b: var BitStream, op: var int, fixedCodes: bool
+  dst: var string,
+  b: var BitStream,
+  op: var int,
+  fixedCodes: bool
 ) =
   var literalsHuffman, distancesHuffman: Huffman
   if fixedCodes:
@@ -164,51 +168,58 @@ proc inflateBlock(
     elif symbol == 256:
       break
     else:
-      let lengthIndex = symbol - firstLengthCodeIndex
-      if lengthIndex >= baseLengths.len.uint16:
+      let lengthIdx = (symbol - 257).int
+      if lengthIdx >= baseLengths.len:
         failUncompress()
 
-      let totalLength = (
-        baseLengths[lengthIndex] +
-        b.readBits(baseLengthsExtraBits[lengthIndex])
+      let copyLength = (
+        baseLengths[lengthIdx] +
+        b.readBits(baseLengthsExtraBits[lengthIdx].uint)
       ).int
 
       let distanceIdx = decodeSymbol(b, distancesHuffman)
       if distanceIdx >= baseDistances.len.uint16:
         failUncompress()
 
-      let totalDist = (
+      let distance = (
         baseDistances[distanceIdx] +
-        b.readBits(baseDistanceExtraBits[distanceIdx])
+        b.readBits(baseDistanceExtraBits[distanceIdx].uint)
       ).int
-      if totalDist > op:
+
+      if distance > op:
         failUncompress()
 
       # Min match is 3 so leave room to overwrite by 13
-      if op + totalLength + 13 > dst.len:
-        dst.setLen((op + totalLength) * 2 + 10) # At least 16
+      if op + copyLength + 13 > dst.len:
+        dst.setLen((op + copyLength) * 2 + 10) # At least 16
 
-      if totalLength <= 16 and totalDist >= 8:
-        copy64(dst, dst, op, op - totalDist)
-        copy64(dst, dst, op + 8, op - totalDist + 8)
-        op += totalLength
+      let dst = cast[ptr UncheckedArray[uint8]](dst[0].addr)
+
+      if copyLength <= 16 and distance >= 8:
+        copy64(dst, dst, op, op - distance)
+        copy64(dst, dst, op + 8, op - distance + 8)
+        op += copyLength
       else:
         var
-          src = op - totalDist
-          pos = op
-          remaining = totalLength
-        while pos - src < 8:
-          copy64(dst, dst, pos, src)
-          remaining -= pos - src
-          pos += pos - src
+          copyFrom = op - distance
+          copyTo = op
+          remaining = copyLength
+        while copyTo - copyFrom < 8:
+          copy64(dst, dst, copyTo, copyFrom)
+          remaining -= copyTo - copyFrom
+          copyTo += copyTo - copyFrom
         while remaining > 0:
-          copy64(dst, dst, pos, src)
-          src += 8
-          pos += 8
+          copy64(dst, dst, copyTo, copyFrom)
+          copyFrom += 8
+          copyTo += 8
           remaining -= 8
-        op += totalLength
+        op += copyLength
 
-proc inflateNoCompression(dst: var string, b: var BitStream, op: var int) =
+proc inflateNoCompression(
+  dst: var string,
+  b: var BitStream,
+  op: var int
+) =
   b.skipRemainingBitsInCurrentByte()
   let
     len = b.readBits(16).int
