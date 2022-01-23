@@ -213,11 +213,7 @@ proc deflateNoCompression(
     if len > 0:
       b.addBytes(dst, src, pos, blockLen.int)
 
-proc deflate*(
-  dst: var string,
-  src: ptr UncheckedArray[uint8],
-  len, level: int
-) =
+proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) =
   if level < -2 or level > 9:
     raise newException(ZippyError, "Invalid compression level " & $level)
 
