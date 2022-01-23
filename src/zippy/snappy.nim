@@ -8,7 +8,7 @@ proc encodeFragment(
   encoding: var seq[uint16],
   metadata: var BlockMetadata,
   src: ptr UncheckedArray[uint8],
-  op: var int,
+  ep: var int,
   start, bytesToRead: int,
   compressTable: var seq[uint16]
 ) =
@@ -33,16 +33,16 @@ proc encodeFragment(
 
     var remaining = length
     while remaining > 0:
-      if op + 1 > encoding.len:
+      if ep + 1 > encoding.len:
         encoding.setLen(max(encoding.len * 2, 2))
 
       let added = min(remaining, (1 shl 15) - 1)
-      encoding[op] = added.uint16
-      inc op
+      encoding[ep] = added.uint16
+      inc ep
       remaining -= added
 
   template addCopy(offset: int, length: int) =
-    if op + 3 > encoding.len:
+    if ep + 3 > encoding.len:
       encoding.setLen(max(encoding.len * 2, 2))
 
     let
@@ -53,10 +53,10 @@ proc encodeFragment(
 
     # The length and dist indices are packed into this value with the highest
     # bit set as a flag to indicate this starts a run.
-    encoding[op] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
-    encoding[op + 1] = offset.uint16
-    encoding[op + 2] = length.uint16
-    op += 3
+    encoding[ep + 0] = ((lengthIndex shl 8) or distIndex) or (1 shl 15)
+    encoding[ep + 1] = offset.uint16
+    encoding[ep + 2] = length.uint16
+    ep += 3
 
   template emitRemainder() =
     if nextEmit < ipEnd:
@@ -135,21 +135,19 @@ proc encodeSnappy*(
   ep: var int,
   metadata: var BlockMetadata,
   src: ptr UncheckedArray[uint8],
-  start, len: int
+  blockStart, blockLen: int
 ) =
   metadata.litLenFreq[256] = 1 # Alway 1 end-of-block symbol
 
-  const
-    maxBlockSize = maxWindowSize
-    maxCompressTableSize = 1 shl 14
+  const maxCompressTableSize = 1 shl 14
 
   var
-    ip, op: int
+    pos = blockStart
     compressTable = newSeq[uint16](maxCompressTableSize)
-  while ip < len:
+  while pos < blockStart + blockLen:
     let
-      fragmentSize = len - ip
-      bytesToRead = min(fragmentSize, maxBlockSize)
+      fragmentSize = blockStart + blockLen - pos
+      bytesToRead = min(fragmentSize, maxWindowSize)
     if bytesToRead <= 0:
       failCompress()
 
@@ -157,9 +155,9 @@ proc encodeSnappy*(
       encoding,
       metadata,
       src,
-      op,
-      ip,
+      ep,
+      pos,
       bytesToRead,
       compressTable
     )
-    ip += bytesToRead
+    pos += bytesToRead

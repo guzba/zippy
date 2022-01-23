@@ -10,9 +10,8 @@ proc encodeLz77*(
   config: CompressionConfig,
   metadata: var BlockMetadata,
   src: ptr UncheckedArray[uint8],
-  start, len: int
+  blockStart, blockLen: int
 ) =
-  metadata.litLenFreq[256] = 1 # Alway 1 end-of-block symbol
 
   template addLiteral(start, length: int) =
     for i in 0 ..< length:
@@ -47,15 +46,15 @@ proc encodeLz77*(
     encoding[ep + 2] = length.uint16
     ep += 3
 
-  if minMatchLen >= len:
-    for i in 0 ..< len:
-      inc metadata.litLenFreq[src[i]]
-    encoding.setLen(1)
-    addLiteral(0, len)
+  metadata.litLenFreq[256] = 1 # Alway 1 end-of-block symbol
+
+  if minMatchLen >= blockLen:
+    addLiteral(blockStart, blockLen)
     return
 
   var
-    pos, literalLen: int
+    pos = blockStart
+    literalLen: int
     hash: uint32
     windowPos: uint16
     head = newSeq[uint16](hashSize)       # hash -> pos
@@ -68,19 +67,19 @@ proc encodeLz77*(
     chain[windowPos] = head[hash]
     head[hash] = windowPos
 
-  while pos < len:
-    if pos + minMatchLen >= len:
-      addLiteral(pos - literalLen, len - pos + literalLen)
+  while pos < blockStart + blockLen:
+    if pos + minMatchLen >= blockStart + blockLen:
+      addLiteral(pos - literalLen, blockStart + blockLen - pos + literalLen)
       break
 
-    windowPos = (pos and (maxWindowSize - 1)).uint16
+    windowPos = ((pos - blockStart) and (maxWindowSize - 1)).uint16
 
     hash = hash4(pos)
     updateChain()
 
     var
       hashPos = chain[windowPos]
-      limit = min(len, pos + maxMatchLen)
+      limit = min(blockStart + blockLen, pos + maxMatchLen)
       tries = config.chain
       prevOffset, longestMatchOffset, longestMatchLen: int
     while tries > 0 and hashPos != 0:
@@ -118,7 +117,7 @@ proc encodeLz77*(
       for i in 1 ..< longestMatchLen:
         inc pos
         windowPos = (pos and (maxWindowSize - 1)).uint16
-        if pos + minMatchLen < len:
+        if pos + minMatchLen < blockStart + blockLen:
           hash = hash4(pos)
           updateChain()
     else:
@@ -126,4 +125,5 @@ proc encodeLz77*(
       if literalLen == maxLiteralLength:
         addLiteral(pos + 1 - literalLen, literalLen)
         literalLen = 0
+
     inc pos

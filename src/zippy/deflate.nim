@@ -199,7 +199,9 @@ proc addNoCompressionBlock(
   if blockLen > maxUncompressedBlockSize:
     failCompress()
 
-  b.addBits(dst, if finalBlock: 1 else: 0, 8)
+  b.addBits(dst, if finalBlock: 1 else: 0, 1)
+  b.addBits(dst, 0, 2)
+  b.skipRemainingBitsInCurrentByte()
   b.addBits(dst, blockLen.uint16, 16)
   b.addBits(dst, (maxUncompressedBlockSize - blockLen).uint16, 16)
   if blockLen > 0:
@@ -226,231 +228,235 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
     dst.setLen(b.pos)
     return
 
+  let blockCount = max((len + maxBlockSize - 1) div maxBlockSize, 1)
+
   var
-    metadata: BlockMetadata
     encoding: seq[uint16]
     encodingLen: int
+  for blockNum in 0 ..< blockCount:
+    let
+      blockStart = blockNum * maxBlockSize
+      blockLen = min(len - blockStart, maxBlockSize)
+      finalBlock = blockNum == (blockCount - 1)
 
-  case level:
-  of -2:
-    encodeAllLiterals(
-      encoding,
-      encodingLen,
-      metadata,
-      src,
-      0,
-      len
-    )
-  of 1:
-    encodeSnappy(
-      encoding,
-      encodingLen,
-      metadata,
-      src,
-      0,
-      len
-    )
-  else:
-    # -1 or [2, 9]
-    encodeLz77(
-      encoding,
-      encodingLen,
-      configurationTable[if level == -1: 6 else: level],
-      metadata,
-      src,
-      0,
-      len
-    )
+    encodingLen = 0
 
-  # If encoding returned almost all literals then write uncompressed.
-  if level != -2 and metadata.numLiterals >= (len.float32 * 0.98).int:
-    let blockCount = max(
-      (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
-      1
-    )
-    for blockNum in 0 ..< blockCount:
-      let
-        finalBlock = blockNum == (blockCount - 1)
-        blockStart = blockNum * maxUncompressedBlockSize
-        blockLen = min(len - blockStart, maxUncompressedBlockSize)
+    var metadata: BlockMetadata
+
+    case level:
+    of -2:
+      encodeAllLiterals(
+        encoding,
+        encodingLen,
+        metadata,
+        src,
+        blockStart,
+        blockLen
+      )
+    of 1:
+      encodeSnappy(
+        encoding,
+        encodingLen,
+        metadata,
+        src,
+        blockStart,
+        blockLen
+      )
+    else:
+      # -1 or [2, 9]
+      encodeLz77(
+        encoding,
+        encodingLen,
+        configurationTable[if level == -1: 6 else: level],
+        metadata,
+        src,
+        blockStart,
+        blockLen
+      )
+
+    # If encoding returned almost all literals then write uncompressed.
+    if level != -2 and metadata.numLiterals >= (blockLen.float32 * 0.98).int:
       b.addNoCompressionBlock(dst, src, blockStart, blockLen, finalBlock)
-    dst.setLen(b.pos)
-    return
-
-  let
-    useFixedCodes = len <= 2048
-    (litLenCodes, litLenCodeLengths) = block:
-      if useFixedCodes:
-        (fixedLitLenCodes, fixedLitLenCodeLengths)
-      else:
-        huffmanCodes(metadata.litLenFreq, 257, maxCodeLength)
-    (distanceCodes, distanceCodeLengths) = block:
-      if useFixedCodes:
-        (fixedDistanceCodes, fixedDistanceCodeLengths)
-      else:
-        huffmanCodes(metadata.distanceFreq, 2, maxCodeLength)
-
-  if useFixedCodes:
-    b.addBits(dst, 1, 1)
-    b.addBits(dst, 1, 2) # Fixed Huffman codes
-  else:
-    var
-      codeLengths: array[maxLitLenCodes + maxDistanceCodes, uint8]
-      numCodes = litLenCodes.len + distanceCodes.len
-    block:
-      var cli: int
-      for i in 0 ..< litLenCodes.len:
-        codeLengths[cli] = litLenCodeLengths[i]
-        inc cli
-      for i in 0 ..< distanceCodes.len:
-        codeLengths[cli] = distanceCodeLengths[i]
-        inc cli
-
-    var codeLengthsRle: seq[uint8]
-    block:
-      var i: int
-      while i < numCodes:
-        var repeatCount: int
-        while i + repeatCount + 1 < numCodes and
-          codeLengths[i + repeatCount + 1] == codeLengths[i]:
-          inc repeatCount
-
-        if codeLengths[i] == 0 and repeatCount >= 2:
-          inc repeatCount # Initial zero
-          if repeatCount <= 10:
-            codeLengthsRle.add(17)
-            codeLengthsRle.add(repeatCount.uint8 - 3)
-          else:
-            repeatCount = min(repeatCount, 138) # Max of 138 zeros for code 18
-            codeLengthsRle.add(18)
-            codeLengthsRle.add(repeatCount.uint8 - 11)
-          i += repeatCount - 1
-        elif repeatCount >= 3: # Repeat code for non-zero, must be >= 3 times
-          var
-            a = repeatCount div 6
-            b = repeatCount mod 6
-          codeLengthsRle.add(codeLengths[i])
-          for j in 0 ..< a:
-            codeLengthsRle.add(16)
-            codeLengthsRle.add(3)
-          if b >= 3:
-            codeLengthsRle.add(16)
-            codeLengthsRle.add(b.uint8 - 3)
-          else:
-            repeatCount -= b
-          i += repeatCount
-        else:
-          codeLengthsRle.add(codeLengths[i])
-        inc i
-
-    var clFreq: array[19, uint16]
-    block :
-      var i: int
-      while i < codeLengthsRle.len:
-        inc clFreq[codeLengthsRle[i]]
-        # Skip the number of times codes are repeated
-        if codeLengthsRle[i] >= 16.uint8:
-          inc i
-        inc i
-
-    let (clCodes, clCodeLengths) = huffmanCodes(clFreq, clFreq.len, 7)
-
-    var clclOrdered: array[19, uint16]
-    for i in 0 ..< clclOrdered.len:
-      clclOrdered[i] = clCodeLengths[clclOrder[i]]
-
-    var hclen = clclOrdered.len
-    while clclOrdered[hclen - 1] == 0 and clclOrdered.len > 4:
-      dec hclen
-    hclen -= 4
+      continue
 
     let
-      hlit = litLenCodes.len - firstLengthCodeIndex
-      hdist = distanceCodes.len - 1
+      useFixedCodes = false
+      (litLenCodes, litLenCodeLengths) = block:
+        if useFixedCodes:
+          (fixedLitLenCodes, fixedLitLenCodeLengths)
+        else:
+          huffmanCodes(metadata.litLenFreq, 257, maxCodeLength)
+      (distanceCodes, distanceCodeLengths) = block:
+        if useFixedCodes:
+          (fixedDistanceCodes, fixedDistanceCodeLengths)
+        else:
+          huffmanCodes(metadata.distanceFreq, 2, maxCodeLength)
 
-    b.addBits(dst, 1, 1)
-    b.addBits(dst, 2, 2) # Dynamic Huffman codes
+    if useFixedCodes:
+      b.addBits(dst, if finalBlock: 1 else: 0, 1)
+      b.addBits(dst, 1, 2) # Fixed Huffman codes
+    else:
+      var
+        codeLengths: array[maxLitLenCodes + maxDistanceCodes, uint8]
+        numCodes = litLenCodes.len + distanceCodes.len
+      block:
+        var cli: int
+        for i in 0 ..< litLenCodes.len:
+          codeLengths[cli] = litLenCodeLengths[i]
+          inc cli
+        for i in 0 ..< distanceCodes.len:
+          codeLengths[cli] = distanceCodeLengths[i]
+          inc cli
 
-    b.addBits(dst, hlit.uint32, 5)
-    b.addBits(dst, hdist.uint32, 5)
-    b.addBits(dst, hclen.uint32, 4)
+      var codeLengthsRle: seq[uint8]
+      block:
+        var i: int
+        while i < numCodes:
+          var repeatCount: int
+          while i + repeatCount + 1 < numCodes and
+            codeLengths[i + repeatCount + 1] == codeLengths[i]:
+            inc repeatCount
 
-    for i in 0 ..< hclen + 4:
-      b.addBits(dst, clclOrdered[i], 3)
+          if codeLengths[i] == 0 and repeatCount >= 2:
+            inc repeatCount # Initial zero
+            if repeatCount <= 10:
+              codeLengthsRle.add(17)
+              codeLengthsRle.add(repeatCount.uint8 - 3)
+            else:
+              repeatCount = min(repeatCount, 138) # Max of 138 zeros for code 18
+              codeLengthsRle.add(18)
+              codeLengthsRle.add(repeatCount.uint8 - 11)
+            i += repeatCount - 1
+          elif repeatCount >= 3: # Repeat code for non-zero, must be >= 3 times
+            var
+              a = repeatCount div 6
+              b = repeatCount mod 6
+            codeLengthsRle.add(codeLengths[i])
+            for j in 0 ..< a:
+              codeLengthsRle.add(16)
+              codeLengthsRle.add(3)
+            if b >= 3:
+              codeLengthsRle.add(16)
+              codeLengthsRle.add(b.uint8 - 3)
+            else:
+              repeatCount -= b
+            i += repeatCount
+          else:
+            codeLengthsRle.add(codeLengths[i])
+          inc i
+
+      var clFreq: array[19, uint16]
+      block :
+        var i: int
+        while i < codeLengthsRle.len:
+          inc clFreq[codeLengthsRle[i]]
+          # Skip the number of times codes are repeated
+          if codeLengthsRle[i] >= 16.uint8:
+            inc i
+          inc i
+
+      let (clCodes, clCodeLengths) = huffmanCodes(clFreq, clFreq.len, 7)
+
+      var clclOrdered: array[19, uint16]
+      for i in 0 ..< clclOrdered.len:
+        clclOrdered[i] = clCodeLengths[clclOrder[i]]
+
+      var hclen = clclOrdered.len
+      while clclOrdered[hclen - 1] == 0 and clclOrdered.len > 4:
+        dec hclen
+      hclen -= 4
+
+      let
+        hlit = litLenCodes.len - firstLengthCodeIndex
+        hdist = distanceCodes.len - 1
+
+      b.addBits(dst, if finalBlock: 1 else: 0, 1)
+      b.addBits(dst, 2, 2) # Dynamic Huffman codes
+
+      b.addBits(dst, hlit.uint32, 5)
+      b.addBits(dst, hdist.uint32, 5)
+      b.addBits(dst, hclen.uint32, 4)
+
+      for i in 0 ..< hclen + 4:
+        b.addBits(dst, clclOrdered[i], 3)
+
+      block:
+        var i: int
+        while i < codeLengthsRle.len:
+          let symbol = codeLengthsRle[i]
+          b.addBits(dst, clCodes[symbol], clCodeLengths[symbol].int)
+          inc i
+          if symbol == 16:
+            b.addBits(dst, codeLengthsRle[i], 2)
+            inc i
+          elif symbol == 17:
+            b.addBits(dst, codeLengthsRle[i], 3)
+            inc i
+          elif symbol == 18:
+            b.addBits(dst, codeLengthsRle[i], 7)
+            inc i
 
     block:
-      var i: int
-      while i < codeLengthsRle.len:
-        let symbol = codeLengthsRle[i]
-        b.addBits(dst, clCodes[symbol], clCodeLengths[symbol].int)
-        inc i
-        if symbol == 16:
-          b.addBits(dst, codeLengthsRle[i], 2)
-          inc i
-        elif symbol == 17:
-          b.addBits(dst, codeLengthsRle[i], 3)
-          inc i
-        elif symbol == 18:
-          b.addBits(dst, codeLengthsRle[i], 7)
-          inc i
+      var
+        srcPos = blockStart
+        encPos: int
+      while encPos < encodingLen:
+        if (encoding[encPos] and (1 shl 15)) != 0:
+          let
+            value = encoding[encPos + 0]
+            offset = encoding[encPos + 1]
+            length = encoding[encPos + 2]
+            lengthIndex = (value shr 8) and (uint8.high shr 1)
+            distanceIndex = value and uint8.high
+            lengthExtraBits = baseLengthsExtraBits[lengthIndex]
+            lengthExtra = length - baseLengths[lengthIndex]
+            distanceExtraBits = baseDistanceExtraBits[distanceIndex]
+            distanceExtra = offset - baseDistances[distanceIndex]
 
-  block:
-    var srcPos, encPos: int
-    while encPos < encoding.len:
-      if (encoding[encPos] and (1 shl 15)) != 0:
-        let
-          value = encoding[encPos + 0]
-          offset = encoding[encPos + 1]
-          length = encoding[encPos + 2]
-          lengthIndex = (value shr 8) and (uint8.high shr 1)
-          distanceIndex = value and uint8.high
-          lengthExtraBits = baseLengthsExtraBits[lengthIndex]
-          lengthExtra = length - baseLengths[lengthIndex]
-          distanceExtraBits = baseDistanceExtraBits[distanceIndex]
-          distanceExtra = offset - baseDistances[distanceIndex]
+          encPos += 3
+          srcPos += length.int
 
-        encPos += 3
-        srcPos += length.int
-
-        var
-          buf = litLenCodes[lengthIndex + 257].uint32
-          bitLen = litLenCodeLengths[lengthIndex + 257].int
-        buf = buf or (lengthExtra.uint32 shl bitLen)
-        bitLen += lengthExtraBits.int
-
-        b.addBits(dst, buf, bitLen)
-
-        buf = distanceCodes[distanceIndex].uint32
-        bitLen = distanceCodeLengths[distanceIndex].int
-        buf = buf or (distanceExtra.uint32 shl bitLen)
-        bitLen += distanceExtraBits.int
-
-        b.addBits(dst, buf, bitLen)
-      else:
-        let literalsLength = encoding[encPos].int
-        inc encPos
-
-        for _ in 0 ..< literalsLength div 2:
           var
-            buf = litLenCodes[src[srcPos + 0]].uint32
-            bitLen = litLenCodeLengths[src[srcPos + 0]].int
-          buf = buf or (litLenCodes[src[srcPos + 1]].uint32 shl bitLen)
-          bitLen += litLenCodeLengths[src[srcPos + 1]].int
+            buf = litLenCodes[lengthIndex + 257].uint32
+            bitLen = litLenCodeLengths[lengthIndex + 257].int
+          buf = buf or (lengthExtra.uint32 shl bitLen)
+          bitLen += lengthExtraBits.int
 
           b.addBits(dst, buf, bitLen)
-          srcPos += 2
 
-        if literalsLength mod 2 != 0:
-          b.addBits(dst, litLenCodes[src[srcPos]], litLenCodeLengths[src[srcPos]].int)
-          inc srcPos
+          buf = distanceCodes[distanceIndex].uint32
+          bitLen = distanceCodeLengths[distanceIndex].int
+          buf = buf or (distanceExtra.uint32 shl bitLen)
+          bitLen += distanceExtraBits.int
 
-  if litLenCodeLengths[256] == 0:
-    failCompress()
+          b.addBits(dst, buf, bitLen)
+        else:
+          let literalsLength = encoding[encPos].int
+          inc encPos
 
-  b.addBits(dst, litLenCodes[256], litLenCodeLengths[256].int) # End of block
+          for _ in 0 ..< literalsLength div 2:
+            var
+              buf = litLenCodes[src[srcPos + 0]].uint32
+              bitLen = litLenCodeLengths[src[srcPos + 0]].int
+            buf = buf or (litLenCodes[src[srcPos + 1]].uint32 shl bitLen)
+            bitLen += litLenCodeLengths[src[srcPos + 1]].int
+
+            b.addBits(dst, buf, bitLen)
+            srcPos += 2
+
+          if literalsLength mod 2 != 0:
+            b.addBits(dst, litLenCodes[src[srcPos]], litLenCodeLengths[src[srcPos]].int)
+            inc srcPos
+
+      if encPos != encodingLen:
+        failUncompress()
+
+    if litLenCodeLengths[256] == 0:
+      failCompress()
+
+    b.addBits(dst, litLenCodes[256], litLenCodeLengths[256].int) # End of block
 
   b.skipRemainingBitsInCurrentByte()
-
   dst.setLen(b.pos)
 
 when defined(release):
