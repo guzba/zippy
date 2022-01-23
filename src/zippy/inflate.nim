@@ -4,7 +4,7 @@ const
   fastBits = 9
   fastMask = (1 shl 9) - 1
 
-type Huffman = ref object
+type Huffman = object
   firstCode, firstSymbol: array[16, uint16]
   maxCodes: array[17, uint32]
   lengths: array[288, uint8]
@@ -14,13 +14,8 @@ type Huffman = ref object
 when defined(release):
   {.push checks: off.}
 
-proc newHuffman(codeLengths: seq[uint8], maxNumCodes: int): Huffman =
+proc init(huffman: var Huffman, codeLengths: openArray[uint8]) =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
-
-  result = Huffman()
-
-  if codeLengths.len > maxNumCodes:
-    failUncompress()
 
   var histogram: array[17, uint16]
   for i in 0 ..< codeLengths.len:
@@ -37,32 +32,32 @@ proc newHuffman(codeLengths: seq[uint8], maxNumCodes: int): Huffman =
     nextCode: array[16, uint32]
   for i in 1 ..< 16:
     nextCode[i] = code
-    result.firstCode[i] = code.uint16
-    result.firstSymbol[i] = k
+    huffman.firstCode[i] = code.uint16
+    huffman.firstSymbol[i] = k
     code = code + histogram[i]
     if histogram[i] > 0 and code - 1 >= (1.uint32 shl i):
       failUncompress()
-    result.maxCodes[i] = (code shl (16 - i))
+    huffman.maxCodes[i] = (code shl (16 - i))
     code = code shl 1
     k += histogram[i]
 
-  result.maxCodes[16] = 1 shl 16
+  huffman.maxCodes[16] = 1 shl 16
 
   for i, len in codeLengths:
     if len > 0.uint8:
       let symbolId =
-        nextCode[len] - result.firstCode[len] + result.firstSymbol[len]
-      result.lengths[symbolId] = len
-      result.values[symbolId] = i.uint16
+        nextCode[len] - huffman.firstCode[len] + huffman.firstSymbol[len]
+      huffman.lengths[symbolId] = len
+      huffman.values[symbolId] = i.uint16
       if len <= fastBits:
         let fast = (len.uint16 shl 9) or i.uint16
         var k = reverseBits(nextCode[len].uint16) shr (16.uint16 - len)
         while k < (1 shl fastBits):
-          result.fast[k] = fast
+          huffman.fast[k] = fast
           k += (1.uint16 shl len)
       inc nextCode[len]
 
-proc decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
+proc decodeSymbol(b: var BitStream, h: var Huffman): uint16 {.inline.} =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
   ## This function is the most important for inflate performance.
 
@@ -99,46 +94,65 @@ proc decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
 proc inflateBlock(
   b: var BitStream, dst: var string, op: var int, fixedCodes: bool
 ) =
-  var literalHuffman, distanceHuffman: Huffman
-
+  var literalsHuffman, distancesHuffman: Huffman
   if fixedCodes:
-    literalHuffman = newHuffman(fixedLitLenCodeLengths, maxFixedLitLenCodes)
-    distanceHuffman = newHuffman(fixedDistanceCodeLengths, maxDistanceCodes)
+    literalsHuffman.init(fixedLitLenCodeLengths)
+    distancesHuffman.init(fixedDistanceCodeLengths)
   else:
     let
-      hlit = b.readBits(5).int + firstLengthCodeIndex
+      hlit = b.readBits(5).int + 257
       hdist = b.readBits(5).int + 1
       hclen = b.readBits(4).int + 4
 
-    var clCodeLengths = newSeq[uint8](19)
+    if hlit > maxLitLenCodes:
+      failUncompress()
+
+    if hdist > maxDistanceCodes:
+      failUncompress()
+
+    var clcls: array[19, uint8]
     for i in 0 ..< hclen:
-      clCodeLengths[clclOrder[i]] = b.readBits(3).uint8
+      clcls[clclOrder[i]] = b.readBits(3).uint8
 
-    let h = newHuffman(clCodeLengths, 19)
+    var clclsHuffman: Huffman
+    clclsHuffman.init(clcls)
 
-    var unpacked: seq[uint8]
-    while unpacked.len < hlit + hdist:
-      let symbol = decodeSymbol(b, h)
+    # From RFC 1951, all code lengths form a single sequence of HLIT + HDIST
+    # This means the max unpacked length is 31 + 31 + 257 + 1 = 320
+
+    var
+      unpacked: array[320, uint8]
+      i: int
+    while i != hlit + hdist:
+      let symbol = decodeSymbol(b, clclsHuffman)
       if symbol <= 15:
-        unpacked.add(symbol.uint8)
+        unpacked[i] = symbol.uint8
+        inc i
       elif symbol == 16:
-        if unpacked.len == 0:
+        if i == 0:
           failUncompress()
-        let prev = unpacked[unpacked.len - 1]
-        for i in 0 ..< b.readBits(2).int + 3:
-          unpacked.add(prev)
+        let
+          prev = unpacked[i - 1]
+          repeatCount = b.readBits(2).int + 3
+        if i + repeatCount > hlit + hdist:
+          failUncompress()
+        for _ in 0 ..< repeatCount:
+          unpacked[i] = prev
+          inc i
       elif symbol == 17:
-        unpacked.setLen(unpacked.len + b.readBits(3).int + 3)
+        let repeatZeroCount = b.readBits(3).int + 3
+        i += repeatZeroCount
       elif symbol == 18:
-        unpacked.setLen(unpacked.len + b.readBits(7).int + 11)
+        let repeatZeroCount = b.readBits(7).int + 11
+        i += repeatZeroCount
       else:
         raise newException(ZippyError, "Invalid symbol")
 
-    literalHuffman = newHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
-    distanceHuffman = newHuffman(unpacked[hlit ..< unpacked.len], maxDistanceCodes)
+    literalsHuffman.init(unpacked.toOpenArray(0, hlit - 1))
+    distancesHuffman.init(unpacked.toOpenArray(hlit, hlit + hdist - 1))
 
   while true:
-    let symbol = decodeSymbol(b, literalHuffman)
+    let symbol = decodeSymbol(b, literalsHuffman)
     if symbol <= 255:
       if op >= dst.len:
         dst.setLen((op + 1) * 2)
@@ -156,13 +170,13 @@ proc inflateBlock(
         b.readBits(baseLengthsExtraBits[lengthIndex])
       ).int
 
-      let distIndex = decodeSymbol(b, distanceHuffman)
-      if distIndex >= baseDistances.len.uint16:
+      let distanceIdx = decodeSymbol(b, distancesHuffman)
+      if distanceIdx >= baseDistances.len.uint16:
         failUncompress()
 
       let totalDist = (
-        baseDistances[distIndex] +
-        b.readBits(baseDistanceExtraBits[distIndex])
+        baseDistances[distanceIdx] +
+        b.readBits(baseDistanceExtraBits[distanceIdx])
       ).int
       if totalDist > op:
         failUncompress()
