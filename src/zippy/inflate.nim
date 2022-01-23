@@ -57,19 +57,19 @@ proc init(huffman: var Huffman, codeLengths: openArray[uint8]) =
           k += (1.uint16 shl len)
       inc nextCode[len]
 
-proc decodeSymbol(b: var BitStream, h: var Huffman): uint16 {.inline.} =
+proc decodeSymbol(b: var BitStreamReader, h: var Huffman): uint16 {.inline.} =
   ## This function is the most important for inflate performance.
 
-  if b.bitCount < 16:
-    b.fillBitBuf()
+  if b.bitsBuffered < 16:
+    b.fillBitBuffer()
 
-  let fast = h.fast[b.bitBuf and fastMask]
+  let fast = h.fast[b.bitBuffer and fastMask]
   var codeLength: uint16
   if fast > 0.uint16:
     codeLength = (fast shr 9)
     result = fast and 511
   else: # Slow path
-    let k = reverseBits(cast[uint16](b.bitBuf))
+    let k = reverseBits(cast[uint16](b.bitBuffer))
     codeLength = 1
     let maxCodeLength = h.maxCodes.len.uint16
     while codeLength < maxCodeLength:
@@ -86,15 +86,15 @@ proc decodeSymbol(b: var BitStream, h: var Huffman): uint16 {.inline.} =
       h.firstSymbol[codeLength]
     result = h.values[symbolId]
 
-  if codeLength.int > b.bitCount:
+  if codeLength.int > b.bitsBuffered:
     failEndOfBuffer()
 
-  b.bitBuf = b.bitBuf shr codeLength
-  b.bitCount -= codeLength.int
+  b.bitBuffer = b.bitBuffer shr codeLength
+  b.bitsBuffered -= codeLength.int
 
 proc inflateBlock(
   dst: var string,
-  b: var BitStream,
+  b: var BitStreamReader,
   op: var int,
   fixedCodes: bool
 ) =
@@ -217,7 +217,7 @@ proc inflateBlock(
 
 proc inflateNoCompression(
   dst: var string,
-  b: var BitStream,
+  b: var BitStreamReader,
   op: var int
 ) =
   b.skipRemainingBitsInCurrentByte()
@@ -241,7 +241,7 @@ proc inflate*(dst: var string, src: string, pos: int) =
         nil
 
   var
-    b = BitStream(
+    b = BitStreamReader(
       src: src,
       len: len,
       pos: pos

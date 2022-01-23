@@ -2,49 +2,49 @@ import internal, common
 
 type
   BitStream* = object
-    src*: ptr UncheckedArray[uint8]
-    len*: int
     pos*: int
-    # Reading
-    bitCount*: int
-    bitBuf*: uint64
     # Writing
     dst*: string
     bitPos: uint
 
-when defined(release):
-  {.push checks: off.}
+  BitStreamReader* = object
+    src*: ptr UncheckedArray[uint8]
+    len*, pos*: int
+    bitBuffer*: uint64
+    bitsBuffered*: int
 
 template failEndOfBuffer*() =
   raise newException(ZippyError, "Cannot read further, at end of buffer")
+
+when defined(release):
+  {.push checks: off.}
 
 proc initBitStream*(dst: string, pos = 0): BitStream =
   result.dst = dst
   result.pos = pos
 
-proc fillBitBuf*(b: var BitStream) {.inline.} =
-  while b.bitCount <= 56:
+proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
+  while b.bitsBuffered <= 56:
     if b.pos >= b.len:
       break
-    b.bitBuf = b.bitBuf or (b.src[b.pos].uint64 shl b.bitCount)
+    b.bitBuffer = b.bitBuffer or (b.src[b.pos].uint64 shl b.bitsBuffered)
     inc b.pos
-    b.bitCount += 8
+    b.bitsBuffered += 8
 
-proc readBits*(b: var BitStream, bits: uint): uint16 =
+proc readBits*(b: var BitStreamReader, bits: uint): uint16 =
   assert bits <= 16
 
-  if b.bitCount < 16:
-    b.fillBitBuf()
+  if b.bitsBuffered < 16:
+    b.fillBitBuffer()
 
-  result = (b.bitBuf and ((1.uint64 shl bits) - 1)).uint16
-  b.bitBuf = b.bitBuf shr bits
-  b.bitCount -= bits.int # bitCount can go negative if we've read past the end
+  result = (b.bitBuffer and ((1.uint64 shl bits) - 1)).uint16
+  b.bitBuffer = b.bitBuffer shr bits
+  b.bitsBuffered -= bits.int # bitCount can go negative if we've read past the end
 
-proc readBytes*(b: var BitStream, dst: var string, start, len: int) =
-  assert b.bitPos == 0
-  assert b.bitCount mod 8 == 0
+proc readBytes*(b: var BitStreamReader, dst: var string, start, len: int) =
+  assert b.bitsBuffered mod 8 == 0
 
-  let posOffset = b.bitCount div 8
+  let posOffset = b.bitsBuffered div 8
 
   if b.pos - posOffset + len > b.len:
     failEndOfBuffer()
@@ -52,8 +52,15 @@ proc readBytes*(b: var BitStream, dst: var string, start, len: int) =
   copyMem(dst[start].addr, b.src[b.pos - posOffset].addr, len)
 
   b.pos = b.pos - posOffset + len
-  b.bitCount = 0
-  b.bitBuf = 0
+  b.bitsBuffered = 0
+  b.bitBuffer = 0
+
+proc skipRemainingBitsInCurrentByte*(b: var BitStreamReader) =
+  # If reading
+  let mod8 = b.bitsBuffered mod 8
+  if mod8 != 0:
+    b.bitsBuffered -= mod8
+    b.bitBuffer = b.bitBuffer shr mod8
 
 proc incPos(b: var BitStream, bits: uint) {.inline.} =
   # Used when writing
@@ -64,12 +71,6 @@ proc skipRemainingBitsInCurrentByte*(b: var BitStream) =
   # If writing
   if b.bitPos > 0.uint:
     b.incPos(8.uint - b.bitPos)
-
-  # If reading
-  let mod8 = b.bitCount mod 8
-  if mod8 != 0:
-    b.bitCount -= mod8
-    b.bitBuf = b.bitBuf shr mod8
 
 proc addBytes*(b: var BitStream, src: string, start, len: int) =
   assert b.bitPos == 0
