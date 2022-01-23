@@ -2,12 +2,14 @@ import internal, common
 
 type
   BitStream* = object
+    src*: ptr UncheckedArray[uint8]
+    len*: int
     pos*: int
-    data*: string
     # Reading
     bitCount*: int
     bitBuf*: uint64
     # Writing
+    dst*: string
     bitPos: uint
 
 when defined(release):
@@ -16,15 +18,15 @@ when defined(release):
 template failEndOfBuffer*() =
   raise newException(ZippyError, "Cannot read further, at end of buffer")
 
-proc initBitStream*(data: string, pos = 0): BitStream =
-  result.data = data
+proc initBitStream*(dst: string, pos = 0): BitStream =
+  result.dst = dst
   result.pos = pos
 
 proc fillBitBuf*(b: var BitStream) {.inline.} =
   while b.bitCount <= 56:
-    if b.pos >= b.data.len:
+    if b.pos >= b.len:
       break
-    b.bitBuf = b.bitBuf or (b.data[b.pos].uint64 shl b.bitCount)
+    b.bitBuf = b.bitBuf or (b.src[b.pos].uint64 shl b.bitCount)
     inc b.pos
     b.bitCount += 8
 
@@ -44,10 +46,10 @@ proc readBytes*(b: var BitStream, dst: var string, start, len: int) =
 
   let posOffset = b.bitCount div 8
 
-  if b.pos - posOffset + len > b.data.len:
+  if b.pos - posOffset + len > b.len:
     failEndOfBuffer()
 
-  copyMem(dst[start].addr, b.data[b.pos - posOffset].addr, len)
+  copyMem(dst[start].addr, b.src[b.pos - posOffset].addr, len)
 
   b.pos = b.pos - posOffset + len
   b.bitCount = 0
@@ -72,23 +74,23 @@ proc skipRemainingBitsInCurrentByte*(b: var BitStream) =
 proc addBytes*(b: var BitStream, src: string, start, len: int) =
   assert b.bitPos == 0
 
-  if b.pos + len > b.data.len:
-    b.data.setLen(b.pos + len)
+  if b.pos + len > b.dst.len:
+    b.dst.setLen(b.pos + len)
 
-  copyMem(b.data[b.pos].addr, src[start].unsafeAddr, len)
+  copyMem(b.dst[b.pos].addr, src[start].unsafeAddr, len)
 
   b.incPos(len.uint * 8)
 
 proc addBits*(b: var BitStream, value: uint32, bits: uint32) {.inline.} =
   assert bits <= 32
 
-  if b.pos + 8 > b.data.len:
+  if b.pos + 8 > b.dst.len:
     # Make sure we have room to read64
-    b.data.setLen(max(b.data.len * 2, 64))
+    b.dst.setLen(max(b.dst.len * 2, 64))
 
   let value = value.uint64 and ((1.uint64 shl bits) - 1)
 
-  write64(b.data, b.pos, read64(b.data, b.pos) or (value.uint64 shl b.bitPos))
+  write64(b.dst, b.pos, read64(b.dst, b.pos) or (value.uint64 shl b.bitPos))
 
   b.incPos(bits)
 

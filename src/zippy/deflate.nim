@@ -202,8 +202,8 @@ proc deflateNoCompression(src: string): string =
     if len > 0.uint16:
       b.addBytes(src, pos, len.int)
 
-  b.data.setLen(b.pos)
-  b.data
+  b.dst.setLen(b.pos)
+  b.dst
 
 proc deflate*(src: string, level = -1): string =
   if level < -2 or level > 9:
@@ -408,8 +408,8 @@ proc deflate*(src: string, level = -1): string =
 
   b.skipRemainingBitsInCurrentByte()
 
-  b.data.setLen(b.pos)
-  b.data
+  b.dst.setLen(b.pos)
+  b.dst
 
 when defined(release):
   {.pop.}

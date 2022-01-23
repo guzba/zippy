@@ -232,8 +232,20 @@ proc inflateNoCompression(
   op += len
 
 proc inflate*(dst: var string, src: string, pos: int) =
+  let
+    len = src.len
+    src =
+      if len > 0:
+        cast[ptr UncheckedArray[uint8]](src[0].unsafeAddr)
+      else:
+        nil
+
   var
-    b = initBitStream(src, pos)
+    b = BitStream(
+      src: src,
+      len: len,
+      pos: pos
+    )
     op: int
     finalBlock: bool
   while not finalBlock:
