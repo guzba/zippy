@@ -103,7 +103,7 @@ proc inflateBlock(
 
   if fixedCodes:
     literalHuffman = newHuffman(fixedCodeLengths, maxFixedLitLenCodes)
-    distanceHuffman = newHuffman(fixedDistLengths, maxDistCodes)
+    distanceHuffman = newHuffman(fixedDistLengths, maxDistanceCodes)
   else:
     let
       hlit = b.readBits(5).int + firstLengthCodeIndex
@@ -135,7 +135,7 @@ proc inflateBlock(
         raise newException(ZippyError, "Invalid symbol")
 
     literalHuffman = newHuffman(unpacked[0 ..< hlit], maxLitLenCodes)
-    distanceHuffman = newHuffman(unpacked[hlit ..< unpacked.len], maxDistCodes)
+    distanceHuffman = newHuffman(unpacked[hlit ..< unpacked.len], maxDistanceCodes)
 
   while true:
     let symbol = decodeSymbol(b, literalHuffman)

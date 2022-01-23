@@ -1,14 +1,12 @@
 import bitops, strutils, common
 
-type
-  CompressionConfig* = object
-    good*, lazy*, nice*, chain*: int
+type CompressionConfig* = object
+  good*, lazy*, nice*, chain*: int
 
 const
-  # DEFLATE RFC constants
-  maxCodeLength* = 15               ## Maximum bits in a code
+  maxCodeLength* = 15
   maxLitLenCodes* = 286
-  maxDistCodes* = 30
+  maxDistanceCodes* = 30
   maxFixedLitLenCodes* = 288
   maxWindowSize* = 32768
   maxUncompressedBlockSize* = 65535
@@ -161,7 +159,7 @@ const
     makeCodes(fixedCodeLengths)
 
   fixedDistLengths* = block:
-    var lengths = newSeq[uint8](maxDistCodes)
+    var lengths = newSeq[uint8](maxDistanceCodes)
     for i in 0 ..< lengths.len:
       lengths[i] = 5
     lengths
