@@ -217,7 +217,6 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
       (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
       1
     )
-
     for blockNum in 0 ..< blockCount:
       let
         finalBlock = blockNum == (blockCount - 1)
@@ -269,7 +268,6 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
       (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
       1
     )
-
     for blockNum in 0 ..< blockCount:
       let
         finalBlock = blockNum == (blockCount - 1)
@@ -396,7 +394,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
           b.addBits(dst, codeLengthsRle[i], 7)
           inc i
 
-  block write_encoded_data:
+  block:
     var srcPos, encPos: int
     while encPos < encoding.len:
       if (encoding[encPos] and (1 shl 15)) != 0:
@@ -436,11 +434,11 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
         var j: int
         for _ in 0 ..< length div 2:
           var
-            buf = litLenCodes[cast[uint8](src[srcPos + 0])].uint32
-            bitLen = litLenCodeLengths[cast[uint8](src[srcPos + 0])].int
+            buf = litLenCodes[src[srcPos + 0]].uint32
+            bitLen = litLenCodeLengths[src[srcPos + 0]].int
 
-          buf = buf or (litLenCodes[cast[uint8](src[srcPos + 1])].uint32 shl bitLen)
-          bitLen += litLenCodeLengths[cast[uint8](src[srcPos + 1])].int
+          buf = buf or (litLenCodes[src[srcPos + 1]].uint32 shl bitLen)
+          bitLen += litLenCodeLengths[src[srcPos + 1]].int
 
           b.addBits(dst, buf, bitLen)
 
@@ -450,8 +448,8 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
         if j != length:
           b.addBits(
             dst,
-            litLenCodes[cast[uint8](src[srcPos])],
-            litLenCodeLengths[cast[uint8](src[srcPos])].int
+            litLenCodes[src[srcPos]],
+            litLenCodeLengths[src[srcPos]].int
           )
           inc srcPos
 
