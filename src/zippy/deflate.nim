@@ -189,29 +189,21 @@ proc encodeAllLiterals(
   metadata.litLenFreq[256] = 1 # Alway 1 end-of-block symbol
   metadata.numLiterals = len
 
-proc deflateNoCompression(
+proc addNoCompressionBlock(
   b: var BitStreamWriter,
   dst: var string,
   src: ptr UncheckedArray[uint8],
-  start, len: int
+  blockStart, blockLen: int,
+  finalBlock: bool
 ) =
-  let blockCount = max(
-    (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
-    1
-  )
+  if blockLen > maxUncompressedBlockSize:
+    failCompress()
 
-  for blockNum in 0 ..< blockCount:
-    let finalBlock = blockNum == (blockCount - 1)
-    b.addBits(dst, finalBlock.uint16, 8)
-
-    let
-      pos = start + blockNum * maxUncompressedBlockSize
-      blockLen = min(len - pos, maxUncompressedBlockSize).uint16
-
-    b.addBits(dst, blockLen, 16)
-    b.addBits(dst, maxUncompressedBlockSize.uint16 - blockLen, 16)
-    if len > 0:
-      b.addBytes(dst, src, pos, blockLen.int)
+  b.addBits(dst, if finalBlock: 1 else: 0, 8)
+  b.addBits(dst, blockLen.uint16, 16)
+  b.addBits(dst, (maxUncompressedBlockSize - blockLen).uint16, 16)
+  if blockLen > 0:
+    b.addBytes(dst, src, blockStart, blockLen.int)
 
 proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) =
   if level < -2 or level > 9:
@@ -221,7 +213,17 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
   b.pos = dst.len
 
   if level == 0:
-    deflateNoCompression(b, dst, src, 0, len)
+    let blockCount = max(
+      (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
+      1
+    )
+
+    for blockNum in 0 ..< blockCount:
+      let
+        finalBlock = blockNum == (blockCount - 1)
+        blockStart = blockNum * maxUncompressedBlockSize
+        blockLen = min(len - blockStart, maxUncompressedBlockSize)
+      b.addNoCompressionBlock(dst, src, blockStart, blockLen, finalBlock)
     dst.setLen(b.pos)
     return
 
@@ -230,7 +232,8 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
     encoding: seq[uint16]
     encodingLen: int
 
-  if level == -2:
+  case level:
+  of -2:
     encodeAllLiterals(
       encoding,
       encodingLen,
@@ -239,7 +242,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
       0,
       len
     )
-  elif level == 1:
+  of 1:
     encodeSnappy(
       encoding,
       encodingLen,
@@ -262,7 +265,17 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
 
   # If encoding returned almost all literals then write uncompressed.
   if level != -2 and metadata.numLiterals >= (len.float32 * 0.98).int:
-    deflateNoCompression(b, dst, src, 0, len)
+    let blockCount = max(
+      (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
+      1
+    )
+
+    for blockNum in 0 ..< blockCount:
+      let
+        finalBlock = blockNum == (blockCount - 1)
+        blockStart = blockNum * maxUncompressedBlockSize
+        blockLen = min(len - blockStart, maxUncompressedBlockSize)
+      b.addNoCompressionBlock(dst, src, blockStart, blockLen, finalBlock)
     dst.setLen(b.pos)
     return
 
