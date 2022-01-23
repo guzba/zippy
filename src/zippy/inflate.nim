@@ -92,7 +92,7 @@ proc decodeSymbol(b: var BitStream, h: var Huffman): uint16 {.inline.} =
   b.bitCount -= len.int
 
 proc inflateBlock(
-  b: var BitStream, dst: var string, op: var int, fixedCodes: bool
+  dst: var string, b: var BitStream, op: var int, fixedCodes: bool
 ) =
   var literalsHuffman, distancesHuffman: Huffman
   if fixedCodes:
@@ -155,7 +155,7 @@ proc inflateBlock(
     let symbol = decodeSymbol(b, literalsHuffman)
     if symbol <= 255:
       if op >= dst.len:
-        dst.setLen((op + 1) * 2)
+        dst.setLen(max(op * 2, 2))
       dst[op] = symbol.char
       inc op
     elif symbol == 256:
@@ -205,7 +205,7 @@ proc inflateBlock(
           remaining -= 8
         op += totalLength
 
-proc inflateNoCompression(b: var BitStream, dst: var string, op: var int) =
+proc inflateNoCompression(dst: var string, b: var BitStream, op: var int) =
   b.skipRemainingBitsInCurrentByte()
   let
     len = b.readBits(16).int
@@ -226,16 +226,17 @@ proc inflate*(dst: var string, src: string, pos: int) =
     let
       bfinal = b.readBits(1)
       btype = b.readBits(2)
-    if bfinal > 0.uint16:
+
+    if bfinal > 0:
       finalBlock = true
 
     case btype:
     of 0: # No compression
-      inflateNoCompression(b, dst, op)
+      inflateNoCompression(dst, b, op)
     of 1: # Compressed with fixed Huffman codes
-      inflateBlock(b, dst, op, true)
+      inflateBlock(dst, b, op, true)
     of 2: # Compressed with dynamic Huffman codes
-      inflateBlock(b, dst, op, false)
+      inflateBlock(dst, b, op, false)
     else:
       raise newException(ZippyError, "Invalid block header")
 
