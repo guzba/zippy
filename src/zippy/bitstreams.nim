@@ -63,6 +63,19 @@ func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
   b.bitPos = cast[int](cast[uint](bits + b.bitPos) and 7)
   # does this matter^?
 
+proc addBits*(b: var BitStreamWriter, value: uint32, bitLen: int) {.inline.} =
+  assert bitLen <= 32
+
+  if b.pos + 8 > b.dst.len:
+    # Make sure we have room to read64
+    b.dst.setLen(max(b.dst.len * 2, 64))
+
+  let value = value.uint64 and ((1.uint64 shl bitLen) - 1)
+
+  write64(b.dst, b.pos, read64(b.dst, b.pos) or (value.uint64 shl b.bitPos))
+
+  b.incPos(bitLen)
+
 proc addBytes*(
   b: var BitStreamWriter,
   src: ptr UncheckedArray[uint8],
@@ -76,19 +89,6 @@ proc addBytes*(
   copyMem(b.dst[b.pos].addr, src[start].unsafeAddr, len)
 
   b.incPos(len * 8)
-
-proc addBits*(b: var BitStreamWriter, value: uint32, bitLen: int) {.inline.} =
-  assert bitLen <= 32
-
-  if b.pos + 8 > b.dst.len:
-    # Make sure we have room to read64
-    b.dst.setLen(max(b.dst.len * 2, 64))
-
-  let value = value.uint64 and ((1.uint64 shl bitLen) - 1)
-
-  write64(b.dst, b.pos, read64(b.dst, b.pos) or (value.uint64 shl b.bitPos))
-
-  b.incPos(bitLen)
 
 proc skipRemainingBitsInCurrentByte*(b: var BitStreamWriter) =
   if b.bitPos > 0:
