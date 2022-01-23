@@ -20,11 +20,6 @@ func initBitStream*(data: string, pos = 0): BitStream =
   result.data = data
   result.pos = pos
 
-# TMP
-func initBitStream*(data: seq[uint8], pos = 0): BitStream =
-  result.data = cast[string](data)
-  result.pos = pos
-
 func fillBitBuf*(b: var BitStream) {.inline.} =
   while b.bitCount <= 56:
     if b.pos >= b.data.len:
