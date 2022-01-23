@@ -24,11 +24,7 @@ func encodeFragment(
     tableSize = tableSize shl 1
     dec shift
 
-  when nimvm:
-    for i in 0 ..< tableSize:
-      compressTable[i] = 0
-  else:
-    zeroMem(compressTable[0].addr, tableSize * sizeof(uint16))
+  zeroMem(compressTable[0].addr, tableSize * sizeof(uint16))
 
   template addLiteral(start, length: int) =
     for i in 0 ..< length:

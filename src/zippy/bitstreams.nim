@@ -52,11 +52,7 @@ func readBytes*(b: var BitStream, dst: var string, start, len: int) =
   if b.pos - posOffset + len > b.data.len:
     failEndOfBuffer()
 
-  when nimvm:
-    for i in 0 ..< len:
-      dst[start + i] = b.data[b.pos - posOffset + i]
-  else:
-    copyMem(dst[start].addr, b.data[b.pos - posOffset].addr, len)
+  copyMem(dst[start].addr, b.data[b.pos - posOffset].addr, len)
 
   b.pos = b.pos - posOffset + len
   b.bitCount = 0
@@ -84,11 +80,7 @@ func addBytes*(b: var BitStream, src: string, start, len: int) =
   if b.pos + len > b.data.len:
     b.data.setLen(b.pos + len)
 
-  when nimvm:
-    for i in 0 ..< len:
-      b.data[b.pos + i] = src[start + i]
-  else:
-    copyMem(b.data[b.pos].addr, src[start].unsafeAddr, len)
+  copyMem(b.data[b.pos].addr, src[start].unsafeAddr, len)
 
   b.incPos(len.uint * 8)
 

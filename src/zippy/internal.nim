@@ -176,53 +176,19 @@ template failCompress*() =
   raise newException(ZippyError, "Unexpected error while compressing")
 
 func read16*(s: string, pos: int): uint16 {.inline.} =
-  when nimvm:
-    (s[pos + 0].uint16 shl 0) or
-    (s[pos + 1].uint16 shl 8)
-  else:
-    cast[ptr uint16](s[pos].unsafeAddr)[]
+  cast[ptr uint16](s[pos].unsafeAddr)[]
 
 func read32*(s: seq[uint8] | string, pos: int): uint32 {.inline.} =
-  when nimvm:
-    (s[pos + 0].uint32 shl 0) or
-    (s[pos + 1].uint32 shl 8) or
-    (s[pos + 2].uint32 shl 16) or
-    (s[pos + 3].uint32 shl 24)
-  else:
-    cast[ptr uint32](s[pos].unsafeAddr)[]
+  cast[ptr uint32](s[pos].unsafeAddr)[]
 
 func read64*(s: seq[uint8] | string, pos: int): uint64 {.inline.} =
-  when nimvm:
-    (s[pos + 0].uint64 shl 0) or
-    (s[pos + 1].uint64 shl 8) or
-    (s[pos + 2].uint64 shl 16) or
-    (s[pos + 3].uint64 shl 24) or
-    (s[pos + 4].uint64 shl 32) or
-    (s[pos + 5].uint64 shl 40) or
-    (s[pos + 6].uint64 shl 48) or
-    (s[pos + 7].uint64 shl 56)
-  else:
-    cast[ptr uint64](s[pos].unsafeAddr)[]
+  cast[ptr uint64](s[pos].unsafeAddr)[]
 
 func write64*(dst: var string, pos: int, value: uint64) {.inline.} =
-  when nimvm:
-    dst[pos + 0] = (value shr 0 and 255).char
-    dst[pos + 1] = (value shr 8 and 255).char
-    dst[pos + 2] = (value shr 16 and 255).char
-    dst[pos + 3] = (value shr 24 and 255).char
-    dst[pos + 4] = (value shr 32 and 255).char
-    dst[pos + 5] = (value shr 40 and 255).char
-    dst[pos + 6] = (value shr 48 and 255).char
-    dst[pos + 7] = (value shr 56 and 255).char
-  else:
-    cast[ptr uint64](dst[pos].addr)[] = value
+  cast[ptr uint64](dst[pos].addr)[] = value
 
 func copy64*(dst: var string, src: string, op, ip: int) {.inline.} =
-  when nimvm:
-    for i in 0 .. 7:
-      dst[op + i] = src[ip + i]
-  else:
-    write64(dst, op, read64(src, ip))
+  write64(dst, op, read64(src, ip))
 
 func distanceCodeIndex*(value: uint16): uint16 =
   const distanceCodes = [
