@@ -1,6 +1,6 @@
-import os, streams, strutils, tables, times, zippy, zippy/internal, zippy/zippyerror
+import os, streams, strutils, tables, times, zippy, internal, common
 
-export zippyerror
+export common
 
 const
   # TSUID   =  0o04000  # set UID on execution */

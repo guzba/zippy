@@ -1,4 +1,4 @@
-import zippy/internal
+import common, internal
 
 ## Use Snappy's algorithm for encoding repeated data instead of LZ77.
 ## This is much faster but does not compress as well. Perfect for BestSpeed.

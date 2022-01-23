@@ -1,4 +1,4 @@
-import bitops, strutils, zippy/zippyerror
+import bitops, strutils, common
 
 type
   CompressionConfig* = object

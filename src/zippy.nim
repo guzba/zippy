@@ -1,17 +1,6 @@
-import zippy/internal, zippy/crc, zippy/deflate, zippy/inflate, zippy/zippyerror
+import zippy/internal, zippy/crc, zippy/deflate, zippy/inflate, zippy/common
 
-export zippyerror
-
-const
-  NoCompression* = 0
-  BestSpeed* = 1
-  BestCompression* = 9
-  DefaultCompression* = -1
-  HuffmanOnly* = -2
-
-type
-  CompressedDataFormat* = enum ## Supported compressed data formats
-    dfDetect, dfZlib, dfGzip, dfDeflate
+export common
 
 func compress*(
   src: string,

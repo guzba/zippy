@@ -1,4 +1,4 @@
-import bitstreams, internal, zippyerror
+import bitstreams, internal, common
 
 const
   fastBits = 9

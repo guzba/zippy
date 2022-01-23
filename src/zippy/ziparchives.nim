@@ -1,7 +1,6 @@
-import os, streams, strutils, tables, times, zippy, zippy/internal, zippy/crc,
-    zippy/zippyerror
+import os, streams, strutils, tables, times, zippy, internal, crc, common
 
-export zippyerror
+export common
 
 type
   EntryKind* = enum
