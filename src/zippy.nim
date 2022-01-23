@@ -18,11 +18,11 @@ proc compress*(
     result[1] = 139.char
     result[2] = 8.char
 
+    deflate(result, src, len, level)
+
     let
       checksum = crc32(src, len)
       isize = len
-
-    deflate(result, src, len, level)
 
     result.add(((checksum shr 0) and 255).char)
     result.add(((checksum shr 8) and 255).char)
@@ -45,9 +45,9 @@ proc compress*(
     result[0] = cmf.char
     result[1] = fcheck.char
 
-    let checksum = adler32(src, len)
-
     deflate(result, src, len, level)
+
+    let checksum = adler32(src, len)
 
     result.add(((checksum shr 24) and 255).char)
     result.add(((checksum shr 16) and 255).char)
@@ -58,7 +58,7 @@ proc compress*(
     deflate(result, src, len, level)
 
   else:
-    raise newException(ZippyError, "Invalid data format " & $dataFormat)
+    raise newException(ZippyError, "Invalid data format " & $dfDetect)
 
 proc compress*(
   src: string,
