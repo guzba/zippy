@@ -207,17 +207,9 @@ proc deflateNoCompression(src: ptr UncheckedArray[uint8], len: int): string =
   b.dst.setLen(b.pos)
   b.dst
 
-proc deflate*(src: string, level = -1): string =
+proc deflate*(src: ptr UncheckedArray[uint8], len: int, level = -1): string =
   if level < -2 or level > 9:
     raise newException(ZippyError, "Invalid compression level " & $level)
-
-  let
-    len = src.len
-    src =
-      if len > 0:
-        cast[ptr UncheckedArray[uint8]](src[0].unsafeAddr)
-      else:
-        nil
 
   if level == 0:
     return deflateNoCompression(src, len)

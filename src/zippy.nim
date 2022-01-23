@@ -3,11 +3,13 @@ import zippy/internal, zippy/crc, zippy/deflate, zippy/inflate, zippy/common
 export common
 
 proc compress*(
-  src: string,
+  src: pointer,
+  len: int,
   level = DefaultCompression,
   dataFormat = dfGzip
 ): string {.raises: [ZippyError].} =
   ## Compresses src and returns the compressed data.
+  let src = cast[ptr UncheckedArray[uint8]](src)
 
   case dataFormat:
   of dfGzip:
@@ -17,11 +19,11 @@ proc compress*(
     result[2] = 8.char
 
     let
-      checksum = crc32(src)
-      isize = src.len
+      checksum = crc32(src, len)
+      isize = len
 
     # Last to touch src
-    result.add(deflate(src, level))
+    result.add(deflate(src, len, level))
 
     result.add(((checksum shr 0) and 255).char)
     result.add(((checksum shr 8) and 255).char)
@@ -44,10 +46,10 @@ proc compress*(
     result[0] = cmf.char
     result[1] = fcheck.char
 
-    let checksum = adler32(src)
+    let checksum = adler32(src, len)
 
     # Last to touch src
-    result.add(deflate(src, level))
+    result.add(deflate(src,len, level))
 
     result.add(((checksum shr 24) and 255).char)
     result.add(((checksum shr 16) and 255).char)
@@ -55,10 +57,20 @@ proc compress*(
     result.add(((checksum shr 0) and 255).char)
 
   of dfDeflate:
-    result = deflate(src, level)
+    result = deflate(src, len, level)
 
   else:
     raise newException(ZippyError, "Invalid data format " & $dataFormat)
+
+proc compress*(
+  src: string,
+  level = DefaultCompression,
+  dataFormat = dfGzip
+): string {.inline, raises: [ZippyError].} =
+  if src.len > 0:
+    compress(src[0].unsafeAddr, src.len, level, dataFormat)
+  else:
+    compress(nil, 0, level, dataFormat)
 
 proc uncompress*(
   src: pointer,
@@ -189,7 +201,7 @@ proc uncompress*(
 proc uncompress*(
   src: string,
   dataFormat = dfDetect
-): string {.raises: [ZippyError].} =
+): string {.inline, raises: [ZippyError].} =
   if src.len > 0:
     uncompress(src[0].unsafeAddr, src.len, dataFormat)
   else:
