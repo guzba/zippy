@@ -1,4 +1,4 @@
-import bitstreams, internal, common
+import bitops, bitstreams, internal, common
 
 const
   fastBits = 9
@@ -14,16 +14,6 @@ type
 
 when defined(release):
   {.push checks: off.}
-
-func reverse16Bits(n: uint16): uint16 {.inline.} =
-  result = ((n and 0xAAAA) shr 1) or ((n and 0x5555) shl 1)
-  result = ((result and 0xCCCC) shr 2) or ((result and 0x3333) shl 2)
-  result = ((result and 0xF0F0) shr 4) or ((result and 0x0F0F) shl 4)
-  result = ((result and 0xFF00) shr 8) or ((result and 0x00FF) shl 8)
-
-func reverseBits(n, bits: uint16): uint16 {.inline.} =
-  assert bits <= 16
-  (reverse16Bits(n.uint16) shr (16.uint16 - bits))
 
 func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
@@ -66,7 +56,7 @@ func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
       result.values[symbolId] = i.uint16
       if len <= fastBits:
         let fast = (len.uint shl 9) or i.uint
-        var k = reverseBits(nextCode[len].uint16, len).uint
+        var k = reverseBits(nextCode[len].uint16) shr (16 - len)
         while k < (1 shl fastBits):
           result.fast[k] = fast.uint16
           k += (1.uint16 shl len)
@@ -87,7 +77,7 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
     len = (fast shr 9)
     result = fast and 511
   else: # Slow path
-    let k = reverse16Bits(cast[uint16](b.bitBuf)).uint
+    let k = reverseBits(cast[uint16](b.bitBuf)).uint
     len = 1
     while len < maxCodesLen.uint16:
       if k < h.maxCodes[len]:
