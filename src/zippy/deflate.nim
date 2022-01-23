@@ -1,4 +1,4 @@
-import bitstreams, heapqueue, internal, lz77, snappy, common
+import bitops, bitstreams, heapqueue, internal, lz77, snappy, common
 
 when defined(release):
   {.push checks: off.}
@@ -158,7 +158,7 @@ func huffmanCodeLengths(
   # Convert to canonical codes (+ reversed)
   for i in 0 ..< codes.len:
     if lengths[i] != 0:
-      codes[i] = reverseUint16(nextCode[lengths[i]], lengths[i])
+      codes[i] = reverseBits(nextCode[lengths[i]]) shr (16.uint8 - lengths[i])
       inc nextCode[lengths[i]]
 
   numCodes = max(numCodes, minCodes)

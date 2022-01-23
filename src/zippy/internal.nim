@@ -122,19 +122,8 @@ const
     16.uint16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
-  bitReverseTable* = block:
-    var result: array[256, uint16]
-    for i in 0 ..< result.len:
-      result[i] = reverseBits(i.uint8)
-    result
-
 when defined(release):
   {.push checks: off.}
-
-func reverseUint16*(code: uint16, length: uint8): uint16 {.inline.} =
-  (
-    (bitReverseTable[(code and 255)] shl 8) or bitReverseTable[(code shr 8)]
-  ) shr (16 - length.int)
 
 func makeCodes(lengths: seq[uint8]): seq[uint16] =
   result = newSeq[uint16](lengths.len)
@@ -151,7 +140,7 @@ func makeCodes(lengths: seq[uint8]): seq[uint16] =
 
   for i in 0 ..< result.len:
     if lengths[i] != 0:
-      result[i] = reverseUint16(nextCode[lengths[i]], lengths[i])
+      result[i] = reverseBits(nextCode[lengths[i]]) shr (16.uint8 - lengths[i])
       inc nextCode[lengths[i]]
 
 const
