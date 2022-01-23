@@ -16,11 +16,11 @@ when defined(release):
 template failEndOfBuffer*() =
   raise newException(ZippyError, "Cannot read further, at end of buffer")
 
-func initBitStream*(data: string, pos = 0): BitStream =
+proc initBitStream*(data: string, pos = 0): BitStream =
   result.data = data
   result.pos = pos
 
-func fillBitBuf*(b: var BitStream) {.inline.} =
+proc fillBitBuf*(b: var BitStream) {.inline.} =
   while b.bitCount <= 56:
     if b.pos >= b.data.len:
       break
@@ -28,7 +28,7 @@ func fillBitBuf*(b: var BitStream) {.inline.} =
     inc b.pos
     b.bitCount += 8
 
-func readBits*(b: var BitStream, bits: uint): uint16 =
+proc readBits*(b: var BitStream, bits: uint): uint16 =
   assert bits <= 16
 
   if b.bitCount < 16:
@@ -38,7 +38,7 @@ func readBits*(b: var BitStream, bits: uint): uint16 =
   b.bitBuf = b.bitBuf shr bits
   b.bitCount -= bits.int # bitCount can go negative if we've read past the end
 
-func readBytes*(b: var BitStream, dst: var string, start, len: int) =
+proc readBytes*(b: var BitStream, dst: var string, start, len: int) =
   assert b.bitPos == 0
   assert b.bitCount mod 8 == 0
 
@@ -53,12 +53,12 @@ func readBytes*(b: var BitStream, dst: var string, start, len: int) =
   b.bitCount = 0
   b.bitBuf = 0
 
-func incPos(b: var BitStream, bits: uint) {.inline.} =
+proc incPos(b: var BitStream, bits: uint) {.inline.} =
   # Used when writing
   b.pos += ((bits + b.bitPos) shr 3).int
   b.bitPos = (bits + b.bitPos) and 7
 
-func skipRemainingBitsInCurrentByte*(b: var BitStream) =
+proc skipRemainingBitsInCurrentByte*(b: var BitStream) =
   # If writing
   if b.bitPos > 0.uint:
     b.incPos(8.uint - b.bitPos)
@@ -69,7 +69,7 @@ func skipRemainingBitsInCurrentByte*(b: var BitStream) =
     b.bitCount -= mod8
     b.bitBuf = b.bitBuf shr mod8
 
-func addBytes*(b: var BitStream, src: string, start, len: int) =
+proc addBytes*(b: var BitStream, src: string, start, len: int) =
   assert b.bitPos == 0
 
   if b.pos + len > b.data.len:
@@ -79,7 +79,7 @@ func addBytes*(b: var BitStream, src: string, start, len: int) =
 
   b.incPos(len.uint * 8)
 
-func addBits*(b: var BitStream, value: uint32, bits: uint32) {.inline.} =
+proc addBits*(b: var BitStream, value: uint32, bits: uint32) {.inline.} =
   assert bits <= 32
 
   if b.pos + 8 > b.data.len:

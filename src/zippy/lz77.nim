@@ -4,7 +4,7 @@ const
   hashBits = 17
   hashSize = 1 shl hashBits
 
-func lz77Encode*(
+proc lz77Encode*(
   src: string, config: CompressionConfig
 ): (seq[uint16], seq[int], seq[int], int) =
   var

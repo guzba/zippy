@@ -4,7 +4,7 @@ import common, internal
 ## This is much faster but does not compress as well. Perfect for BestSpeed.
 ## See https://github.com/guzba/supersnappy
 
-func encodeFragment(
+proc encodeFragment(
   encoded: var seq[uint16],
   src: string,
   op: var int,
@@ -131,7 +131,7 @@ func encodeFragment(
 
   emitRemainder()
 
-func snappyEncode*(src: string): (seq[uint16], seq[int], seq[int], int) =
+proc snappyEncode*(src: string): (seq[uint16], seq[int], seq[int], int) =
   var
     encoded = newSeq[uint16](4096)
     freqLitLen = newSeq[int](286)

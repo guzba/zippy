@@ -12,8 +12,6 @@ To ensure Zippy is compatible with other implementations, `tests/validate.nim` c
 
 This library works well using Nim's relatively new `--gc:arc` and `--gc:orc` as well as the default garbage collector. This library also works using both `nim c` and `nim cpp`, in addition to `--cc:vcc` on Windows.
 
-I have also verified that Zippy builds with `--experimental:strictFuncs` on Nim 1.4.0.
-
 ## Examples
 
 Simple examples using Zippy can be found in the [examples/](https://github.com/guzba/zippy/blob/master/examples) folder.

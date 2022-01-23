@@ -10,7 +10,7 @@ type Node = ref object
 proc `<`(a, b: Node): bool {.inline.} =
   a.freq < b.freq
 
-func huffmanCodeLengths(
+proc huffmanCodeLengths(
   frequencies: seq[int], minCodes, maxCodeLen: int
 ): (seq[uint8], seq[uint16]) =
   # https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
@@ -169,7 +169,7 @@ func huffmanCodeLengths(
 
   (lengths, codes)
 
-func huffmanOnlyEncode(src: string): (seq[uint16], seq[int], seq[int], int) =
+proc huffmanOnlyEncode(src: string): (seq[uint16], seq[int], seq[int], int) =
   var
     encoded = newSeq[uint16]()
     freqLitLen = newSeq[int](286)
@@ -187,7 +187,7 @@ func huffmanOnlyEncode(src: string): (seq[uint16], seq[int], seq[int], int) =
 
   (encoded, freqLitLen, freqDist, 0)
 
-func deflateNoCompression(src: string): string =
+proc deflateNoCompression(src: string): string =
   let blockCount = max(
     (src.len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
     1
@@ -211,7 +211,7 @@ func deflateNoCompression(src: string): string =
   b.data.setLen(b.pos)
   b.data
 
-func deflate*(src: string, level = -1): string =
+proc deflate*(src: string, level = -1): string =
   if level < -2 or level > 9:
     raise newException(ZippyError, "Invalid compression level " & $level)
 

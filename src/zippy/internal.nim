@@ -125,7 +125,7 @@ const
 when defined(release):
   {.push checks: off.}
 
-func makeCodes(lengths: seq[uint8]): seq[uint16] =
+proc makeCodes(lengths: seq[uint8]): seq[uint16] =
   result = newSeq[uint16](lengths.len)
 
   var lengthCounts: array[16, uint8]
@@ -187,22 +187,22 @@ template write64*(dst: ptr UncheckedArray[uint8], op: int, value: uint64) =
 template copy64*(dst, src: ptr UncheckedArray[uint8], op, ip: int) =
   write64(dst, op, read64(src, ip))
 
-func read16*(s: string, pos: int): uint16 {.inline.} =
+proc read16*(s: string, pos: int): uint16 {.inline.} =
   cast[ptr uint16](s[pos].unsafeAddr)[]
 
-func read32*(s: seq[uint8] | string, pos: int): uint32 {.inline.} =
+proc read32*(s: seq[uint8] | string, pos: int): uint32 {.inline.} =
   cast[ptr uint32](s[pos].unsafeAddr)[]
 
-func read64*(s: seq[uint8] | string, pos: int): uint64 {.inline.} =
+proc read64*(s: seq[uint8] | string, pos: int): uint64 {.inline.} =
   cast[ptr uint64](s[pos].unsafeAddr)[]
 
-func write64*(dst: var string, pos: int, value: uint64) {.inline.} =
+proc write64*(dst: var string, pos: int, value: uint64) {.inline.} =
   cast[ptr uint64](dst[pos].addr)[] = value
 
-func copy64*(dst: var string, src: string, op, ip: int) {.inline.} =
+proc copy64*(dst: var string, src: string, op, ip: int) {.inline.} =
   write64(dst, op, read64(src, ip))
 
-func distanceCodeIndex*(value: uint16): uint16 =
+proc distanceCodeIndex*(value: uint16): uint16 =
   const distanceCodes = [
     0.uint16, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7,
     8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9,
@@ -229,7 +229,7 @@ func distanceCodeIndex*(value: uint16): uint16 =
   else:
     distanceCodes[value shr 14] + 28
 
-func findMatchLength*(src: string, s1, s2, limit: int): int {.inline.} =
+proc findMatchLength*(src: string, s1, s2, limit: int): int {.inline.} =
   var
     s1 = s1
     s2 = s2
@@ -307,7 +307,7 @@ proc adler32*(src: string): uint32 {.inline.} =
   else:
     adler32(nil, 0)
 
-func toUnixPath*(path: string): string =
+proc toUnixPath*(path: string): string =
   path.replace('\\', '/')
 
 when defined(release):

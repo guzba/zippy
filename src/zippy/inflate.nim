@@ -15,7 +15,7 @@ type
 when defined(release):
   {.push checks: off.}
 
-func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
+proc newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
 
   result = Huffman()
@@ -62,7 +62,7 @@ func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
           k += (1.uint16 shl len)
       inc nextCode[len]
 
-func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
+proc decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
   ## This function is the most important for inflate performance.
 
@@ -96,7 +96,7 @@ func decodeSymbol(b: var BitStream, h: Huffman): uint16 {.inline.} =
   b.bitBuf = b.bitBuf shr len
   b.bitCount -= len.int
 
-func inflateBlock(
+proc inflateBlock(
   b: var BitStream, dst: var string, op: var int, fixedCodes: bool
 ) =
   var literalHuffman, distanceHuffman: Huffman
@@ -191,7 +191,7 @@ func inflateBlock(
           remaining -= 8
         op += totalLength
 
-func inflateNoCompression(b: var BitStream, dst: var string, op: var int) =
+proc inflateNoCompression(b: var BitStream, dst: var string, op: var int) =
   b.skipRemainingBitsInCurrentByte()
   let
     len = b.readBits(16).int
@@ -203,7 +203,7 @@ func inflateNoCompression(b: var BitStream, dst: var string, op: var int) =
     b.readBytes(dst, op, len)
   op += len
 
-func inflate*(dst: var string, src: string, pos = 0) =
+proc inflate*(dst: var string, src: string, pos = 0) =
   var
     b = initBitStream(src, pos)
     op: int
