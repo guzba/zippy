@@ -62,14 +62,6 @@ func compress*(
   else:
     result = deflate(src, level)
 
-template compress*(
-  src: seq[uint8],
-  level = DefaultCompression,
-  dataFormat = dfGzip
-): seq[uint8] =
-  ## Helper for when preferring to work with seq[uint8].
-  cast[seq[uint8]](compress(cast[string](src), level, dataFormat))
-
 func uncompress(
   dst: var string,
   src: string,
@@ -207,7 +199,3 @@ func uncompress*(
       raise newException(ZippyError, "Unable to detect compressed data format")
   else:
     uncompress(result, src, dataFormat)
-
-template uncompress*(src: seq[uint8], dataFormat = dfDetect): seq[uint8] =
-  ## Helper for when preferring to work with seq[uint8].
-  cast[seq[uint8]](uncompress(cast[string](src), dataFormat))
