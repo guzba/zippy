@@ -56,7 +56,7 @@ func newHuffman(lengths: seq[uint8], maxNumCodes: int): Huffman =
       result.values[symbolId] = i.uint16
       if len <= fastBits:
         let fast = (len.uint shl 9) or i.uint
-        var k = reverseBits(nextCode[len].uint16) shr (16 - len)
+        var k = reverseBits(nextCode[len].uint16) shr (16.uint8 - len)
         while k < (1 shl fastBits):
           result.fast[k] = fast.uint16
           k += (1.uint16 shl len)
