@@ -11,7 +11,7 @@ proc `<`(a, b: Node): bool {.inline.} =
   a.freq < b.freq
 
 proc huffmanCodes(
-  frequencies: openArray[int],
+  frequencies: openArray[uint16],
   minCodes, codeLengthLimit: int
 ): (seq[uint16], seq[uint8]) =
   # https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
@@ -22,7 +22,7 @@ proc huffmanCodes(
     highestSymbol: int
     numSymbolsUsed: int
   for symbol, freq in frequencies:
-    if freq > 0:
+    if freq > 0.uint16:
       highestSymbol = symbol
       inc numSymbolsUsed
 
@@ -46,7 +46,7 @@ proc huffmanCodes(
   else:
     var nodes: seq[Node]
     for symbol, freq in frequencies:
-      if freq > 0:
+      if freq > 0.uint16:
         nodes.add(Node(
           symbol: symbol,
           freq: freq.int
@@ -163,25 +163,31 @@ proc huffmanCodes(
 
   (codes, lengths)
 
-proc huffmanOnlyEncode(
-  src: ptr UncheckedArray[uint8], len: int
-): (seq[uint16], seq[int], seq[int], int) =
-  var
-    encoded = newSeq[uint16]()
-    freqLitLen = newSeq[int](286)
-    freqDist = newSeq[int](baseDistances.len)
-
-  freqLitLen[256] = 1 # Alway 1 end-of-block symbol
-
+proc encodeAllLiterals(
+  encoding: var seq[uint16],
+  ep: var int,
+  metadata: var BlockMetadata,
+  src: ptr UncheckedArray[uint8],
+  start, len: int
+) =
   for i in 0 ..< len:
-    inc freqLitLen[src[i]]
+    inc metadata.litLenFreq[src[start + i]]
 
-  for i in 0 ..< len div maxLiteralLength:
-    encoded.add(maxLiteralLength.uint16)
+  let
+    a = len div maxLiteralLength
+    b = len mod maxLiteralLength
+    c = a + (if b > 0: 1 else: 0)
+  if ep + c > encoding.len:
+    encoding.setLen(ep + c)
+  for i in 0 ..< a:
+    encoding[ep] = maxLiteralLength.uint16
+    inc ep
+  if b > 0:
+    encoding[ep] = b.uint16
+    inc ep
 
-  encoded.add((len mod maxLiteralLength).uint16)
-
-  (encoded, freqLitLen, freqDist, 0)
+  metadata.litLenFreq[256] = 1 # Alway 1 end-of-block symbol
+  metadata.numLiterals = len
 
 proc deflateNoCompression(
   b: var BitStreamWriter,
@@ -225,17 +231,43 @@ proc deflate*(
     deflateNoCompression(b, dst, src, len)
     return
 
-  let (encoding, freqLitLen, freqDist, literalsTotal) = block:
-    if level == -2:
-      huffmanOnlyEncode(src, len)
-    elif level == 1:
-      snappyEncode(src, len)
-    else:
-      # -1 or [2, 9]
-      lz77Encode(src, len, configurationTable[if level == -1: 6 else: level])
+  var
+    metadata: BlockMetadata
+    encoding: seq[uint16]
+    encodingLen: int
+
+  if level == -2:
+    encodeAllLiterals(
+      encoding,
+      encodingLen,
+      metadata,
+      src,
+      0,
+      len
+    )
+  elif level == 1:
+    encodeSnappy(
+      encoding,
+      encodingLen,
+      metadata,
+      src,
+      0,
+      len
+    )
+  else:
+    # -1 or [2, 9]
+    encodeLz77(
+      encoding,
+      encodingLen,
+      configurationTable[if level == -1: 6 else: level],
+      metadata,
+      src,
+      0,
+      len
+    )
 
   # If encoding returned almost all literals then write uncompressed.
-  if literalsTotal >= (len.float32 * 0.98).int:
+  if level != -2 and metadata.numLiterals >= (len.float32 * 0.98).int:
     deflateNoCompression(b, dst, src, len)
     return
 
@@ -245,12 +277,12 @@ proc deflate*(
       if useFixedCodes:
         (fixedLitLenCodes, fixedLitLenCodeLengths)
       else:
-        huffmanCodes(freqLitLen, 257, maxCodeLength)
+        huffmanCodes(metadata.litLenFreq, 257, maxCodeLength)
     (distanceCodes, distanceCodeLengths) = block:
       if useFixedCodes:
         (fixedDistanceCodes, fixedDistanceCodeLengths)
       else:
-        huffmanCodes(freqDist, 2, maxCodeLength)
+        huffmanCodes(metadata.distanceFreq, 2, maxCodeLength)
 
   if useFixedCodes:
     b.addBits(dst, 1, 1)
@@ -305,7 +337,7 @@ proc deflate*(
           codeLengthsRle.add(codeLengths[i])
         inc i
 
-    var clFreq: array[19, int]
+    var clFreq: array[19, uint16]
     block :
       var i: int
       while i < codeLengthsRle.len:

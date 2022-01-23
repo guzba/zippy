@@ -6,12 +6,11 @@ import common, internal
 
 proc encodeFragment(
   encoding: var seq[uint16],
+  metadata: var BlockMetadata,
   src: ptr UncheckedArray[uint8],
   op: var int,
   start, bytesToRead: int,
-  compressTable: var seq[uint16],
-  freqLitLen, freqDist: var seq[int],
-  literalsTotal: var int
+  compressTable: var seq[uint16]
 ) =
   let ipEnd = start + bytesToRead
   var
@@ -28,14 +27,14 @@ proc encodeFragment(
 
   template addLiteral(start, length: int) =
     for i in 0 ..< length:
-      inc freqLitLen[cast[uint8](src[start + i])]
+      inc metadata.litLenFreq[src[start + i]]
 
-    literalsTotal += length
+    metadata.numLiterals += length
 
     var remaining = length
     while remaining > 0:
       if op + 1 > encoding.len:
-        encoding.setLen(encoding.len * 2)
+        encoding.setLen(max(encoding.len * 2, 2))
 
       let added = min(remaining, (1 shl 15) - 1)
       encoding[op] = added.uint16
@@ -44,13 +43,13 @@ proc encodeFragment(
 
   template addCopy(offset: int, length: int) =
     if op + 3 > encoding.len:
-      encoding.setLen(encoding.len * 2)
+      encoding.setLen(max(encoding.len * 2, 2))
 
     let
       lengthIndex = baseLengthIndices[length - baseMatchLen]
       distIndex = distanceCodeIndex((offset - 1).uint16)
-    inc freqLitLen[lengthIndex + firstLengthCodeIndex]
-    inc freqDist[distIndex]
+    inc metadata.litLenFreq[lengthIndex + firstLengthCodeIndex]
+    inc metadata.distanceFreq[distIndex]
 
     # The length and dist indices are packed into this value with the highest
     # bit set as a flag to indicate this starts a run.
@@ -131,16 +130,14 @@ proc encodeFragment(
 
   emitRemainder()
 
-proc snappyEncode*(
-  src: ptr UncheckedArray[uint8], len: int
-): (seq[uint16], seq[int], seq[int], int) =
-  var
-    encoded = newSeq[uint16](4096)
-    freqLitLen = newSeq[int](286)
-    freqDist = newSeq[int](baseDistances.len)
-    literalsTotal: int
-
-  freqLitLen[256] = 1 # Alway 1 end-of-block symbol
+proc encodeSnappy*(
+  encoding: var seq[uint16],
+  ep: var int,
+  metadata: var BlockMetadata,
+  src: ptr UncheckedArray[uint8],
+  start, len: int
+) =
+  metadata.litLenFreq[256] = 1 # Alway 1 end-of-block symbol
 
   const
     maxBlockSize = maxWindowSize
@@ -157,17 +154,12 @@ proc snappyEncode*(
       failCompress()
 
     encodeFragment(
-      encoded,
+      encoding,
+      metadata,
       src,
       op,
       ip,
       bytesToRead,
-      compressTable,
-      freqLitLen,
-      freqDist,
-      literalsTotal
+      compressTable
     )
     ip += bytesToRead
-
-  encoded.setLen(op)
-  (encoded, freqLitLen, freqDist, literalsTotal)
