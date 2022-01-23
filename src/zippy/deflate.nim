@@ -1,11 +1,11 @@
 import bitops, bitstreams, heapqueue, internal, lz77, snappy, common
 
-when defined(release):
-  {.push checks: off.}
-
 type Node = ref object
   symbol, freq: int
   left, right: Node
+
+when defined(release):
+  {.push checks: off.}
 
 proc `<`(a, b: Node): bool {.inline.} =
   a.freq < b.freq
