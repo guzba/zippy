@@ -227,9 +227,5 @@ func inflate*(dst: var string, src: string, pos = 0) =
 
   dst.setLen(op)
 
-func inflate*(src: string): string =
-  result = newStringOfCap(src.len)
-  inflate(result, src)
-
 when defined(release):
   {.pop.}
