@@ -35,7 +35,7 @@ proc init(huffman: var Huffman, codeLengths: openArray[uint8]) =
     huffman.firstCode[i] = code.uint16
     huffman.firstSymbol[i] = k
     code = code + histogram[i]
-    if histogram[i] > 0 and code - 1 >= (1.uint32 shl i):
+    if histogram[i] > 0.uint16 and code - 1 >= (1.uint32 shl i):
       failUncompress()
     huffman.maxCodes[i] = (code shl (16 - i))
     code = code shl 1
@@ -227,7 +227,7 @@ proc inflate*(dst: var string, src: string, pos: int) =
       bfinal = b.readBits(1)
       btype = b.readBits(2)
 
-    if bfinal > 0:
+    if bfinal > 0.uint16:
       finalBlock = true
 
     case btype:
