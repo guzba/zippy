@@ -19,10 +19,6 @@ template failEndOfBuffer*() =
 when defined(release):
   {.push checks: off.}
 
-proc initBitStream*(dst: string, pos = 0): BitStream =
-  result.dst = dst
-  result.pos = pos
-
 proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
   while b.bitsBuffered <= 56:
     if b.pos >= b.len:
