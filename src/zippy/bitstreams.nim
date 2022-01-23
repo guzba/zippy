@@ -1,4 +1,4 @@
-import internal, common
+import common, internal
 
 type
   BitStreamReader* = object
@@ -65,18 +65,19 @@ func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
 proc addBits*(
   b: var BitStreamWriter,
   dst: var string,
-  value: uint32, bitLen: int
+  value: uint32,
+  bitLen: int
 ) {.inline.} =
-  assert bitLen <= 32
+  assert bitLen >= 0 and bitLen <= 32
 
   if b.pos + 8 > dst.len:
     # Make sure we have room to read64
-    dst.setLen(max(dst.len * 2, 64))
+    dst.setLen(max(dst.len * 2, 8))
 
-  let value = value.uint64 and ((1.uint64 shl bitLen) - 1)
-
+  let
+    dst = cast[ptr UncheckedArray[uint8]](dst[0].addr)
+    value = value.uint64 and ((1.uint64 shl bitLen) - 1)
   write64(dst, b.pos, read64(dst, b.pos) or (value.uint64 shl b.bitPos))
-
   b.incPos(bitLen)
 
 proc addBytes*(
@@ -85,13 +86,13 @@ proc addBytes*(
   src: ptr UncheckedArray[uint8],
   start, len: int
 ) =
-  assert b.bitPos == 0
+  if b.bitPos != 0:
+    raise newException(ZippyError, "Must be at a byte boundary")
 
   if b.pos + len > dst.len:
     dst.setLen(b.pos + len)
 
-  copyMem(dst[b.pos].addr, src[start].unsafeAddr, len)
-
+  copyMem(dst[b.pos].addr, src[start].addr, len)
   b.incPos(len * 8)
 
 proc skipRemainingBitsInCurrentByte*(b: var BitStreamWriter) =
