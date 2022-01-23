@@ -227,12 +227,12 @@ proc deflate*(src: string, level = -1): string =
 
   let
     useFixedCodes = src.len <= 2048
-    (llCodes, llLengths) = block:
+    (litLenCodes, litLenCodeLengths) = block:
       if useFixedCodes:
         (fixedLitLenCodes, fixedLitLenCodeLengths)
       else:
         huffmanCodes(freqLitLen, 257, maxCodeLength)
-    (distCodes, distLengths) = block:
+    (distanceCodes, distanceCodeLengths) = block:
       if useFixedCodes:
         (fixedDistanceCodes, fixedDistanceCodeLengths)
       else:
@@ -243,100 +243,104 @@ proc deflate*(src: string, level = -1): string =
     b.addBits(1, 1)
     b.addBits(1, 2) # Fixed Huffman codes
   else:
-    var bitLens = newSeqOfCap[uint8](llCodes.len + distCodes.len)
-    for i in 0 ..< llCodes.len:
-      bitLens.add(llLengths[i])
-    for i in 0 ..< distCodes.len:
-      bitLens.add(distLengths[i])
-
     var
-      bitLensRle: seq[uint8]
-      bitCount: int
-    block construct_binlens_rle:
+      codeLengths: array[maxLitLenCodes + maxDistanceCodes, uint8]
+      numCodes = litLenCodes.len + distanceCodes.len
+    block:
+      var cli: int
+      for i in 0 ..< litLenCodes.len:
+        codeLengths[cli] = litLenCodeLengths[i]
+        inc cli
+      for i in 0 ..< distanceCodes.len:
+        codeLengths[cli] = distanceCodeLengths[i]
+        inc cli
+
+    var codeLengthsRle: seq[uint8]
+    block:
       var i: int
-      while i < bitLens.len:
+      while i < numCodes:
         var repeatCount: int
-        while i + repeatCount + 1 < bitLens.len and
-          bitLens[i + repeatCount + 1] == bitLens[i]:
+        while i + repeatCount + 1 < numCodes and
+          codeLengths[i + repeatCount + 1] == codeLengths[i]:
           inc repeatCount
 
-        if bitLens[i] == 0 and repeatCount >= 2:
+        if codeLengths[i] == 0 and repeatCount >= 2:
           inc repeatCount # Initial zero
           if repeatCount <= 10:
-            bitLensRle.add([17.uint8, repeatCount.uint8 - 3])
+            codeLengthsRle.add(17)
+            codeLengthsRle.add(repeatCount.uint8 - 3)
           else:
             repeatCount = min(repeatCount, 138) # Max of 138 zeros for code 18
-            bitLensRle.add([18.uint8, repeatCount.uint8 - 11])
+            codeLengthsRle.add(18)
+            codeLengthsRle.add(repeatCount.uint8 - 11)
           i += repeatCount - 1
-          bitCount += 7
         elif repeatCount >= 3: # Repeat code for non-zero, must be >= 3 times
           var
             a = repeatCount div 6
             b = repeatCount mod 6
-          bitLensRle.add(bitLens[i])
+          codeLengthsRle.add(codeLengths[i])
           for j in 0 ..< a:
-            # bitLensRle.add([16.uint8, 3]) Makes ARC unhappy?
-            bitLensRle.add(16)
-            bitLensRle.add(3)
+            codeLengthsRle.add(16)
+            codeLengthsRle.add(3)
           if b >= 3:
-            bitLensRle.add([16.uint8, b.uint8 - 3])
+            codeLengthsRle.add(16)
+            codeLengthsRle.add(b.uint8 - 3)
           else:
             repeatCount -= b
           i += repeatCount
-          bitCount += (a + b) * 2
         else:
-          bitLensRle.add(bitLens[i])
+          codeLengthsRle.add(codeLengths[i])
         inc i
-        bitCount += 7
 
-    var clFreq = newSeq[int](19)
-    block count_cl_frequencies:
+    var clFreq: array[19, int]
+    block :
       var i: int
-      while i < bitLensRle.len:
-        inc clFreq[bitLensRle[i]]
+      while i < codeLengthsRle.len:
+        inc clFreq[codeLengthsRle[i]]
         # Skip the number of times codes are repeated
-        if bitLensRle[i] >= 16.uint8:
+        if codeLengthsRle[i] >= 16.uint8:
           inc i
         inc i
 
-    let (clCodes, clLengths) = huffmanCodes(clFreq, clFreq.len, 7)
+    let (clCodes, clCodeLengths) = huffmanCodes(clFreq, clFreq.len, 7)
 
-    var bitLensCodeLen = newSeq[uint8](clFreq.len)
-    for i in 0 ..< bitLensCodeLen.len:
-      bitLensCodeLen[i] = clLengths[clclOrder[i]]
+    var clclOrdered: array[19, uint16]
+    for i in 0 ..< clclOrdered.len:
+      clclOrdered[i] = clCodeLengths[clclOrder[i]]
 
-    while bitLensCodeLen[bitLensCodeLen.high] == 0 and bitLensCodeLen.len > 4:
-      bitLensCodeLen.setLen(bitLensCodeLen.len - 1)
+    var hclen = clclOrdered.len
+    while clclOrdered[hclen - 1] == 0 and clclOrdered.len > 4:
+      dec hclen
+    hclen -= 4
 
     let
-      hlit = (llCodes.len - 257).uint8
-      hdist = distCodes.len.uint8 - 1
-      hclen = bitLensCodeLen.len.uint8 - 4
+      hlit = litLenCodes.len - firstLengthCodeIndex
+      hdist = distanceCodes.len - 1
 
     b.addBits(1, 1)
     b.addBits(2, 2) # Dynamic Huffman codes
 
-    b.addBits(hlit, 5)
-    b.addBits(hdist, 5)
-    b.addBits(hclen, 4)
+    b.addBits(hlit.uint32, 5)
+    b.addBits(hdist.uint32, 5)
+    b.addBits(hclen.uint32, 4)
 
-    for i in 0.uint8 ..< hclen + 4:
-      b.addBits(bitLensCodeLen[i], 3)
+    for i in 0 ..< hclen + 4:
+      b.addBits(clclOrdered[i], 3)
 
-    block write_bitlens_rle:
+    block:
       var i: int
-      while i < bitLensRle.len:
-        let symbol = bitLensRle[i]
-        b.addBits(clCodes[symbol], clLengths[symbol])
+      while i < codeLengthsRle.len:
+        let symbol = codeLengthsRle[i]
+        b.addBits(clCodes[symbol], clCodeLengths[symbol])
         inc i
         if symbol == 16:
-          b.addBits(bitLensRle[i], 2)
+          b.addBits(codeLengthsRle[i], 2)
           inc i
         elif symbol == 17:
-          b.addBits(bitLensRle[i], 3)
+          b.addBits(codeLengthsRle[i], 3)
           inc i
         elif symbol == 18:
-          b.addBits(bitLensRle[i], 7)
+          b.addBits(codeLengthsRle[i], 7)
           inc i
 
   block write_encoded_data:
@@ -357,16 +361,16 @@ proc deflate*(src: string, level = -1): string =
         srcPos += length.int
 
         var
-          buf = llCodes[lengthIndex + firstLengthCodeIndex].uint32
-          len = llLengths[lengthIndex + firstLengthCodeIndex].uint32
+          buf = litLenCodes[lengthIndex + firstLengthCodeIndex].uint32
+          len = litLenCodeLengths[lengthIndex + firstLengthCodeIndex].uint32
 
         buf = buf or (lengthExtra.uint32 shl len)
         len += lengthExtraBits
 
         b.addBits(buf, len)
 
-        buf = distCodes[distIndex].uint32
-        len = distLengths[distIndex].uint32
+        buf = distanceCodes[distIndex].uint32
+        len = distanceCodeLengths[distIndex].uint32
 
         buf = buf or (distExtra.uint32 shl len)
         len += distExtraBits
@@ -379,11 +383,11 @@ proc deflate*(src: string, level = -1): string =
         var j: int
         for _ in 0 ..< length div 2:
           var
-            buf = llCodes[cast[uint8](src[srcPos + 0])].uint32
-            len = llLengths[cast[uint8](src[srcPos + 0])].uint32
+            buf = litLenCodes[cast[uint8](src[srcPos + 0])].uint32
+            len = litLenCodeLengths[cast[uint8](src[srcPos + 0])].uint32
 
-          buf = buf or (llCodes[cast[uint8](src[srcPos + 1])].uint32 shl len)
-          len += llLengths[cast[uint8](src[srcPos + 1])]
+          buf = buf or (litLenCodes[cast[uint8](src[srcPos + 1])].uint32 shl len)
+          len += litLenCodeLengths[cast[uint8](src[srcPos + 1])]
 
           b.addBits(buf, len)
 
@@ -392,15 +396,15 @@ proc deflate*(src: string, level = -1): string =
 
         if j != length:
           b.addBits(
-            llCodes[cast[uint8](src[srcPos])],
-            llLengths[cast[uint8](src[srcPos])]
+            litLenCodes[cast[uint8](src[srcPos])],
+            litLenCodeLengths[cast[uint8](src[srcPos])]
           )
           inc srcPos
 
-  if llLengths[256] == 0:
+  if litLenCodeLengths[256] == 0:
     failCompress()
 
-  b.addBits(llCodes[256], llLengths[256]) # End of block
+  b.addBits(litLenCodes[256], litLenCodeLengths[256]) # End of block
 
   b.skipRemainingBitsInCurrentByte()
 
