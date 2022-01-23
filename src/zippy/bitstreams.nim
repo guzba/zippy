@@ -63,7 +63,11 @@ func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
   b.bitPos = cast[int](cast[uint](bits + b.bitPos) and 7)
   # does this matter^?
 
-proc addBytes*(b: var BitStreamWriter, src: string, start, len: int) =
+proc addBytes*(
+  b: var BitStreamWriter,
+  src: ptr UncheckedArray[uint8],
+  start, len: int
+) =
   assert b.bitPos == 0
 
   if b.pos + len > b.dst.len:

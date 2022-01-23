@@ -183,9 +183,9 @@ proc huffmanOnlyEncode(
 
   (encoded, freqLitLen, freqDist, 0)
 
-proc deflateNoCompression(src: string): string =
+proc deflateNoCompression(src: ptr UncheckedArray[uint8], len: int): string =
   let blockCount = max(
-    (src.len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
+    (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
     1
   )
 
@@ -196,7 +196,7 @@ proc deflateNoCompression(src: string): string =
 
     let
       pos = i * maxUncompressedBlockSize
-      len = min(src.len - pos, maxUncompressedBlockSize).uint16
+      len = min(len - pos, maxUncompressedBlockSize).uint16
       nlen = maxUncompressedBlockSize.uint16 - len
 
     b.addBits(len, 16)
@@ -211,32 +211,32 @@ proc deflate*(src: string, level = -1): string =
   if level < -2 or level > 9:
     raise newException(ZippyError, "Invalid compression level " & $level)
 
-  if level == 0:
-    return deflateNoCompression(src)
-
   let
     len = src.len
-    sp =
+    src =
       if len > 0:
         cast[ptr UncheckedArray[uint8]](src[0].unsafeAddr)
       else:
         nil
 
+  if level == 0:
+    return deflateNoCompression(src, len)
+
   let (encoded, freqLitLen, freqDist, literalsTotal) = block:
     if level == -2:
-      huffmanOnlyEncode(sp, len)
+      huffmanOnlyEncode(src, len)
     elif level == 1:
-      snappyEncode(sp, len)
+      snappyEncode(src, len)
     else:
       # -1 or [2, 9]
-      lz77Encode(sp, len, configurationTable[if level == -1: 6 else: level])
+      lz77Encode(src, len, configurationTable[if level == -1: 6 else: level])
 
   # If encoding returned almost all literals then write uncompressed.
-  if literalsTotal >= (src.len.float32 * 0.98).int:
-    return deflateNoCompression(src)
+  if literalsTotal >= (len.float32 * 0.98).int:
+    return deflateNoCompression(src, len)
 
   let
-    useFixedCodes = src.len <= 2048
+    useFixedCodes = len <= 2048
     (litLenCodes, litLenCodeLengths) = block:
       if useFixedCodes:
         (fixedLitLenCodes, fixedLitLenCodeLengths)
