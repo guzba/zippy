@@ -10,9 +10,10 @@ type Node = ref object
 proc `<`(a, b: Node): bool {.inline.} =
   a.freq < b.freq
 
-proc huffmanCodeLengths(
-  frequencies: seq[int], minCodes, maxCodeLen: int
-): (seq[uint8], seq[uint16]) =
+proc huffmanCodes(
+  frequencies: openArray[int],
+  minCodes, codeLengthLimit: int
+): (seq[uint16], seq[uint8]) =
   # https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
   # https://en.wikipedia.org/wiki/Canonical_Huffman_code
   # https://create.stephan-brumme.com/length-limited-prefix-codes/
@@ -26,9 +27,9 @@ proc huffmanCodeLengths(
       inc numSymbolsUsed
 
   var
-    numCodes = max(highestSymbol + 1, 2)
-    lengths = newSeq[uint8](numCodes)
+    numCodes = max(highestSymbol, minCodes) + 1
     codes = newSeq[uint16](numCodes)
+    lengths = newSeq[uint8](numCodes)
 
   if numSymbolsUsed == 0:
     lengths[0] = 1
@@ -48,7 +49,7 @@ proc huffmanCodeLengths(
       if freq > 0:
         nodes.add(Node(
           symbol: symbol,
-          freq: freq
+          freq: freq.int
         ))
 
     proc buildTree(nodes: seq[Node]): bool =
@@ -75,7 +76,7 @@ proc huffmanCodeLengths(
           walk(node.right, level + 1)
         else:
           node.freq = level # Re-use freq for level
-          if level > maxCodeLen:
+          if level > codeLengthLimit:
             needsLengthLimiting = true
 
       walk(heap[0], 0)
@@ -97,7 +98,7 @@ proc huffmanCodeLengths(
         inc histogramNumBits[node.freq]
 
       var i = maxLength
-      while i > maxCodeLen:
+      while i > codeLengthLimit:
         if histogramNumBits[i] == 0:
           dec i
           continue
@@ -145,15 +146,14 @@ proc huffmanCodeLengths(
       for node in nodes:
         lengths[node.symbol] = node.freq.uint8
 
-  var lengthCounts: array[maxCodeLength + 1, uint8]
+  var histogram: array[maxCodeLength + 1, uint8]
   for l in lengths:
-    inc lengthCounts[l]
-
-  lengthCounts[0] = 0
+    inc histogram[l]
+  histogram[0] = 0
 
   var nextCode: array[maxCodeLength + 1, uint16]
   for i in 1 .. maxCodeLength:
-    nextCode[i] = (nextCode[i - 1] + lengthCounts[i - 1]) shl 1
+    nextCode[i] = (nextCode[i - 1] + histogram[i - 1]) shl 1
 
   # Convert to canonical codes (+ reversed)
   for i in 0 ..< codes.len:
@@ -161,13 +161,7 @@ proc huffmanCodeLengths(
       codes[i] = reverseBits(nextCode[lengths[i]]) shr (16.uint8 - lengths[i])
       inc nextCode[lengths[i]]
 
-  numCodes = max(numCodes, minCodes)
-  if lengths.len < numCodes:
-    lengths.setLen(numCodes)
-  if codes.len < numCodes:
-    codes.setLen(numCodes)
-
-  (lengths, codes)
+  (codes, lengths)
 
 proc huffmanOnlyEncode(src: string): (seq[uint16], seq[int], seq[int], int) =
   var
@@ -233,16 +227,16 @@ proc deflate*(src: string, level = -1): string =
 
   let
     useFixedCodes = src.len <= 2048
-    (llLengths, llCodes) = block:
+    (llCodes, llLengths) = block:
       if useFixedCodes:
-        (fixedLitLenCodeLengths, fixedLitLenCodes)
+        (fixedLitLenCodes, fixedLitLenCodeLengths)
       else:
-        huffmanCodeLengths(freqLitLen, 257, maxCodeLength)
-    (distLengths, distCodes) = block:
+        huffmanCodes(freqLitLen, 257, maxCodeLength)
+    (distCodes, distLengths) = block:
       if useFixedCodes:
-        (fixedDistanceCodeLengths, fixedDistanceCodes)
+        (fixedDistanceCodes, fixedDistanceCodeLengths)
       else:
-        huffmanCodeLengths(freqDist, 2, maxCodeLength)
+        huffmanCodes(freqDist, 2, maxCodeLength)
 
   var b: BitStream
   if useFixedCodes:
@@ -305,7 +299,7 @@ proc deflate*(src: string, level = -1): string =
           inc i
         inc i
 
-    let (clLengths, clCodes) = huffmanCodeLengths(clFreq, clFreq.len, 7)
+    let (clCodes, clLengths) = huffmanCodes(clFreq, clFreq.len, 7)
 
     var bitLensCodeLen = newSeq[uint8](clFreq.len)
     for i in 0 ..< bitLensCodeLen.len:
