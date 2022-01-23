@@ -175,6 +175,18 @@ template failUncompress*() =
 template failCompress*() =
   raise newException(ZippyError, "Unexpected error while compressing")
 
+template read32*(src: ptr UncheckedArray[uint8], ip: int): uint32 =
+  cast[ptr uint32](src[ip].unsafeAddr)[]
+
+template read64*(src: ptr UncheckedArray[uint8], ip: int): uint64 =
+  cast[ptr uint64](src[ip].addr)[]
+
+template write64*(dst: ptr UncheckedArray[uint8], op: int, value: uint64) =
+  cast[ptr uint64](dst[op].addr)[] = value
+
+template copy64*(dst, src: ptr UncheckedArray[uint8], op, ip: int) =
+  write64(dst, op, read64(src, ip))
+
 func read16*(s: string, pos: int): uint16 {.inline.} =
   cast[ptr uint16](s[pos].unsafeAddr)[]
 

@@ -21,14 +21,16 @@ const crcTables = block:
     tables[7][i] = (tables[6][i] shr 8) xor tables[0][tables[6][i] and 255]
   tables
 
-func crc32*(v: uint32, data: seq[uint8] | string): uint32 =
-  result = v
+proc crc32*(src: pointer, len: int): uint32 =
+  let src = cast[ptr UncheckedArray[uint8]](src)
+
+  result = 0xffffffff.uint32
 
   var pos: int
-  while data.len - pos >= 8:
+  while len - pos >= 8:
     let
-      one = read32(data, pos) xor result
-      two = read32(data, pos + 4)
+      one = read32(src, pos) xor result
+      two = read32(src, pos + 4)
     result =
       crcTables[7][(one shr 0) and 255] xor
       crcTables[6][(one shr 8) and 255] xor
@@ -40,9 +42,14 @@ func crc32*(v: uint32, data: seq[uint8] | string): uint32 =
       crcTables[0][two shr 24]
     pos += 8
 
-  while pos < data.len:
-    result = crcTables[0][(result xor cast[uint8](data[pos])) and 255] xor (result shr 8)
+  while pos < len:
+    result = crcTables[0][(result xor src[pos]) and 255] xor (result shr 8)
     inc pos
 
-func crc32*(data: seq[uint8] | string): uint32 {.inline.} =
-  not crc32(0xffffffff.uint32, data)
+  result = not result
+
+proc crc32*(src: string): uint32 {.inline.} =
+  if src.len > 0:
+    crc32(src[0].unsafeAddr, src.len)
+  else:
+    crc32(nil, 0)
