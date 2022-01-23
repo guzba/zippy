@@ -174,7 +174,7 @@ proc inflateBlock(
 
       let copyLength = (
         baseLengths[lengthIdx] +
-        b.readBits(baseLengthsExtraBits[lengthIdx].uint)
+        b.readBits(baseLengthsExtraBits[lengthIdx].int)
       ).int
 
       let distanceIdx = decodeSymbol(b, distancesHuffman)
@@ -183,7 +183,7 @@ proc inflateBlock(
 
       let distance = (
         baseDistances[distanceIdx] +
-        b.readBits(baseDistanceExtraBits[distanceIdx].uint)
+        b.readBits(baseDistanceExtraBits[distanceIdx].int)
       ).int
 
       if distance > op:

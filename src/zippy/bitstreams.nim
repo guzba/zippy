@@ -27,15 +27,18 @@ proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
     inc b.pos
     b.bitsBuffered += 8
 
-proc readBits*(b: var BitStreamReader, bits: uint): uint16 =
-  assert bits <= 16
+proc readBits*(b: var BitStreamReader, bits: int): uint16 =
+  assert bits >= 0 and bits <= 16
+
+  if bits == 0:
+    return
 
   if b.bitsBuffered < 16:
     b.fillBitBuffer()
 
   result = (b.bitBuffer and ((1.uint64 shl bits) - 1)).uint16
   b.bitBuffer = b.bitBuffer shr bits
-  b.bitsBuffered -= bits.int # bitCount can go negative if we've read past the end
+  b.bitsBuffered -= bits # bitCount can go negative if we've read past the end
 
 proc readBytes*(b: var BitStreamReader, dst: pointer, len: int) =
   if b.bitsBuffered mod 8 != 0:
