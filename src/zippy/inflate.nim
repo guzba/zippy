@@ -231,15 +231,7 @@ proc inflateNoCompression(
     b.readBytes(dst[op].addr, len)
   op += len
 
-proc inflate*(dst: var string, src: string, pos: int) =
-  let
-    len = src.len
-    src =
-      if len > 0:
-        cast[ptr UncheckedArray[uint8]](src[0].unsafeAddr)
-      else:
-        nil
-
+proc inflate*(dst: var string, src: ptr UncheckedArray[uint8], len, pos: int) =
   var
     b = BitStreamReader(
       src: src,

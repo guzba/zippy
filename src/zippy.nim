@@ -61,91 +61,87 @@ proc compress*(
     raise newException(ZippyError, "Invalid data format " & $dataFormat)
 
 proc uncompress*(
-  src: string,
+  src: pointer,
+  len: int,
   dataFormat = dfDetect
 ): string {.raises: [ZippyError].} =
   ## Uncompresses src and returns the uncompressed data.
-
-  result = newStringOfCap(src.len)
+  let src = cast[ptr UncheckedArray[uint8]](src)
 
   case dataFormat:
   of dfDetect:
     if (
-      src.len >= 18 and
-      src[0 .. 2] == [31.char, 139.char, 8.char] and
-      (cast[uint8](src[3]) and 0b11100000) == 0
-    ): # This looks like gzip
-      return uncompress(src, dfGzip)
+      len > 18 and
+      src[0].uint8 == 31 and src[1].uint8 == 139 and src[2].uint8 == 8 and
+      (src[3].uint8 and 0b11100000) == 0
+    ):
+      return uncompress(src, len, dfGzip)
 
     if (
-      src.len >= 6 and
-      (cast[uint8](src[0]) and 0b00001111) == 8 and
-      (cast[uint8](src[0]) shr 4) <= 7 and
-      ((src[0].uint16 * 256) + src[1].uint16) mod 31 == 0
-    ): # This looks like zlib
-      return uncompress(src, dfZlib)
+      len > 6 and
+      (src[0].uint8 and 0b00001111) == 8 and
+      (src[0].uint8 shr 4) <= 7 and
+      ((src[0].uint16 * 256) + src[1].uint8) mod 31 == 0
+    ):
+      return uncompress(src, len, dfZlib)
 
     raise newException(ZippyError, "Unable to detect compressed data format")
 
   of dfGzip:
-    # Assumes the gzip src data to uncompress contains only one member.
-
-    if src.len < 18:
+    # Assumes the gzip src data only contains one file.
+    if len < 18:
       failUncompress()
 
     let
-      id1 = cast[uint8](src[0])
-      id2 = cast[uint8](src[1])
-      cm = cast[uint8](src[2])
-      flg = cast[uint8](src[3])
+      id1 = src[0].uint8
+      id2 = src[1].uint8
+      cm = src[2].uint8
+      flg = src[3].uint8
       # mtime = src[4 .. 7]
       # xfl = src[8]
       # os = src[9]
 
     if id1 != 31 or id2 != 139:
       raise newException(ZippyError, "Failed gzip identification values check")
+
     if cm != 8: # DEFLATE
       raise newException(ZippyError, "Unsupported compression method")
+
     if (flg and 0b11100000) > 0.uint8:
       raise newException(ZippyError, "Reserved flag bits set")
 
     let
-      # ftext = (flg and (1.uint8 shl 0)) > 0
-      fhcrc = (flg and (1.uint8 shl 1)) > 0.uint8
-      fextra = (flg and (1.uint8 shl 2)) > 0.uint8
-      fname = (flg and (1.uint8 shl 3)) > 0.uint8
-      fcomment = (flg and (1.uint8 shl 4)) > 0.uint8
+      # ftext = (flg and (1.uint8 shl 0)) != 0
+      fhcrc = (flg and (1.uint8 shl 1)) != 0.uint8
+      fextra = (flg and (1.uint8 shl 2)) != 0.uint8
+      fname = (flg and (1.uint8 shl 3)) != 0.uint8
+      fcomment = (flg and (1.uint8 shl 4)) != 0.uint8
 
     var pos = 10
-
-    func nextZeroByte(s: string, start: int): int =
-      for i in start ..< s.len:
-        if s[i] == 0.char:
-          return i
-      failUncompress()
 
     if fextra:
       raise newException(ZippyError, "Currently unsupported flags are set")
 
     if fname:
-      pos = nextZeroByte(src, pos) + 1
+      pos += cast[cstring](src[pos].unsafeAddr).len + 1
+
     if fcomment:
-      pos = nextZeroByte(src, pos) + 1
+      pos += cast[cstring](src[pos].unsafeAddr).len + 1
+
     if fhcrc:
-      if pos + 2 >= src.len:
+      if pos + 2 >= len:
         failUncompress()
       # TODO: Need to implement this with a test file
       pos += 2
 
-    if pos + 8 >= src.len:
+    if pos + 8 >= len:
       failUncompress()
 
-    let
-      checksum = read32(src, src.len - 8)
-      isize = read32(src, src.len - 4)
+    inflate(result, src, len, pos)
 
-    # Last to touch src
-    inflate(result, src, pos)
+    let
+      checksum = read32(src, len - 8)
+      isize = read32(src, len - 4)
 
     if checksum != crc32(result):
       raise newException(ZippyError, "Checksum verification failed")
@@ -154,19 +150,12 @@ proc uncompress*(
       raise newException(ZippyError, "Size verification failed")
 
   of dfZlib:
-    if src.len < 6:
+    if len < 6:
       failUncompress()
 
-    let checksum = (
-      src[^4].uint32 shl 24 or
-      src[^3].uint32 shl 16 or
-      src[^2].uint32 shl 8 or
-      src[^1].uint32
-    )
-
     let
-      cmf = cast[uint8](src[0])
-      flg = cast[uint8](src[1])
+      cmf = src[0].uint8
+      flg = src[1].uint8
       cm = cmf and 0b00001111
       cinfo = cmf shr 4
 
@@ -182,10 +171,26 @@ proc uncompress*(
     if (flg and 0b00100000) != 0: # FDICT
       raise newException(ZippyError, "Preset dictionary is not yet supported")
 
-    inflate(result, src, 2)
+    inflate(result, src, len, 2)
+
+    let checksum = (
+      src[len - 4].uint32 shl 24 or
+      src[len - 3].uint32 shl 16 or
+      src[len - 2].uint32 shl 8 or
+      src[len - 1].uint32
+    )
 
     if checksum != adler32(result):
       raise newException(ZippyError, "Checksum verification failed")
 
   of dfDeflate:
-    inflate(result, src, 0)
+    inflate(result, src, len, 0)
+
+proc uncompress*(
+  src: string,
+  dataFormat = dfDetect
+): string {.raises: [ZippyError].} =
+  if src.len > 0:
+    uncompress(src[0].unsafeAddr, src.len, dataFormat)
+  else:
+    uncompress(nil, 0, dataFormat)
