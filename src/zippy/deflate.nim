@@ -187,7 +187,7 @@ proc deflateNoCompression(src: string): string =
     1
   )
 
-  var b: BitStream
+  var b: BitStreamWriter
   for i in 0 ..< blockCount:
     let finalBlock = i == blockCount - 1
     b.addBits(finalBlock.uint16, 8)
@@ -238,7 +238,7 @@ proc deflate*(src: string, level = -1): string =
       else:
         huffmanCodes(freqDist, 2, maxCodeLength)
 
-  var b: BitStream
+  var b: BitStreamWriter
   if useFixedCodes:
     b.addBits(1, 1)
     b.addBits(1, 2) # Fixed Huffman codes
@@ -331,7 +331,7 @@ proc deflate*(src: string, level = -1): string =
       var i: int
       while i < codeLengthsRle.len:
         let symbol = codeLengthsRle[i]
-        b.addBits(clCodes[symbol], clCodeLengths[symbol])
+        b.addBits(clCodes[symbol], clCodeLengths[symbol].int)
         inc i
         if symbol == 16:
           b.addBits(codeLengthsRle[i], 2)
@@ -362,20 +362,20 @@ proc deflate*(src: string, level = -1): string =
 
         var
           buf = litLenCodes[lengthIndex + firstLengthCodeIndex].uint32
-          len = litLenCodeLengths[lengthIndex + firstLengthCodeIndex].uint32
+          bitLen = litLenCodeLengths[lengthIndex + firstLengthCodeIndex].int
 
-        buf = buf or (lengthExtra.uint32 shl len)
-        len += lengthExtraBits
+        buf = buf or (lengthExtra.uint32 shl bitLen)
+        bitLen += lengthExtraBits.int
 
-        b.addBits(buf, len)
+        b.addBits(buf, bitLen)
 
         buf = distanceCodes[distIndex].uint32
-        len = distanceCodeLengths[distIndex].uint32
+        bitLen = distanceCodeLengths[distIndex].int
 
-        buf = buf or (distExtra.uint32 shl len)
-        len += distExtraBits
+        buf = buf or (distExtra.uint32 shl bitLen)
+        bitLen += distExtraBits.int
 
-        b.addBits(buf, len)
+        b.addBits(buf, bitLen)
       else:
         let length = encoded[encPos].int
         inc encPos
@@ -384,12 +384,12 @@ proc deflate*(src: string, level = -1): string =
         for _ in 0 ..< length div 2:
           var
             buf = litLenCodes[cast[uint8](src[srcPos + 0])].uint32
-            len = litLenCodeLengths[cast[uint8](src[srcPos + 0])].uint32
+            bitLen = litLenCodeLengths[cast[uint8](src[srcPos + 0])].int
 
-          buf = buf or (litLenCodes[cast[uint8](src[srcPos + 1])].uint32 shl len)
-          len += litLenCodeLengths[cast[uint8](src[srcPos + 1])]
+          buf = buf or (litLenCodes[cast[uint8](src[srcPos + 1])].uint32 shl bitLen)
+          bitLen += litLenCodeLengths[cast[uint8](src[srcPos + 1])].int
 
-          b.addBits(buf, len)
+          b.addBits(buf, bitLen)
 
           srcPos += 2
           j += 2
@@ -397,14 +397,14 @@ proc deflate*(src: string, level = -1): string =
         if j != length:
           b.addBits(
             litLenCodes[cast[uint8](src[srcPos])],
-            litLenCodeLengths[cast[uint8](src[srcPos])]
+            litLenCodeLengths[cast[uint8](src[srcPos])].int
           )
           inc srcPos
 
   if litLenCodeLengths[256] == 0:
     failCompress()
 
-  b.addBits(litLenCodes[256], litLenCodeLengths[256]) # End of block
+  b.addBits(litLenCodes[256], litLenCodeLengths[256].int) # End of block
 
   b.skipRemainingBitsInCurrentByte()
 

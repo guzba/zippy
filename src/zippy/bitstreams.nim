@@ -1,17 +1,15 @@
 import internal, common
 
 type
-  BitStream* = object
-    pos*: int
-    # Writing
-    dst*: string
-    bitPos: uint
-
   BitStreamReader* = object
     src*: ptr UncheckedArray[uint8]
     len*, pos*: int
     bitBuffer*: uint64
     bitsBuffered*: int
+
+  BitStreamWriter* = object
+    dst*: string
+    pos*, bitPos*: int
 
 template failEndOfBuffer*() =
   raise newException(ZippyError, "Cannot read further, at end of buffer")
@@ -60,17 +58,12 @@ proc skipRemainingBitsInCurrentByte*(b: var BitStreamReader) =
     b.bitsBuffered -= mod8
     b.bitBuffer = b.bitBuffer shr mod8
 
-proc incPos(b: var BitStream, bits: uint) {.inline.} =
-  # Used when writing
-  b.pos += ((bits + b.bitPos) shr 3).int
-  b.bitPos = (bits + b.bitPos) and 7
+func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
+  b.pos += cast[int](cast[uint](bits + b.bitPos) shr 3)
+  b.bitPos = cast[int](cast[uint](bits + b.bitPos) and 7)
+  # does this matter^?
 
-proc skipRemainingBitsInCurrentByte*(b: var BitStream) =
-  # If writing
-  if b.bitPos > 0.uint:
-    b.incPos(8.uint - b.bitPos)
-
-proc addBytes*(b: var BitStream, src: string, start, len: int) =
+proc addBytes*(b: var BitStreamWriter, src: string, start, len: int) =
   assert b.bitPos == 0
 
   if b.pos + len > b.dst.len:
@@ -78,20 +71,24 @@ proc addBytes*(b: var BitStream, src: string, start, len: int) =
 
   copyMem(b.dst[b.pos].addr, src[start].unsafeAddr, len)
 
-  b.incPos(len.uint * 8)
+  b.incPos(len * 8)
 
-proc addBits*(b: var BitStream, value: uint32, bits: uint32) {.inline.} =
-  assert bits <= 32
+proc addBits*(b: var BitStreamWriter, value: uint32, bitLen: int) {.inline.} =
+  assert bitLen <= 32
 
   if b.pos + 8 > b.dst.len:
     # Make sure we have room to read64
     b.dst.setLen(max(b.dst.len * 2, 64))
 
-  let value = value.uint64 and ((1.uint64 shl bits) - 1)
+  let value = value.uint64 and ((1.uint64 shl bitLen) - 1)
 
   write64(b.dst, b.pos, read64(b.dst, b.pos) or (value.uint64 shl b.bitPos))
 
-  b.incPos(bits)
+  b.incPos(bitLen)
+
+proc skipRemainingBitsInCurrentByte*(b: var BitStreamWriter) =
+  if b.bitPos > 0:
+    b.incPos(8 - b.bitPos)
 
 when defined(release):
   {.pop.}
