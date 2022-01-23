@@ -181,14 +181,10 @@ const
     makeCodes(fixedDistLengths)
 
 template failUncompress*() =
-  raise newException(
-    ZippyError, "Invalid buffer, unable to uncompress"
-  )
+  raise newException(ZippyError, "Invalid buffer, unable to uncompress")
 
 template failCompress*() =
-  raise newException(
-    ZippyError, "Unexpected error while compressing"
-  )
+  raise newException(ZippyError, "Unexpected error while compressing")
 
 func read16*(s: string, pos: int): uint16 {.inline.} =
   when nimvm:
