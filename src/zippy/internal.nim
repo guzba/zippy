@@ -7,6 +7,7 @@ const
   maxFixedLitLenCodes* = 288
   maxWindowSize* = 32768
   maxUncompressedBlockSize* = 65535
+  maxBlockSize* = (1 shl 15) - 1
   firstLengthCodeIndex* = 257
   baseMatchLen* = 3
   minMatchLen* = 4

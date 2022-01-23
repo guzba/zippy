@@ -193,19 +193,19 @@ proc deflateNoCompression(
   b: var BitStreamWriter,
   dst: var string,
   src: ptr UncheckedArray[uint8],
-  len: int
+  start, len: int
 ) =
   let blockCount = max(
     (len + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
     1
   )
 
-  for i in 0 ..< blockCount:
-    let finalBlock = i == (blockCount - 1)
+  for blockNum in 0 ..< blockCount:
+    let finalBlock = blockNum == (blockCount - 1)
     b.addBits(dst, finalBlock.uint16, 8)
 
     let
-      pos = i * maxUncompressedBlockSize
+      pos = start + blockNum * maxUncompressedBlockSize
       blockLen = min(len - pos, maxUncompressedBlockSize).uint16
 
     b.addBits(dst, blockLen, 16)
@@ -221,7 +221,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
   b.pos = dst.len
 
   if level == 0:
-    deflateNoCompression(b, dst, src, len)
+    deflateNoCompression(b, dst, src, 0, len)
     dst.setLen(b.pos)
     return
 
@@ -262,7 +262,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
 
   # If encoding returned almost all literals then write uncompressed.
   if level != -2 and metadata.numLiterals >= (len.float32 * 0.98).int:
-    deflateNoCompression(b, dst, src, len)
+    deflateNoCompression(b, dst, src, 0, len)
     dst.setLen(b.pos)
     return
 
