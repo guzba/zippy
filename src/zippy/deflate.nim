@@ -201,20 +201,17 @@ proc deflateNoCompression(
   )
 
   for i in 0 ..< blockCount:
-    let finalBlock = i == blockCount - 1
+    let finalBlock = i == (blockCount - 1)
     b.addBits(dst, finalBlock.uint16, 8)
 
     let
       pos = i * maxUncompressedBlockSize
-      len = min(len - pos, maxUncompressedBlockSize).uint16
-      nlen = maxUncompressedBlockSize.uint16 - len
+      blockLen = min(len - pos, maxUncompressedBlockSize).uint16
 
-    b.addBits(dst, len, 16)
-    b.addBits(dst, nlen, 16)
-    if len > 0.uint16:
-      b.addBytes(dst, src, pos, len.int)
-
-  dst.setLen(b.pos)
+    b.addBits(dst, blockLen, 16)
+    b.addBits(dst, maxUncompressedBlockSize.uint16 - blockLen, 16)
+    if len > 0:
+      b.addBytes(dst, src, pos, blockLen.int)
 
 proc deflate*(
   dst: var string,
@@ -229,6 +226,7 @@ proc deflate*(
 
   if level == 0:
     deflateNoCompression(b, dst, src, len)
+    dst.setLen(b.pos)
     return
 
   var
@@ -269,6 +267,7 @@ proc deflate*(
   # If encoding returned almost all literals then write uncompressed.
   if level != -2 and metadata.numLiterals >= (len.float32 * 0.98).int:
     deflateNoCompression(b, dst, src, len)
+    dst.setLen(b.pos)
     return
 
   let

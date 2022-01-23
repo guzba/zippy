@@ -84,7 +84,7 @@ proc addBytes*(
   b: var BitStreamWriter,
   dst: var string,
   src: ptr UncheckedArray[uint8],
-  start, len: int
+  srcPos, len: int
 ) =
   if b.bitPos != 0:
     raise newException(ZippyError, "Must be at a byte boundary")
@@ -92,7 +92,7 @@ proc addBytes*(
   if b.pos + len > dst.len:
     dst.setLen(b.pos + len)
 
-  copyMem(dst[b.pos].addr, src[start].addr, len)
+  copyMem(dst[b.pos].addr, src[srcPos].addr, len)
   b.incPos(len * 8)
 
 proc skipRemainingBitsInCurrentByte*(b: var BitStreamWriter) =
