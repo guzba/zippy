@@ -408,6 +408,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
           lengthExtra = length - baseLengths[lengthIndex]
           distExtraBits = baseDistanceExtraBits[distIndex]
           distExtra = offset - baseDistances[distIndex]
+
         encPos += 3
         srcPos += length.int
 
@@ -428,29 +429,21 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
 
         b.addBits(dst, buf, bitLen)
       else:
-        let length = encoding[encPos].int
+        let literalsLength = encoding[encPos].int
         inc encPos
 
-        var j: int
-        for _ in 0 ..< length div 2:
+        for _ in 0 ..< literalsLength div 2:
           var
             buf = litLenCodes[src[srcPos + 0]].uint32
             bitLen = litLenCodeLengths[src[srcPos + 0]].int
-
           buf = buf or (litLenCodes[src[srcPos + 1]].uint32 shl bitLen)
           bitLen += litLenCodeLengths[src[srcPos + 1]].int
 
           b.addBits(dst, buf, bitLen)
-
           srcPos += 2
-          j += 2
 
-        if j != length:
-          b.addBits(
-            dst,
-            litLenCodes[src[srcPos]],
-            litLenCodeLengths[src[srcPos]].int
-          )
+        if literalsLength mod 2 != 0:
+          b.addBits(dst, litLenCodes[src[srcPos]], litLenCodeLengths[src[srcPos]].int)
           inc srcPos
 
   if litLenCodeLengths[256] == 0:
