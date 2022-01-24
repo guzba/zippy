@@ -290,7 +290,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
       continue
 
     let
-      useFixedCodes = blockLen <= 2048
+      useFixedCodes = level <= 6 and blockLen <= 2048
       (litLenCodes, litLenCodeLengths) = block:
         if useFixedCodes:
           (fixedLitLenCodes, fixedLitLenCodeLengths)
