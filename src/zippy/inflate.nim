@@ -233,11 +233,7 @@ proc inflateNoCompression(
 
 proc inflate*(dst: var string, src: ptr UncheckedArray[uint8], len, pos: int) =
   var
-    b = BitStreamReader(
-      src: src,
-      len: len,
-      pos: pos
-    )
+    b = BitStreamReader(src: src, len: len, pos: pos)
     op: int
     finalBlock: bool
   while not finalBlock:
