@@ -455,7 +455,11 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
             srcPos += 2
 
           if literalsLength mod 2 != 0:
-            b.addBits(dst, litLenCodes[src[srcPos]], litLenCodeLengths[src[srcPos]].int)
+            b.addBits(
+              dst,
+              litLenCodes[src[srcPos]],
+              litLenCodeLengths[src[srcPos]].int
+            )
             inc srcPos
 
       if encPos != encodingLen:

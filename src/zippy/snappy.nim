@@ -4,13 +4,15 @@ import common, internal
 ## This is much faster but does not compress as well. Perfect for BestSpeed.
 ## See https://github.com/guzba/supersnappy
 
+const maxCompressTableSize = 1 shl 14
+
 proc encodeFragment(
   encoding: var seq[uint16],
   metadata: var BlockMetadata,
   src: ptr UncheckedArray[uint8],
   ep: var int,
   start, bytesToRead: int,
-  compressTable: var seq[uint16]
+  compressTable: var array[maxCompressTableSize, uint16]
 ) =
   let ipEnd = start + bytesToRead
   var
@@ -139,11 +141,9 @@ proc encodeSnappy*(
 ) =
   metadata.litLenFreq[256] = 1 # Alway 1 end-of-block symbol
 
-  const maxCompressTableSize = 1 shl 14
-
   var
     pos = blockStart
-    compressTable = newSeq[uint16](maxCompressTableSize)
+    compressTable: array[maxCompressTableSize, uint16]
   while pos < blockStart + blockLen:
     let
       fragmentSize = blockStart + blockLen - pos

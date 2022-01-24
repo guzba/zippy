@@ -59,8 +59,8 @@ proc skipRemainingBitsInCurrentByte*(b: var BitStreamReader) =
     b.bitBuffer = b.bitBuffer shr mod8
 
 func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
-  b.pos += cast[int](cast[uint](bits + b.bitPos) shr 3)
-  b.bitPos = cast[int](cast[uint](bits + b.bitPos) and 7)
+  b.pos += (bits + b.bitPos) shr 3
+  b.bitPos = (bits + b.bitPos) and 7
 
 proc addBits*(
   b: var BitStreamWriter,
@@ -77,7 +77,7 @@ proc addBits*(
   let
     dst = cast[ptr UncheckedArray[uint8]](dst[0].addr)
     value = value.uint64 and ((1.uint64 shl bitLen) - 1)
-  write64(dst, b.pos, read64(dst, b.pos) or (value.uint64 shl b.bitPos))
+  write64(dst, b.pos, read32(dst, b.pos).uint64 or (value.uint64 shl b.bitPos))
   b.incPos(bitLen)
 
 proc addBytes*(
