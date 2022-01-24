@@ -1,4 +1,4 @@
-import zippy/internal, zippy/crc, zippy/deflate, zippy/inflate, zippy/common
+import zippy/common, zippy/crc, zippy/deflate, zippy/inflate, zippy/internal
 
 export common
 

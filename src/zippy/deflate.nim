@@ -1,4 +1,4 @@
-import bitops, bitstreams, heapqueue, internal, lz77, snappy, common
+import bitops, bitstreams, common, heapqueue, internal, lz77, snappy
 
 type Node = ref object
   symbol, freq: int
@@ -356,7 +356,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
           inc i
 
       var clFreq: array[19, uint16]
-      block :
+      block:
         var i: int
         while i < codeLengthsRle.len:
           inc clFreq[codeLengthsRle[i]]

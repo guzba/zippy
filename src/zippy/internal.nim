@@ -1,4 +1,4 @@
-import bitops, strutils, common
+import bitops, common, strutils
 
 const
   maxCodeLength* = 15
@@ -186,8 +186,8 @@ proc read32*(src: ptr UncheckedArray[uint8], ip: int): uint32 {.inline.} =
 proc read64*(src: ptr UncheckedArray[uint8], ip: int): uint64 {.inline.} =
   cast[ptr uint64](src[ip].addr)[]
 
-proc write64*(dst: ptr UncheckedArray[uint8], op: int, value: uint64) {.inline.} =
-  cast[ptr uint64](dst[op].addr)[] = value
+proc write64*(dst: ptr UncheckedArray[uint8], op: int, v: uint64) {.inline.} =
+  cast[ptr uint64](dst[op].addr)[] = v
 
 proc copy64*(dst, src: ptr UncheckedArray[uint8], op, ip: int) {.inline.} =
   write64(dst, op, read64(src, ip))
