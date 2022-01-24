@@ -58,7 +58,7 @@ proc skipRemainingBitsInCurrentByte*(b: var BitStreamReader) =
     b.bitsBuffered -= mod8
     b.bitBuffer = b.bitBuffer shr mod8
 
-func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
+proc incPos(b: var BitStreamWriter, bits: int) {.inline.} =
   b.pos += (bits + b.bitPos) shr 3
   b.bitPos = (bits + b.bitPos) and 7
 
