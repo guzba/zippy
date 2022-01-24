@@ -24,11 +24,8 @@ proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
     inc b.pos
     b.bitsBuffered += 8
 
-proc readBits*(b: var BitStreamReader, bits: int): uint16 =
+proc readBits*(b: var BitStreamReader, bits: int): uint16 {.inline.} =
   assert bits >= 0 and bits <= 16
-
-  if bits == 0:
-    return
 
   if b.bitsBuffered < 16:
     b.fillBitBuffer()
