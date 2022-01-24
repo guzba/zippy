@@ -196,16 +196,26 @@ proc addNoCompressionBlock(
   blockStart, blockLen: int,
   finalBlock: bool
 ) =
-  if blockLen > maxUncompressedBlockSize:
-    failCompress()
+  let uncompressedBlockCount = max(
+    (blockLen + maxUncompressedBlockSize - 1) div maxUncompressedBlockSize,
+    1
+  )
+  for blockNum in 0 ..< uncompressedBlockCount:
+    let
+      uncompressedFinalBlock = blockNum == (uncompressedBlockCount - 1)
+      uncompressedBlockStart = blockStart + blockNum * maxUncompressedBlockSize
+      uncompressedBlockLen = min(
+        blockStart + blockLen - uncompressedBlockStart,
+        maxUncompressedBlockSize
+      )
 
-  b.addBits(dst, if finalBlock: 1 else: 0, 1)
-  b.addBits(dst, 0, 2)
-  b.skipRemainingBitsInCurrentByte()
-  b.addBits(dst, blockLen.uint16, 16)
-  b.addBits(dst, (maxUncompressedBlockSize - blockLen).uint16, 16)
-  if blockLen > 0:
-    b.addBytes(dst, src, blockStart, blockLen.int)
+    b.addBits(dst, if finalBlock and uncompressedFinalBlock: 1 else: 0, 1)
+    b.addBits(dst, 0, 2)
+    b.skipRemainingBitsInCurrentByte()
+    b.addBits(dst, uncompressedBlockLen.uint16, 16)
+    b.addBits(dst, (maxUncompressedBlockSize - uncompressedBlockLen).uint16, 16)
+    if uncompressedBlockLen > 0:
+      b.addBytes(dst, src, uncompressedBlockStart, uncompressedBlockLen.int)
 
 proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) =
   if level < -2 or level > 9:
@@ -280,7 +290,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
       continue
 
     let
-      useFixedCodes = false
+      useFixedCodes = blockLen <= 2048
       (litLenCodes, litLenCodeLengths) = block:
         if useFixedCodes:
           (fixedLitLenCodes, fixedLitLenCodeLengths)
