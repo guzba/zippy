@@ -57,14 +57,13 @@ proc skipRemainingBitsInCurrentByte*(b: var BitStreamReader) =
 func incPos(b: var BitStreamWriter, bits: int) {.inline.} =
   b.pos += cast[int](cast[uint](bits + b.bitPos) shr 3)
   b.bitPos = cast[int](cast[uint](bits + b.bitPos) and 7)
-  # does this matter^?
 
 proc addBits*(
   b: var BitStreamWriter,
   dst: var string,
   value: uint32,
   bitLen: int
-) {.inline.} =
+) =
   assert bitLen >= 0 and bitLen <= 32
 
   if b.pos + 8 > dst.len:
