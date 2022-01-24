@@ -6,6 +6,9 @@ import internal
 
 const maxCompressTableSize = 1 shl 14
 
+when defined(release):
+  {.push checks: off.}
+
 proc encodeFragment(
   encoding: var seq[uint16],
   metadata: var BlockMetadata,
@@ -158,3 +161,6 @@ proc encodeSnappy*(
       compressTable
     )
     pos += bytesToRead
+
+when defined(release):
+  {.pop.}

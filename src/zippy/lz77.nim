@@ -4,6 +4,9 @@ const
   hashBits = 17
   hashSize = 1 shl hashBits
 
+when defined(release):
+  {.push checks: off.}
+
 proc encodeLz77*(
   encoding: var seq[uint16],
   ep: var int,
@@ -125,3 +128,6 @@ proc encodeLz77*(
       inc literalLen
 
     inc pos
+
+when defined(release):
+  {.pop.}

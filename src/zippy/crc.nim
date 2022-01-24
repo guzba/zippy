@@ -21,6 +21,9 @@ const crcTables = block:
     tables[7][i] = (tables[6][i] shr 8) xor tables[0][tables[6][i] and 255]
   tables
 
+when defined(release):
+  {.push checks: off.}
+
 proc crc32*(src: pointer, len: int): uint32 =
   let src = cast[ptr UncheckedArray[uint8]](src)
 
@@ -53,3 +56,6 @@ proc crc32*(src: string): uint32 {.inline.} =
     crc32(src[0].unsafeAddr, src.len)
   else:
     crc32(nil, 0)
+
+when defined(release):
+  {.pop.}

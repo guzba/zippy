@@ -7,7 +7,8 @@ const
     "rfctest3.z",
     "randtest3.z",
     "paper-100k.pdf.z",
-    "geo.protodata.z"
+    "geo.protodata.z",
+    "tor-list.z"
   ]
   golds = [
     "alice29.txt",
@@ -16,7 +17,8 @@ const
     "randtest3.gold",
     "paper-100k.pdf",
     "geo.protodata",
-    "gzipfiletest.txt"
+    "gzipfiletest.txt",
+    "tor-list.gold"
   ]
   iterations = 10
 
