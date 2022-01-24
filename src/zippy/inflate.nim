@@ -57,11 +57,15 @@ proc init(huffman: var Huffman, codeLengths: openArray[uint8]) =
           k += (1.uint16 shl len)
       inc nextCode[len]
 
-proc decodeSymbol(b: var BitStreamReader, h: var Huffman): uint16 {.inline.} =
+proc decodeSymbol(
+  b: var BitStreamReader,
+  h: var Huffman,
+  fillsBitBuffer: static[bool] = true
+): uint16 {.inline.} =
   ## This function is the most important for inflate performance.
-
-  if b.bitsBuffered < 16:
-    b.fillBitBuffer()
+  when fillsBitBuffer:
+    if b.bitsBuffered < 16:
+      b.fillBitBuffer()
 
   let fast = h.fast[b.bitBuffer and fastMask]
   var codeLength: uint16
@@ -168,22 +172,24 @@ proc inflateBlock(
     elif symbol == 256:
       break
     else:
+      b.fillBitBuffer()
+
       let lengthIdx = (symbol - 257).int
       if lengthIdx >= baseLengths.len:
         failUncompress()
 
       let copyLength = (
         baseLengths[lengthIdx] +
-        b.readBits(baseLengthsExtraBits[lengthIdx].int)
+        b.readBits(baseLengthsExtraBits[lengthIdx].int, false)
       ).int
 
-      let distanceIdx = decodeSymbol(b, distancesHuffman)
+      let distanceIdx = decodeSymbol(b, distancesHuffman, false)
       if distanceIdx >= baseDistances.len.uint16:
         failUncompress()
 
       let distance = (
         baseDistances[distanceIdx] +
-        b.readBits(baseDistanceExtraBits[distanceIdx].int)
+        b.readBits(baseDistanceExtraBits[distanceIdx].int, false)
       ).int
 
       if distance > op:
@@ -198,7 +204,6 @@ proc inflateBlock(
       if copyLength <= 16 and distance >= 8:
         copy64(dst, dst, op, op - distance)
         copy64(dst, dst, op + 8, op - distance + 8)
-        op += copyLength
       else:
         var
           copyFrom = op - distance
@@ -213,7 +218,7 @@ proc inflateBlock(
           copyFrom += 8
           copyTo += 8
           remaining -= 8
-        op += copyLength
+      op += copyLength
 
 proc inflateNoCompression(
   dst: var string,
