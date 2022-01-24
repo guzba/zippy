@@ -427,19 +427,24 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
           srcPos += length.int
 
           var
-            buf = litLenCodes[lengthIndex + 257].uint32
+            buf = litLenCodes[lengthIndex + 257].uint64
             bitLen = litLenCodeLengths[lengthIndex + 257].int
-          buf = buf or (lengthExtra.uint32 shl bitLen)
+          buf = buf or (lengthExtra.uint64 shl bitLen)
           bitLen += lengthExtraBits
 
-          b.addBits(dst, buf, bitLen)
-
-          buf = distanceCodes[distanceIndex].uint32
-          bitLen = distanceCodeLengths[distanceIndex].int
-          buf = buf or (distanceExtra.uint32 shl bitLen)
+          buf = buf or (distanceCodes[distanceIndex].uint64 shl bitLen)
+          bitLen += distanceCodeLengths[distanceIndex].int
+          buf = buf or (distanceExtra.uint64 shl bitLen)
           bitLen += distanceExtraBits
 
-          b.addBits(dst, buf, bitLen)
+          let firstAddLen = min(bitLen, 32)
+          b.addBits(dst, buf.uint32, firstAddLen)
+          buf = buf shr firstAddLen
+          bitLen -= firstAddLen
+
+          if bitLen > 0:
+            b.addBits(dst, buf.uint32, bitLen)
+
         else:
           let literalsLength = encoding[encPos].int
           inc encPos
