@@ -1,4 +1,4 @@
-import common, internal
+import internal
 
 ## Use Snappy's algorithm for encoding repeated data instead of LZ77.
 ## This is much faster but does not compress as well. Perfect for BestSpeed.
@@ -43,9 +43,9 @@ proc encodeFragment(
       inc ep
       remaining -= added
 
-  template addCopy(offset: int, length: int) =
+  template addCopy(offset, length: int) =
     if ep + 3 > encoding.len:
-      encoding.setLen(max(encoding.len * 2, 2))
+      encoding.setLen(max(encoding.len * 2, ep + 3))
 
     let
       lengthIndex = baseLengthIndices[length - baseMatchLen].uint16
@@ -148,9 +148,6 @@ proc encodeSnappy*(
     let
       fragmentSize = blockStart + blockLen - pos
       bytesToRead = min(fragmentSize, maxWindowSize)
-    if bytesToRead <= 0:
-      failCompress()
-
     encodeFragment(
       encoding,
       metadata,

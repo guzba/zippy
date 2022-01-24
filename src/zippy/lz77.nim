@@ -114,6 +114,7 @@ proc encodeLz77*(
         literalLen = 0
 
       addCopy(longestMatchOffset, longestMatchLen)
+
       for i in 1 ..< longestMatchLen:
         inc pos
         windowPos = (pos and (maxWindowSize - 1)).uint16
@@ -122,8 +123,5 @@ proc encodeLz77*(
           updateChain()
     else:
       inc literalLen
-      if literalLen == maxLiteralLength:
-        addLiteral(pos + 1 - literalLen, literalLen)
-        literalLen = 0
 
     inc pos

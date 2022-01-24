@@ -47,18 +47,12 @@ for i in 0 ..< 10000:
         compressed = zippy.compress(data)
         uncompressed = zippy.uncompress(compressed)
       doAssert uncompressed == data
-      doAssert zlib.uncompress(
-        cast[string](compressed),
-        stream = GZIP_STREAM
-      ) == cast[string](data)
+      doAssert zlib.uncompress(compressed, stream = GZIP_STREAM) == data
       fuzz()
     block: # shuffled
       var
         compressed = zippy.compress(shuffled)
         uncompressed = zippy.uncompress(compressed)
       doAssert uncompressed == shuffled
-      doAssert zlib.uncompress(
-        cast[string](compressed),
-        stream = GZIP_STREAM
-      ) == cast[string](shuffled)
+      doAssert zlib.uncompress(compressed, stream = GZIP_STREAM) == shuffled
       fuzz()
