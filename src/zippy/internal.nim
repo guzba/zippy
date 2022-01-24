@@ -84,7 +84,7 @@ const
   ]
 
   baseDistanceExtraBits* = [
-    0.uint16, 0, 0, 0, # 0-3
+    0.uint8, 0, 0, 0, # 0-3
     1, 1, # 4-5
     2, 2, # 6-7
     3, 3, # 8-9
@@ -101,7 +101,7 @@ const
   ]
 
   clclOrder* = [
-    16.uint16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
+    16.uint8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
 proc makeCodes(lengths: seq[uint8]): seq[uint16] =

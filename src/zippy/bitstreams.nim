@@ -36,7 +36,7 @@ proc readBits*(
 
   result = (b.bitBuffer and ((1.uint64 shl bits) - 1)).uint16
   b.bitBuffer = b.bitBuffer shr bits
-  b.bitsBuffered -= bits # bitCount can go negative if we've read past the end
+  b.bitsBuffered -= bits # Can go negative if we've read past the end
 
 proc readBytes*(b: var BitStreamReader, dst: pointer, len: int) =
   if b.bitsBuffered mod 8 != 0:
