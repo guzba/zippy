@@ -1,7 +1,5 @@
 import benchy, strformat, zip/zlib, zippy
 
-# import miniz, nimPNG/nimz
-
 const
   zs = [
     "alice29.txt.z",
@@ -35,13 +33,6 @@ for gold in golds:
   timeIt gold:
     for i in 0 ..< iterations:
       discard zlib.compress(uncompressed, stream = ZLIB_STREAM)
-
-# echo "https://github.com/treeform/miniz compress [default]"
-# for gold in golds:
-#   let uncompressed = readFile(&"tests/data/{gold}")
-#   timeIt gold:
-#     for i in 0 ..< iterations:
-#       discard miniz.compress(uncompressed)
 
 echo "https://github.com/guzba/zippy compress [best speed]"
 for gold in golds:
@@ -84,10 +75,3 @@ for z in zs:
   timeIt z:
     for i in 0 ..< iterations:
       discard zlib.uncompress(compressed, stream = ZLIB_STREAM)
-
-# echo "https://github.com/treeform/miniz uncompress"
-# for z in zs:
-#   let compressed = readFile(&"tests/data/{z}")
-#   timeIt z:
-#     for i in 0 ..< iterations:
-#       discard miniz.uncompress(compressed)
