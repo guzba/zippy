@@ -28,7 +28,7 @@ const
   ]
 
   baseLengthsExtraBits* = [
-    0.uint16, 0, 0, 0, 0, 0, 0, 0, # 257 - 264
+    0.uint8, 0, 0, 0, 0, 0, 0, 0, # 257 - 264
     1, 1, 1, 1, # 265 - 268
     2, 2, 2, 2, # 269 - 273
     3, 3, 3, 3, # 274 - 276
@@ -38,7 +38,7 @@ const
   ]
 
   baseLengthIndices* = [
-    0.uint16, 1, 2, 3, 4, 5, 6, 7, 8, 8,
+    0.uint8, 1, 2, 3, 4, 5, 6, 7, 8, 8,
     9, 9, 10, 10, 11, 11, 12, 12, 12, 12,
     13, 13, 13, 13, 14, 14, 14, 14, 15, 15,
     15, 15, 16, 16, 16, 16, 16, 16, 16, 16,
@@ -104,6 +104,15 @@ const
     16.uint8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
+type
+  CompressionConfig* = object
+    good*, lazy*, nice*, chain*: int
+
+  BlockMetadata* = object
+    litLenFreq*: array[maxLitLenCodes, uint16]
+    distanceFreq*: array[maxDistanceCodes, uint16]
+    numLiterals*: int
+
 proc makeCodes(lengths: seq[uint8]): seq[uint16] =
   result = newSeq[uint16](lengths.len)
 
@@ -121,15 +130,6 @@ proc makeCodes(lengths: seq[uint8]): seq[uint16] =
     if lengths[i] != 0:
       result[i] = reverseBits(nextCode[lengths[i]]) shr (16.uint8 - lengths[i])
       inc nextCode[lengths[i]]
-
-type
-  CompressionConfig* = object
-    good*, lazy*, nice*, chain*: int
-
-  BlockMetadata* = object
-    litLenFreq*: array[maxLitLenCodes, uint16]
-    distanceFreq*: array[maxDistanceCodes, uint16]
-    numLiterals*: int
 
 const
   fixedLitLenCodeLengths* = block:
@@ -200,7 +200,7 @@ proc read32*(s: seq[uint8] | string, pos: int): uint32 {.inline.} =
 
 proc distanceCodeIndex*(value: uint16): uint16 =
   const distanceCodes = [
-    0.uint16, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7,
+    0.uint8, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7,
     8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9,
     10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,

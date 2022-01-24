@@ -418,9 +418,9 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
             length = encoding[encPos + 2]
             lengthIndex = (value shr 8) and (uint8.high shr 1)
             distanceIndex = value and uint8.high
-            lengthExtraBits = baseLengthsExtraBits[lengthIndex]
+            lengthExtraBits = baseLengthsExtraBits[lengthIndex].int
             lengthExtra = length - baseLengths[lengthIndex]
-            distanceExtraBits = baseDistanceExtraBits[distanceIndex]
+            distanceExtraBits = baseDistanceExtraBits[distanceIndex].int
             distanceExtra = offset - baseDistances[distanceIndex]
 
           encPos += 3
@@ -430,14 +430,14 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
             buf = litLenCodes[lengthIndex + 257].uint32
             bitLen = litLenCodeLengths[lengthIndex + 257].int
           buf = buf or (lengthExtra.uint32 shl bitLen)
-          bitLen += lengthExtraBits.int
+          bitLen += lengthExtraBits
 
           b.addBits(dst, buf, bitLen)
 
           buf = distanceCodes[distanceIndex].uint32
           bitLen = distanceCodeLengths[distanceIndex].int
           buf = buf or (distanceExtra.uint32 shl bitLen)
-          bitLen += distanceExtraBits.int
+          bitLen += distanceExtraBits
 
           b.addBits(dst, buf, bitLen)
         else:

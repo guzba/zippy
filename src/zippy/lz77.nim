@@ -34,7 +34,7 @@ proc encodeLz77*(
       encoding.setLen(max(encoding.len * 2, ep + 3))
 
     let
-      lengthIndex = baseLengthIndices[length - baseMatchLen]
+      lengthIndex = baseLengthIndices[length - baseMatchLen].uint16
       distIndex = distanceCodeIndex((offset - 1).uint16)
     inc metadata.litLenFreq[lengthIndex + firstLengthCodeIndex]
     inc metadata.distanceFreq[distIndex]
