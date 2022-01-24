@@ -444,26 +444,27 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
           let literalsLength = encoding[encPos].int
           inc encPos
 
-          for _ in 0 ..< literalsLength div 2:
-            var
-              buf = litLenCodes[src[srcPos + 0]].uint32
-              bitLen = litLenCodeLengths[src[srcPos + 0]].int
-            buf = buf or (litLenCodes[src[srcPos + 1]].uint32 shl bitLen)
-            bitLen += litLenCodeLengths[src[srcPos + 1]].int
-
-            b.addBits(dst, buf, bitLen)
-            srcPos += 2
-
-          if literalsLength mod 2 != 0:
-            b.addBits(
-              dst,
-              litLenCodes[src[srcPos]],
-              litLenCodeLengths[src[srcPos]].int
-            )
+          var
+            buf: uint32
+            bitLen: int
+          for _ in 0 ..< literalsLength:
+            let codeLength = litLenCodeLengths[src[srcPos]].int
+            if bitLen + codeLength > 32:
+              # Flush
+              b.addBits(dst, buf, bitLen)
+              buf = 0
+              bitLen = 0
+            buf = buf or litLenCodes[src[srcPos]].uint32 shl bitLen
+            bitLen += codeLength
             inc srcPos
+
+          if bitLen > 0:
+            b.addBits(dst, buf, bitLen)
 
       if encPos != encodingLen:
         failUncompress()
+
+      assert srcPos == blockStart + blockLen
 
     if litLenCodeLengths[256] == 0:
       failCompress()

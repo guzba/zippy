@@ -77,7 +77,7 @@ proc addBits*(
   let
     dst = cast[ptr UncheckedArray[uint8]](dst[0].addr)
     value = value.uint64 and ((1.uint64 shl bitLen) - 1)
-  write64(dst, b.pos, read32(dst, b.pos).uint64 or (value.uint64 shl b.bitPos))
+  write64(dst, b.pos, read32(dst, b.pos).uint64 or (value shl b.bitPos))
   b.incPos(bitLen)
 
 proc addBytes*(
