@@ -21,18 +21,6 @@ const
     "tor-list.gold"
   ]
 
-echo "https://github.com/guzba/zippy compress [default]"
-for gold in golds:
-  let uncompressed = readFile(&"tests/data/{gold}")
-  timeIt gold:
-    discard zippy.compress(uncompressed, dataFormat = dfDeflate)
-
-echo "https://github.com/nim-lang/zip compress [default]" # Requires zlib1.dll
-for gold in golds:
-  let uncompressed = readFile(&"tests/data/{gold}")
-  timeIt gold:
-    discard zlib.compress(uncompressed, stream = RAW_DEFLATE)
-
 echo "https://github.com/guzba/zippy compress [best speed]"
 for gold in golds:
   let uncompressed = readFile(&"tests/data/{gold}")
@@ -44,6 +32,18 @@ for gold in golds:
   let uncompressed = readFile(&"tests/data/{gold}")
   timeIt gold:
     discard zlib.compress(uncompressed, Z_BEST_SPEED, RAW_DEFLATE)
+
+echo "https://github.com/guzba/zippy compress [default]"
+for gold in golds:
+  let uncompressed = readFile(&"tests/data/{gold}")
+  timeIt gold:
+    discard zippy.compress(uncompressed, dataFormat = dfDeflate)
+
+echo "https://github.com/nim-lang/zip compress [default]" # Requires zlib1.dll
+for gold in golds:
+  let uncompressed = readFile(&"tests/data/{gold}")
+  timeIt gold:
+    discard zlib.compress(uncompressed, stream = RAW_DEFLATE)
 
 echo "https://github.com/guzba/zippy compress [best compression]"
 for gold in golds:
