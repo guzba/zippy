@@ -1,4 +1,4 @@
-import os, tables, untar, zippy/common, zippy/tarballs
+import std/os, std/tables, untar, zippy/internal, zippy/tarballs
 
 proc trim(s: string): string =
   for i in 0 ..< s.len:

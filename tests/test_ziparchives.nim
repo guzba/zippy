@@ -1,63 +1,27 @@
-import os, strformat, tables, zippy/ziparchives
+import std/os, zippy/ziparchives
 
-proc testTempDir(): string =
-  when defined(windows):
-    getHomeDir() / r"AppData\Local\Temp" / "ziparchives"
+removeDir("test_tmp")
+
+createDir("test_tmp")
+extractAll("tests/data/ziparchives/nim-1.6.2_x64.zip", "test_tmp/zippy")
+
+createDir("test_tmp/gold")
+when defined(windows) or defined(macosx):
+  let cmd = "tar -xf tests/data/ziparchives/nim-1.6.2_x64.zip -C test_tmp/gold"
+else:
+  let cmd = "unzip tests/data/ziparchives/nim-1.6.2_x64.zip -d test_tmp/gold"
+doAssert execShellCmd(cmd) == 0
+
+for path in walkDirRec("test_tmp/tar", relative = true):
+  let
+    goldPath = "test_tmp/gold" / path
+    zippyPath = "test_tmp/zippy" / path
+
+  if dirExists(goldPath):
+    doAssert dirExists(zippyPath)
   else:
-    getTempDir() / "ziparchives"
+    doAssert fileExists(zippyPath)
+    doAssert readFile(goldPath) == readFile(zippyPath)
 
-block:
-  let archive = ZipArchive()
-  archive.open("tests/data/ziparchives/basic.zip")
-
-  removeDir(testTempDir())
-
-  archive.extractAll(testTempDir())
-
-  for path, entry in archive.contents:
-    if entry.kind == ekFile:
-      doAssert fileExists(testTempDir() / path)
-      doAssert readFile("tests/data/" & path) == entry.contents
-    else:
-      doAssert dirExists(testTempDir() / path)
-
-block:
-  let archive = ZipArchive()
-  archive.addDir("src/")
-
-  removeDir(testTempDir())
-
-  archive.extractAll(testTempDir())
-
-  for path, entry in archive.contents:
-    if entry.kind == ekFile:
-      doAssert fileExists(testTempDir() / path)
-      doAssert readFile("src/" & path) == entry.contents
-    else:
-      doAssert dirExists(testTempDir() / path)
-
-when not defined(windows):
-  # Somehow GitHub Actions has unzip on windows-latest, but I do not.
-  block:
-    let archive = ZipArchive()
-    archive.open("tests/data/ziparchives/permissions.zip")
-
-    let tmpdir = testTempDir()
-    removeDir(tmpdir)
-    createDir(tmpdir)
-
-    let
-      tmpdir_a = tmpdir / "zippy"
-      tmpdir_b = tmpdir / "unzip"
-
-    # use zippy
-    archive.extractAll(tmpdir_a)
-
-    # use zip
-    createDir(tmpdir_b)
-    doAssert execShellCmd(&"unzip tests/data/ziparchives/permissions.zip -d {tmpdir_b}") == 0
-    doAssert dirExists(tmpdir_b)
-
-    # compare the two
-    for path in walkDirRec(tmpdir_b, relative = true):
-      doAssert getFilePermissions(tmpdir_a / path) == getFilePermissions(tmpdir_b / path), &"Permissions didn't match for {path}"
+  doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
+  doAssert getLastModificationTime(goldPath) == getLastModificationTime(zippyPath)

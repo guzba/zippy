@@ -1,4 +1,4 @@
-import benchy, strformat, zip/zlib, zippy
+import benchy, std/strformat, zip/zlib, zippy
 
 const
   zs = [
@@ -49,7 +49,7 @@ echo "https://github.com/guzba/zippy compress [best compression]"
 for gold in golds:
   let uncompressed = readFile(&"tests/data/{gold}")
   timeIt gold:
-    discard zippy.compress(uncompressed, BestCompression, dataFormat = dfDeflate)
+    discard zippy.compress(uncompressed, BestCompression, dfDeflate)
 
 echo "https://github.com/nim-lang/zip compress [best compression]" # Requires zlib1.dll
 for gold in golds:

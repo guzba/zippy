@@ -1,4 +1,4 @@
-import fidget/opengl/perf, strformat, strutils
+import fidget/opengl/perf, std/strformat, std/strutils
 
 const
   minMatchLen = 3

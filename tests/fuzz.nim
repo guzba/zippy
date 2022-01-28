@@ -1,4 +1,4 @@
-import random, strformat, zippy
+import std/random, std/strformat, zippy
 
 randomize()
 

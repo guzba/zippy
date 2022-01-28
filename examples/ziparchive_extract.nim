@@ -1,6 +1,4 @@
-import os, zippy/ziparchives
+import zippy/ziparchives
 
 # Extracts all of the files and directories from the zip.
-
-createDir("tmp") # Ensure the path to the output dir exists
-extractAll("tests/data/ziparchives/Nim-1.4.2.zip", "tmp/unzipped")
+extractAll("tests/data/ziparchives/nim-1.6.2_x64.zip", "unzipped")

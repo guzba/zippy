@@ -6,7 +6,7 @@
 
 Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [ZLIB](https://tools.ietf.org/html/rfc1950) and [GZIP](https://tools.ietf.org/html/rfc1952) data compression formats.
 
-Zippy can also create and open [Tarballs](https://en.wikipedia.org/wiki/Tar_(computing)) (.tar, .tar.gz, .tgz, .taz) and [ZIP archives](https://en.wikipedia.org/wiki/Zip_(file_format)).
+Zippy can also open [Tarballs](https://en.wikipedia.org/wiki/Tar_(computing)) (.tar, .tar.gz, .tgz, .taz) and [ZIP archives](https://en.wikipedia.org/wiki/Zip_(file_format)).
 
 The goal of this library is to be a pure Nim implementation that is small, performant and dependency-free.
 
@@ -24,9 +24,7 @@ Simple examples using Zippy can be found in the [examples/](https://github.com/g
 
 * [HTTP client gzip](https://github.com/guzba/zippy/blob/master/examples/http_client.nim)
 * [HTTP server gzip](https://github.com/guzba/zippy/blob/master/examples/http_server.nim)
-* Compress a dir into a [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_create.nim) or [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_create.nim)
-* Extract from a [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_extract.nim) or [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_extract.nim)
-* Compose a [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_compose.nim) or [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_compose.nim) in code
+* Extract from a [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_extract.nim) or [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_extract.nim)
 
 ## Performance
 

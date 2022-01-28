@@ -12,3 +12,4 @@ nimcache
 *.dll
 tmp/
 dump.txt
+test_tmp/

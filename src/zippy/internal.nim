@@ -1,4 +1,4 @@
-import bitops, common, strutils
+import common, std/bitops, std/strutils
 
 const
   maxCodeLength* = 15
@@ -180,6 +180,9 @@ template failCompress*() =
 when defined(release):
   {.push checks: off.}
 
+proc read16*(src: ptr UncheckedArray[uint8], ip: int): uint16 {.inline.} =
+  cast[ptr uint16](src[ip].unsafeAddr)[]
+
 proc read32*(src: ptr UncheckedArray[uint8], ip: int): uint32 {.inline.} =
   cast[ptr uint32](src[ip].unsafeAddr)[]
 
@@ -195,7 +198,7 @@ proc copy64*(dst, src: ptr UncheckedArray[uint8], op, ip: int) {.inline.} =
 proc read16*(s: string, pos: int): uint16 {.inline.} =
   cast[ptr uint16](s[pos].unsafeAddr)[]
 
-proc read32*(s: seq[uint8] | string, pos: int): uint32 {.inline.} =
+proc read32*(s: string, pos: int): uint32 {.inline.} =
   cast[ptr uint32](s[pos].unsafeAddr)[]
 
 proc distanceCodeIndex*(value: uint16): uint16 =

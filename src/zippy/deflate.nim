@@ -1,4 +1,4 @@
-import bitops, bitstreams, common, heapqueue, internal, lz77, snappy
+import bitstreams, common, internal, lz77, snappy, std/bitops, std/heapqueue
 
 type Node = ref object
   symbol, freq: int

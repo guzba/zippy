@@ -1,4 +1,5 @@
-import os, streams, strutils, tables, times, zippy, internal, common
+import common, internal, std/os, std/streams, std/strutils, std/tables,
+    std/times, zippy
 
 export common
 

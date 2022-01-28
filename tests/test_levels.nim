@@ -1,4 +1,4 @@
-import strformat, zippy
+import std/strformat, zippy
 
 const
   golds = [

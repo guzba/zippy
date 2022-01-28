@@ -1,514 +1,332 @@
-import os, streams, strutils, tables, times, zippy, internal, crc, common
+import common, crc, internal, std/memfiles, std/os, std/strutils, std/tables,
+    std/times, std/unicode, ziparchives_v1, zippy
 
-export common
+export ziparchives_v1
+
+const
+  S_IFDIR = 0o0040000
+  fileHeaderSignature = 0x04034b50.uint32
+  centralDirectoryFileHeaderSignature = 0x02014b50.uint32
+  endOfCentralDirectorySignature = 0x06054b50.uint32
 
 type
-  EntryKind* = enum
-    ekFile, ekDirectory
+  ZipArchiveRecordKind = enum
+    FileRecord, DirectoryRecord
 
-  ArchiveEntry* = object
-    kind*: EntryKind
-    contents*: string
-    lastModified*: times.Time
-    permissions: set[FilePermission]
+  ZipArchiveRecord = object
+    kind: ZipArchiveRecordKind
+    fileHeaderOffset: int
+    path: string
+    uncompressedCrc32: uint32
+    compressedSize: int
+    uncompressedSize: int
 
-  ZipArchive* = ref object
-    contents*: OrderedTable[string, ArchiveEntry]
-
-proc addDir(archive: ZipArchive, base, relative: string) =
-  if relative.len > 0 and relative notin archive.contents:
-    archive.contents[(relative & os.DirSep).toUnixPath()] =
-      ArchiveEntry(kind: ekDirectory)
-
-  for kind, path in walkDir(base / relative, relative = true):
-    case kind:
-    of pcFile:
-      archive.contents[(relative / path).toUnixPath()] = ArchiveEntry(
-        kind: ekFile,
-        contents: readFile(base / relative / path),
-        lastModified: getLastModificationTime(base / relative / path),
-        permissions: getFilePermissions(base / relative / path),
-      )
-    of pcDir:
-      archive.addDir(base, relative / path)
-    else:
-      discard
-
-proc addDir*(
-  archive: ZipArchive, dir: string
-) {.raises: [IOError, OSError, ZippyError].} =
-  ## Recursively adds all of the files and directories inside dir to archive.
-  if splitFile(dir).ext.len > 0:
-    raise newException(
-      ZippyError,
-      "Error adding dir " & dir & " to archive, appears to be a file?"
-    )
-
-  let (head, tail) = splitPath(dir)
-  archive.addDir(head, tail)
-
-proc clear*(archive: ZipArchive) {.raises: [].} =
-  archive.contents.clear()
+  ZipArchiveReader = ref object
+    memFile: MemFile
+    records: Table[string, ZipArchiveRecord]
 
 template failEOF() =
-  raise newException(
-    ZippyError, "Attempted to read past end of file, corrupted zip archive?"
-  )
+  raise newException(ZippyError, "Unexpected EOF, invalid zip archive?")
 
-proc extractPermissions(externalFileAttr: uint32): set[FilePermission] =
-  let permissions = externalFileAttr shr 16
-  if defined(windows) or permissions == 0:
-    # Ignore file permissions on Windows. If they are absent (.zip made on
-    # Windows for example), set default permissions.
-    result.incl fpUserRead
-    result.incl fpUserWrite
-    result.incl fpGroupRead
-    result.incl fpGroupWrite
-    result.incl fpOthersRead
-  else:
-    if (permissions and 0o00400) != 0: result.incl fpUserRead
-    if (permissions and 0o00200) != 0: result.incl fpUserWrite
-    if (permissions and 0o00100) != 0: result.incl fpUserExec
-    if (permissions and 0o00040) != 0: result.incl fpGroupRead
-    if (permissions and 0o00020) != 0: result.incl fpGroupWrite
-    if (permissions and 0o00010) != 0: result.incl fpGroupExec
-    if (permissions and 0o00004) != 0: result.incl fpOthersRead
-    if (permissions and 0o00002) != 0: result.incl fpOthersWrite
-    if (permissions and 0o00001) != 0: result.incl fpOthersExec
+iterator walkFiles*(reader: ZipArchiveReader): string =
+  ## Walks over all files in the archive and returns the file name
+  ## (including the path).
+  for _, record in reader.records:
+    if record.kind == FileRecord:
+      yield record.path
 
-proc openStreamImpl*(archive: ZipArchive, stream: Stream) =
-  let data = stream.readAll() # TODO: actually treat as a stream
+proc extractFile*(
+  reader: ZipArchiveReader, path: string
+): string {.raises: [ZippyError].} =
 
-  archive.clear()
+  template failNoFileRecord() =
+    raise newException(ZippyError, "No file record found for " & path)
 
-  template failOpen() =
-    raise newException(ZippyError, "Unexpected error opening zip archive")
+  let
+    src = cast[ptr UncheckedArray[uint8]](reader.memFile.mem)
+    record =
+      try:
+        reader.records[path]
+      except KeyError:
+        failNoFileRecord()
 
-  var pos: int
+  var pos = record.fileHeaderOffset
+
+  if pos + 30 > reader.memFile.size:
+    failEOF()
+
+  if read32(src, pos) != fileHeaderSignature:
+    raise newException(ZippyError, "Invalid file header")
+
+  let
+    # minVersionToExtract = read16(src, pos + 4)
+    # generalPurposeFlag = read16(src, pos + 6)
+    compressionMethod = read16(src, pos + 8)
+    # lastModifiedTime = read16(src, pos + 10)
+    # lastModifiedDate = read16(src, pos + 12)
+    # uncompressedCrc32 = read32(src, pos + 14)
+    # compressedSize = read32(src, pos + 18).int
+    # uncompressedSize = read32(src, pos + 22).int
+    fileNameLen = read16(src, pos + 26).int
+    extraFieldLen = read16(src, pos + 28).int
+
+  pos += 30 + fileNameLen + extraFieldLen
+
+  if pos + record.compressedSize > reader.memFile.size:
+    failEOF()
+
+  case record.kind:
+  of FileRecord:
+    if compressionMethod == 0: # No compression
+      if record.compressedSize > 0:
+        result.setLen(record.compressedSize)
+        copyMem(result[0].addr, src[pos].addr, record.compressedSize)
+    elif compressionMethod == 8: # Deflate
+      result = uncompress(src[pos].addr, record.compressedSize, dfDeflate)
+    else:
+      raise newException(ZippyError, "Unsupported archive, compression method")
+  of DirectoryRecord:
+    failNoFileRecord()
+
+  if crc32(result) != record.uncompressedCrc32:
+    raise newException(ZippyError, "Verifying crc32 failed")
+
+proc close*(reader: ZipArchiveReader) =
+  reader.memFile.close()
+
+proc parseMsDosDateTime(time, date: uint16): Time =
+  let
+    seconds = (time and 0b0000000000011111).int * 2
+    minutes = ((time shr 5) and 0b0000000000111111).int
+    hours = ((time shr 11) and 0b0000000000011111).int
+    days = (date and 0b0000000000011111).int
+    months = ((date shr 5) and 0b0000000000001111).int
+    years = ((date shr 9) and 0b0000000001111111).int
+  if seconds <= 59 and minutes <= 59 and hours <= 23:
+    result = initDateTime(
+      days.MonthdayRange,
+      months.Month,
+      years + 1980,
+      hours.HourRange,
+      minutes.MinuteRange,
+      seconds.SecondRange,
+      local()
+    ).toTime()
+
+proc utf8ify(fileName: string): string =
+  const cp437AfterAscii = [
+    # 0x80 - 0x8f
+    0x00c7.uint32, 0x00fc, 0x00e9, 0x00e2, 0x00e4, 0x00e0, 0x00e5, 0x00e7,
+    0x00ea, 0x00eb, 0x00e8, 0x00ef, 0x00ee, 0x00ec, 0x00c4, 0x00c5,
+    # 0x90 - 0x9f
+    0x00c9, 0x00e6, 0x00c6, 0x00f4, 0x00f6, 0x00f2, 0x00fb, 0x00f9,
+    0x00ff, 0x00d6, 0x00dc, 0x00a2, 0x00a3, 0x00a5, 0x20a7, 0x0192,
+    # 0xa0 - 0xaf
+    0x00e1, 0x00ed, 0x00f3, 0x00fa, 0x00f1, 0x00d1, 0x00aa, 0x00ba,
+    0x00bf, 0x2310, 0x00ac, 0x00bd, 0x00bc, 0x00a1, 0x00ab, 0x00bb,
+    # 0xb0 - 0xbf
+    0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556,
+    0x2555, 0x2563, 0x2551, 0x2557, 0x255d, 0x255c, 0x255b, 0x2510,
+    # 0xc0 - 0xcf
+    0x2514, 0x2534, 0x252c, 0x251c, 0x2500, 0x253c, 0x255e, 0x255f,
+    0x255a, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256c, 0x2567,
+    # 0xd0 - 0xdf
+    0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256b,
+    0x256a, 0x2518, 0x250c, 0x2588, 0x2584, 0x258c, 0x2590, 0x2580,
+    # 0xd0 - 0xdf
+    0x03b1, 0x00df, 0x0393, 0x03c0, 0x03a3, 0x03c3, 0x00b5, 0x03c4,
+    0x03a6, 0x0398, 0x03a9, 0x03b4, 0x221e, 0x03c6, 0x03b5, 0x2229,
+    # 0xf0 - 0xff
+    0x2261, 0x00b1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00f7, 0x2248,
+    0x00b0, 0x2219, 0x00b7, 0x221a, 0x207f, 0x00b2, 0x25a0, 0x00a0
+  ]
+
+  if validateUtf8(fileName) == -1:
+    return fileName
+
+  # If the file name is not valid utf-8, assume it is CP437 / OEM / DOS
+  var runes: seq[Rune]
+  for c in fileName:
+    if c > 0x7f.char:
+      runes.add Rune(cp437AfterAscii[c.int - 0x80])
+    else:
+      runes.add Rune(c)
+  $runes
+
+proc findEndOfCentralDirectory(reader: ZipArchiveReader): int =
+  let src = cast[ptr UncheckedArray[uint8]](reader.memFile.mem)
+
+  result = reader.memFile.size - 22
   while true:
-    if pos + 4 > data.len:
+    if result < 0:
+      failEOF()
+    if read32(src, result) == endOfCentralDirectorySignature:
+      return
+    else:
+      dec result
+
+proc openZipArchive*(
+  zipPath: string
+): ZipArchiveReader {.raises: [IOError, OSError, ZippyError].} =
+  result = ZipArchiveReader()
+  result.memFile = memfiles.open(zipPath)
+
+  let src = cast[ptr UncheckedArray[uint8]](result.memFile.mem)
+
+  let eocd = result.findEndOfCentralDirectory()
+  if eocd + 22 > result.memFile.size:
+    failEOF()
+
+  let
+    diskNumber = read16(src, eocd + 4).int
+    startDisk = read16(src, eocd + 6).int
+    numRecordsOnDisk = read16(src, eocd + 8).int
+    numCentralDirectoryRecords = read16(src, eocd + 10).int
+    centralDirectorySize = read32(src, eocd + 12).int
+    centralDirectoryStart = read32(src, eocd + 16).int
+    commentLen = read16(src, eocd + 20).int
+
+  if diskNumber == 0xffff:
+    raise newException(ZippyError, "Unsupported archive, ZIP64")
+
+  if diskNumber != 0:
+    raise newException(ZippyError, "Unsupported archive, disk number")
+
+  if startDisk != 0:
+    raise newException(ZippyError, "Unsupported archive, start disk")
+
+  if numRecordsOnDisk != numCentralDirectoryRecords:
+    raise newException(ZippyError, "Unsupported archive, record number")
+
+  if eocd + 22 + commentLen > result.memFile.size:
+    failEOF()
+
+  var pos = centralDirectoryStart
+
+  for _ in 0 ..< numCentralDirectoryRecords:
+    if pos + 46 > result.memFile.size:
       failEOF()
 
-    let signature = read32(data, pos)
-    case signature:
-    of 0x04034b50: # Local file header
-      if pos + 30 > data.len:
-        failEOF()
+    if read32(src, pos) != centralDirectoryFileHeaderSignature:
+      raise newException(ZippyError, "Invalid central directory file header")
 
-      let
-        # minVersionToExtract = read16(data, pos + 4)
-        generalPurposeFlag = read16(data, pos + 6)
-        compressionMethod = read16(data, pos + 8)
-        lastModifiedTime = read16(data, pos + 10)
-        lastModifiedDate = read16(data, pos + 12)
-        uncompressedCrc32 = read32(data, pos + 14)
-        compressedSize = read32(data, pos + 18).int
-        uncompressedSize = read32(data, pos + 22).int
-        fileNameLength = read16(data, pos + 26).int
-        extraFieldLength = read16(data, pos + 28).int
+    let
+      # versionMadeBy = read16(src, pos + 4)
+      # minVersionToExtract = read16(src, pos + 6)
+      generalPurposeFlag = read16(src, pos + 8)
+      compressionMethod = read16(src, pos + 10)
+      # lastModifiedTime = read16(src, pos + 12)
+      # lastModifiedDate = read16(src, pos + 14)
+      uncompressedCrc32 = read32(src, pos + 16)
+      compressedSize = read32(src, pos + 20).int
+      uncompressedSize = read32(src, pos + 24).int
+      fileNameLen = read16(src, pos + 28).int
+      extraFieldLen = read16(src, pos + 30).int
+      fileCommentLen = read16(src, pos + 32).int
+      fileDiskNumber = read16(src, pos + 34).int
+      # internalFileAttr = read16(src, pos + 36)
+      externalFileAttr = read32(src, pos + 38)
+      fileHeaderOffset = read32(src, pos + 42).int
 
-      pos += 30 # Move to end of fixed-size entries
+    if compressionMethod notin [0.uint16, 8]:
+      raise newException(ZippyError, "Unsupported archive, compression method")
 
-      if (generalPurposeFlag and 0b100) != 0:
-        raise newException(
-          ZippyError,
-          "Unsupported zip archive, data descriptor bit set"
-        )
+    if fileDiskNumber != 0:
+      raise newException(ZippyError, "Invalid file disk number")
 
-      if (generalPurposeFlag and 0b1000) != 0:
-        raise newException(
-          ZippyError,
-          "Unsupported zip archive, uses deflate64"
-        )
+    pos += 46
 
-      # echo minVersionToExtract
-      # echo generalPurposeFlag
-      # echo compressionMethod
-      # echo lastModifiedTime
-      # echo lastModifiedDate
-      # echo uncompressedCrc32
-      # echo compressedSize
-      # echo uncompressedSize
-      # echo fileNameLength
-      # echo extraFieldLength
+    if pos + fileNameLen > result.memFile.size:
+      failEOF()
 
-      let
-        seconds = (lastModifiedTime and 0b0000000000011111).int * 2
-        minutes = ((lastModifiedTime shr 5) and 0b0000000000111111).int
-        hours = ((lastModifiedTime shr 11) and 0b0000000000011111).int
-        days = (lastModifiedDate and 0b0000000000011111).int
-        months = ((lastModifiedDate shr 5) and 0b0000000000001111).int
-        years = ((lastModifiedDate shr 9) and 0b0000000001111111).int
+    var fileName = newString(fileNameLen)
+    copyMem(fileName[0].addr, src[pos].addr, fileNameLen)
 
-      var lastModified: times.Time
-      if seconds <= 59 and minutes <= 59 and hours <= 23:
-        lastModified = initDateTime(
-          days.MonthdayRange,
-          months.Month,
-          years + 1980,
-          hours.HourRange,
-          minutes.MinuteRange,
-          seconds.SecondRange,
-          local()
-        ).toTime()
+    if fileName in result.records:
+      raise newException(ZippyError, "Unsupported archive, duplicate entry")
 
-      if compressionMethod notin [0.uint16, 8]:
-        raise newException(
-          ZippyError,
-          "Unsupported zip archive compression method " & $compressionMethod
-        )
+    pos += fileNameLen + extraFieldLen + fileCommentLen
 
-      if pos + fileNameLength + extraFieldLength > data.len:
-        failEOF()
+    if pos > centralDirectoryStart + centralDirectorySize:
+      raise newException(ZippyError, "Invalid central directory size")
 
-      let fileName = data[pos ..< pos + fileNameLength]
-      pos += fileNameLength
-
-      # let extraField = data[pos ..< pos + extraFieldLength]
-      pos += extraFieldLength
-
-      # echo fileName
-      # echo extraField
-
-      if pos + compressedSize > data.len:
-        failEOF()
-
-      let uncompressed =
-        if compressionMethod == 0:
-          data[pos ..< pos + compressedSize]
-        else:
-          uncompress(data[pos ..< pos + compressedSize], dfDeflate)
-
-      if crc32(uncompressed) != uncompressedCrc32:
-        raise newException(
-          ZippyError,
-          "Verifying archive entry " & fileName & " CRC-32 failed"
-        )
-      if uncompressed.len != uncompressedSize:
-        raise newException(
-          ZippyError,
-          "Unexpected error verifying " & fileName & " uncompressed size"
-        )
-
-      archive.contents[fileName.toUnixPath()] =
-        ArchiveEntry(
-          contents: uncompressed,
-          lastModified: lastModified,
-        )
-
-      pos += compressedSize
-
-    of 0x02014b50: # Central directory header
-      if pos + 46 > data.len:
-        failEOF()
-
-      let
-        # versionMadeBy = read16(data, pos + 4)
-        # minVersionToExtract = read16(data, pos + 6)
-        # generalPurposeFlag = read16(data, pos + 8)
-        # compressionMethod = read16(data, pos + 10)
-        # lastModifiedTime = read16(data, pos + 12)
-        # lastModifiedDate = read16(data, pos + 14)
-        # uncompressedCrc32 = read32(data, pos + 16)
-        # compressedSize = read32(data, pos + 20).int
-        # uncompressedSize = read32(data, pos + 24).int
-        fileNameLength = read16(data, pos + 28).int
-        extraFieldLength = read16(data, pos + 30).int
-        fileCommentLength = read16(data, pos + 32).int
-        # diskNumber = read16(data, pos + 34)
-        # internalFileAttr = read16(data, pos + 36)
-        externalFileAttr = read32(data, pos + 38) and uint32.high
-        # relativeOffsetOfLocalFileHeader = read32(data, pos + 42)
-
-      # echo versionMadeBy
-      # echo minVersionToExtract
-      # echo generalPurposeFlag
-      # echo compressionMethod
-      # echo lastModifiedTime
-      # echo lastModifiedDate
-      # echo uncompressedCrc32
-      # echo compressedSize
-      # echo uncompressedSize
-      # echo fileNameLength
-      # echo extraFieldLength
-      # echo fileCommentLength
-      # echo diskNumber
-      # echo internalFileAttr
-      # echo externalFileAttr
-      # echo relativeOffsetOfLocalFileHeader
-
-      pos += 46 # Move to end of fixed-size entries
-
-      if pos + fileNameLength + extraFieldLength + fileCommentLength > data.len:
-        failEOF()
-
-      let fileName = data[pos ..< pos + fileNameLength]
-      pos += fileNameLength
-      # let extraField = data[pos ..< pos + extraFieldLength]
-      pos += extraFieldLength
-      # let fileComment = data[pos ..< pos + fileCommentLength]
-      pos += fileCommentLength
-
-      # echo fileName
-      # echo extraField
-      # echo fileComment
-
-      try:
-        # Update the entry kind for directories
-        if (externalFileAttr and 0x10) == 0x10:
-          archive.contents[fileName].kind = ekDirectory
-      except KeyError:
-        failOpen()
-
-      try:
-        # Update file permissions
-        archive.contents[fileName].permissions = externalFileAttr.extractPermissions()
-      except KeyError:
-        failOpen()
-
-    of 0x06054b50: # End of central directory record
-      if pos + 22 > data.len:
-        failEOF()
-
-      let
-        # diskNumber = read16(data, pos + 4)
-        # startDisk = read16(data, pos + 6)
-        # numRecordsOnDisk = read16(data, pos + 8)
-        # numCentralDirectoryRecords = read16(data, pos + 10)
-        # centralDirectorySize = read32(data, pos + 12)
-        # relativeOffsetOfCentralDirectory = read32(data, pos + 16)
-        commentLength = read16(data, pos + 20).int
-
-      # echo diskNumber
-      # echo startDisk
-      # echo numRecordsOnDisk
-      # echo numCentralDirectoryRecords
-      # echo centralDirectorySize
-      # echo relativeOffsetOfCentralDirectory
-      # echo commentLength
-
-      pos += 22 # Move to end of fixed-size entries
-
-      if pos + commentLength > data.len:
-        failEOF()
-
-      # let comment = readStr(data, pos, commentLength)
-      pos += commentLength
-
-      # echo comment
-
-      break
-
-    else:
-      failOpen()
-
-when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
-  proc open*(
-    archive: ZipArchive, stream: Stream
-  ) {.raises: [IOError, OSError, ZippyError].} =
-    ## Opens the zip archive from a stream and reads its contents into
-    ## archive.contents (clears any existing archive.contents entries).
-    openStreamImpl(archive, stream)
-else:
-  proc open*(
-    archive: ZipArchive, stream: Stream
-  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
-    ## Opens the zip archive from a stream and reads its contents into
-    ## archive.contents (clears any existing archive.contents entries).
-    openStreamImpl(archive, stream)
-
-proc open*(archive: ZipArchive, path: string) {.inline.} =
-  ## Opens the zip archive file located at path and reads its contents into
-  ## archive.contents (clears any existing archive.contents entries).
-  archive.open(newStringStream(readFile(path)))
-
-proc toMsDos(time: times.Time): (uint16, uint16) =
-  let
-    dateTime = time.local()
-    seconds = (dateTime.second div 2).uint16
-    minutes = (dateTime.minute).uint16
-    hours = (dateTime.hour).uint16
-    days = (dateTime.monthday).uint16
-    months = (dateTime.month).uint16
-    years = (max(0, dateTime.year - 1980)).uint16
-
-  var lastModifiedTime = seconds
-  lastModifiedTime = (minutes shl 5) or lastModifiedTime
-  lastModifiedTime = (hours shl 11) or lastModifiedTime
-
-  var lastModifiedDate = days
-  lastModifiedDate = (months shl 5) or lastModifiedDate
-  lastModifiedDate = (years shl 9) or lastModifiedDate
-
-  (lastModifiedTime, lastModifiedDate)
-
-proc writeZipArchive*(
-  archive: ZipArchive, path: string
-) {.raises: [IOError, ZippyError].} =
-  ## Writes archive.contents to a zip file at path.
-
-  if archive.contents.len == 0:
-    raise newException(ZippyError, "Zip archive has no contents")
-
-  type Values = object
-    offset, crc32, compressedLen, uncompressedLen: uint32
-    compressionMethod: uint16
-
-  var
-    data: seq[uint8]
-    values: Table[string, Values]
-
-  # Write each file entry
-  for path, entry in archive.contents:
-    var v: Values
-    v.offset = data.len.uint32
-
-    data.add(cast[array[4, uint8]](0x04034b50)) # Local file header signature
-    data.add(cast[array[2, uint8]](20.uint16)) # Min version to extract
-    data.add(cast[array[2, uint8]](1.uint16 shl 11)) # General purpose flag UTF-8
-
-    # Compression method
-    if splitFile(path).name.len == 0 or entry.contents.len == 0:
-      v.compressionMethod = 0
-    else:
-      v.compressionMethod = 8
-
-    data.add(cast[array[2, uint8]](v.compressionMethod))
-
-    let (lastModifiedTime, lastModifiedDate) = entry.lastModified.toMsDos()
-    data.add(cast[array[2, uint8]](lastModifiedTime))
-    data.add(cast[array[2, uint8]](lastModifiedDate))
-
-    v.crc32 = crc32(entry.contents)
-    data.add(cast[array[4, uint8]](v.crc32))
-
-    let compressed =
-      if entry.contents.len > 0:
-        compress(entry.contents, DefaultCompression, dfDeflate)
+    let utf8FileName =
+      if (generalPurposeFlag and 0b100000000000) != 0:
+        # Language encoding flag (EFS) set, assume utf-8
+        fileName
       else:
-        ""
+        fileName.utf8ify()
 
-    v.compressedLen = compressed.len.uint32
-    v.uncompressedLen = entry.contents.len.uint32
-
-    data.add(cast[array[4, uint8]](v.compressedLen))
-    data.add(cast[array[4, uint8]](v.uncompressedLen))
-
-    data.add(cast[array[2, uint8]](path.len.uint16)) # File name len
-    data.add([0.uint8, 0]) # Extra field len
-
-    data.add(cast[seq[uint8]](path))
-
-    data.add(cast[seq[uint8]](compressed))
-
-    values[path] = v
-
-  # Write the central directory
-  let centralDirectoryOffset = data.len
-  var centralDirectorySize: int
-  for path, entry in archive.contents:
-    let v =
-      try:
-        values[path]
-      except KeyError:
-        raise newException(ZippyError, "Unexpected error writing archive")
-
-    data.add(cast[array[4, uint8]](0x02014b50)) # Central directory signature
-    data.add(cast[array[2, uint8]](63.uint16)) # Version made by
-    data.add(cast[array[2, uint8]](20.uint16)) # Min version to extract
-    data.add(cast[array[2, uint8]](1.uint16 shl 11)) # General purpose flag UTF-8
-    data.add(cast[array[2, uint8]](v.compressionMethod))
-
-    let (lastModifiedTime, lastModifiedDate) = entry.lastModified.toMsDos()
-    data.add(cast[array[2, uint8]](lastModifiedTime))
-    data.add(cast[array[2, uint8]](lastModifiedDate))
-
-    data.add(cast[array[4, uint8]](v.crc32))
-    data.add(cast[array[4, uint8]](v.compressedLen))
-    data.add(cast[array[4, uint8]](v.uncompressedLen))
-    data.add(cast[array[2, uint8]](path.len.uint16)) # File name len
-    data.add([0.uint8, 0]) # Extra field len
-    data.add([0.uint8, 0]) # File comment len
-    data.add([0.uint8, 0]) # Disk number
-    data.add([0.uint8, 0]) # Internal file attrib
-
-    # External file attrib
-    case entry.kind:
-    of ekDirectory:
-      data.add([0x10.uint8, 0, 0, 0])
-    of ekFile:
-      data.add([0x20.uint8, 0, 0, 0])
-
-    data.add(cast[array[4, uint8]](v.offset)) # Relative offset of local file header
-    data.add(cast[seq[uint8]](path))
-
-    centralDirectorySize += 46 + path.len
-
-  # Write the end of central directory record
-  data.add(cast[array[4, uint8]](0x06054b50)) # End of central directory signature
-  data.add([0.uint8, 0])
-  data.add([0.uint8, 0])
-  data.add(cast[array[2, uint8]](archive.contents.len.uint16))
-  data.add(cast[array[2, uint8]](archive.contents.len.uint16))
-  data.add(cast[array[4, uint8]](centralDirectorySize.uint32))
-  data.add(cast[array[4, uint8]](centralDirectoryOffset.uint32))
-  data.add([0.uint8, 0])
-
-  when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
-    writeFile(path, data)
-  else:
-    writeFile(path, cast[string](data))
+    let
+      dosDirectoryFlag = (externalFileAttr and 0x10) != 0
+      unixDirectoryFlag = (externalFileAttr and (S_IFDIR.uint32 shl 16)) != 0
+    if dosDirectoryFlag or unixDirectoryFlag:
+      result.records[utf8FileName] = ZipArchiveRecord(
+        kind: DirectoryRecord,
+        fileHeaderOffset: fileHeaderOffset,
+        path: utf8FileName
+      )
+    else:
+      result.records[utf8FileName] = ZipArchiveRecord(
+        kind: FileRecord,
+        fileHeaderOffset: fileHeaderOffset,
+        path: utf8FileName,
+        compressedSize: compressedSize,
+        uncompressedSize: uncompressedSize,
+        uncompressedCrc32: uncompressedCrc32
+      )
 
 proc extractAll*(
-  archive: ZipArchive, dest: string
+  zipPath, dest: string
 ) {.raises: [IOError, OSError, ZippyError].} =
   ## Extracts the files stored in archive to the destination directory.
   ## The path to the destination directory must exist.
   ## The destination directory itself must not exist (it is not overwitten).
-  if dirExists(dest):
-    raise newException(
-      ZippyError, "Destination " & dest & " already exists"
-    )
+  if dest == "" or dirExists(dest):
+    raise newException(ZippyError, "Destination " & dest & " already exists")
 
-  let (head, tail) = splitPath(dest)
-  if tail != "" and not dirExists(head):
-    raise newException(
-      ZippyError, "Path to destination " & dest & " does not exist"
-    )
+  var (head, tail) = splitPath(dest)
+  if tail == "": # For / at end of path
+    (head, tail) = splitPath(head)
+  if head != "" and not dirExists(head):
+    raise newException(ZippyError, "Path to " & dest & " does not exist")
 
-  # Ensure we only raise exceptions we handle below
-  proc writeContents(
-    archive: ZipArchive, dest: string
-  ) {.raises: [IOError, OSError, ZippyError].} =
-    for path, entry in archive.contents:
-      if path.isAbsolute():
-        raise newException(
-          ZippyError,
-          "Extracting absolute paths is not supported (" & path & ")"
-        )
-      if path.startsWith("../") or path.startsWith(r"..\"):
-        raise newException(
-          ZippyError,
-          "Extracting paths starting with `..` is not supported (" & path & ")"
-        )
-      if "/../" in path or r"\..\" in path:
-        raise newException(
-          ZippyError,
-          "Extracting paths containing `/../` is not supported (" & path & ")"
-        )
+  let
+    reader = openZipArchive(zipPath)
+    src = cast[ptr UncheckedArray[uint8]](reader.memFile.mem)
 
-      case entry.kind:
-      of ekDirectory:
-        createDir(dest / path)
-      of ekFile:
-        createDir(dest / splitFile(path).dir)
-        writeFile(dest / path, entry.contents)
-        if entry.lastModified > Time():
-          setLastModificationTime(dest / path, entry.lastModified)
-        setFilePermissions(dest / path, entry.permissions)
+  # Verify some things before attempting to write the files
+  for _, record in reader.records:
+    if record.path.isAbsolute():
+      raise newException(ZippyError, "Absolute path not allowed " & record.path)
+
+    if record.path.startsWith("../") or record.path.startsWith(r"..\"):
+      raise newException(ZippyError, "Path ../ not allowed " & record.path)
+
+    if "/../" in record.path or r"\..\" in record.path:
+      raise newException(ZippyError, "Path /../ not allowed " & record.path)
 
   try:
-    archive.writeContents(dest)
+    # Create the directories and write the extracted files
+    for _, record in reader.records:
+      case record.kind:
+      of DirectoryRecord:
+        createDir(dest / record.path)
+      of FileRecord:
+        createDir(dest / splitFile(record.path).dir)
+        writeFile(dest / record.path, reader.extractFile(record.path))
+
+    # Set last modification time as a second pass otherwise directories get
+    # updated last modification times as files are added.
+    for _, record in reader.records:
+      let
+        lastModifiedTime = read16(src, record.fileHeaderOffset + 10)
+        lastModifiedDate = read16(src, record.fileHeaderOffset + 12)
+        lastModified = parseMsDosDateTime(lastModifiedTime, lastModifiedDate)
+      setLastModificationTime(dest / record.path, lastModified)
+
+  # If something bad happens delete the destination directory to avoid leaving
+  # an incomplete extract.
   except IOError as e:
     removeDir(dest)
     raise e
@@ -518,31 +336,5 @@ proc extractAll*(
   except ZippyError as e:
     removeDir(dest)
     raise e
-
-when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
-  proc extractAll*(
-    zipPath, dest: string
-  ) {.raises: [IOError, OSError, ZippyError].} =
-    ## Extracts the files in the archive located at zipPath into the destination
-    ## directory.
-    let archive = ZipArchive()
-    archive.open(zipPath)
-    archive.extractAll(dest)
-else:
-  proc extractAll*(
-    zipPath, dest: string
-  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
-    ## Extracts the files in the archive located at zipPath into the destination
-    ## directory.
-    let archive = ZipArchive()
-    archive.open(zipPath)
-    archive.extractAll(dest)
-
-proc createZipArchive*(
-  source, dest: string
-) {.raises: [IOError, OSError, ZippyError].} =
-  ## Creates an archive containing all of the files and directories inside
-  ## source and writes the zip file to dest.
-  let archive = ZipArchive()
-  archive.addDir(source)
-  archive.writeZipArchive(dest)
+  finally:
+    reader.close()
