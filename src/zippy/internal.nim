@@ -1,4 +1,4 @@
-import common, std/bitops, std/strutils
+import common, std/bitops, std/os, std/strutils
 
 const
   maxCodeLength* = 15
@@ -188,6 +188,9 @@ template failUncompress*() =
 template failCompress*() =
   raise newException(ZippyError, "Unexpected error while compressing")
 
+template failArchiveEOF*() =
+  raise newException(ZippyError, "Unexpected EOF, invalid archive?")
+
 when defined(release):
   {.push checks: off.}
 
@@ -322,6 +325,54 @@ proc adler32*(src: string): uint32 {.inline.} =
 
 proc toUnixPath*(path: string): string =
   path.replace('\\', '/')
+
+proc parseFilePermissions*(permissions: int): set[FilePermission] =
+  if defined(windows) or permissions == 0:
+    # Ignore file permissions on Windows. If they are absent (.zip made on
+    # Windows for example), set default permissions.
+    result.incl fpUserRead
+    result.incl fpUserWrite
+    result.incl fpGroupRead
+    result.incl fpOthersRead
+  else:
+    if (permissions and TUREAD) != 0: result.incl(fpUserRead)
+    if (permissions and TUWRITE) != 0: result.incl(fpUserWrite)
+    if (permissions and TUEXEC) != 0: result.incl(fpUserExec)
+    if (permissions and TGREAD) != 0: result.incl(fpGroupRead)
+    if (permissions and TGWRITE) != 0: result.incl(fpGroupWrite)
+    if (permissions and TGEXEC) != 0: result.incl(fpGroupExec)
+    if (permissions and TOREAD) != 0: result.incl(fpOthersRead)
+    if (permissions and TOWRITE) != 0: result.incl(fpOthersWrite)
+    if (permissions and TOEXEC) != 0: result.incl(fpOthersExec)
+
+proc verifyPathIsSafeToExtract*(path: string) =
+  if path.isAbsolute():
+    raise newException(ZippyError, "Absolute path not allowed " & path)
+
+  if path.startsWith("../") or path.startsWith(r"..\"):
+    raise newException(ZippyError, "Path ../ not allowed " & path)
+
+  if "/../" in path or r"\..\" in path:
+    raise newException(ZippyError, "Path /../ not allowed " & path)
+
+# Nim std/os is missing a openArray[char] writeFile
+proc writeFile*(filename: string, content: openArray[char]) =
+  ## Opens a file named `filename` for writing. Then writes the
+  ## `content` completely to the file and closes the file afterwards.
+  ## Raises an IO exception in case of an error.
+  var f: File = nil
+  if open(f, filename, fmWrite):
+    try:
+      f.writeBuffer(cast[pointer](content), content.len)
+    finally:
+      close(f)
+  else:
+    raise newException(IOError, "cannot open: " & filename)
+
+template currentExceptionAsZippyError*(): untyped =
+  ## Gets the current exception and returns it as a ZippyError with stack trace.
+  let e = getCurrentException()
+  newException(ZippyError, e.getStackTrace & e.msg, e)
 
 when defined(release):
   {.pop.}

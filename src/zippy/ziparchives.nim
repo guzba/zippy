@@ -25,9 +25,6 @@ type
     memFile: MemFile
     records: Table[string, ZipArchiveRecord]
 
-template failEOF() =
-  raise newException(ZippyError, "Unexpected EOF, invalid zip archive?")
-
 iterator walkFiles*(reader: ZipArchiveReader): string =
   ## Walks over all files in the archive and returns the file name
   ## (including the path).
@@ -53,7 +50,7 @@ proc extractFile*(
   var pos = record.fileHeaderOffset
 
   if pos + 30 > reader.memFile.size:
-    failEOF()
+    failArchiveEOF()
 
   if read32(src, pos) != fileHeaderSignature:
     raise newException(ZippyError, "Invalid file header")
@@ -73,7 +70,7 @@ proc extractFile*(
   pos += 30 + fileNameLen + extraFieldLen
 
   if pos + record.compressedSize > reader.memFile.size:
-    failEOF()
+    failArchiveEOF()
 
   case record.kind:
   of FileRecord:
@@ -112,27 +109,6 @@ proc parseMsDosDateTime(time, date: uint16): Time =
       seconds.SecondRange,
       local()
     ).toTime()
-
-proc parseFilePermissions(externalFileAttr: uint32): set[FilePermission] =
-  let permissions = externalFileAttr shr 16
-  if defined(windows) or permissions == 0:
-    # Ignore file permissions on Windows. If they are absent (.zip made on
-    # Windows for example), set default permissions.
-    result.incl fpUserRead
-    result.incl fpUserWrite
-    result.incl fpGroupRead
-    result.incl fpGroupWrite
-    result.incl fpOthersRead
-  else:
-    if (permissions and 0o00400) != 0: result.incl fpUserRead
-    if (permissions and 0o00200) != 0: result.incl fpUserWrite
-    if (permissions and 0o00100) != 0: result.incl fpUserExec
-    if (permissions and 0o00040) != 0: result.incl fpGroupRead
-    if (permissions and 0o00020) != 0: result.incl fpGroupWrite
-    if (permissions and 0o00010) != 0: result.incl fpGroupExec
-    if (permissions and 0o00004) != 0: result.incl fpOthersRead
-    if (permissions and 0o00002) != 0: result.incl fpOthersWrite
-    if (permissions and 0o00001) != 0: result.incl fpOthersExec
 
 proc utf8ify(fileName: string): string =
   const cp437AfterAscii = [
@@ -180,7 +156,7 @@ proc findEndOfCentralDirectory(reader: ZipArchiveReader): int =
   result = reader.memFile.size - 22
   while true:
     if result < 0:
-      failEOF()
+      failArchiveEOF()
     if read32(src, result) == endOfCentralDirectorySignature:
       return
     else:
@@ -196,7 +172,7 @@ proc openZipArchive*(
 
   let eocd = result.findEndOfCentralDirectory()
   if eocd + 22 > result.memFile.size:
-    failEOF()
+    failArchiveEOF()
 
   let
     diskNumber = read16(src, eocd + 4).int
@@ -220,13 +196,13 @@ proc openZipArchive*(
     raise newException(ZippyError, "Unsupported archive, record number")
 
   if eocd + 22 + commentLen > result.memFile.size:
-    failEOF()
+    failArchiveEOF()
 
   var pos = centralDirectoryStart
 
   for _ in 0 ..< numCentralDirectoryRecords:
     if pos + 46 > result.memFile.size:
-      failEOF()
+      failArchiveEOF()
 
     if read32(src, pos) != centralDirectoryFileHeaderSignature:
       raise newException(ZippyError, "Invalid central directory file header")
@@ -258,7 +234,7 @@ proc openZipArchive*(
     pos += 46
 
     if pos + fileNameLen > result.memFile.size:
-      failEOF()
+      failArchiveEOF()
 
     var fileName = newString(fileNameLen)
     copyMem(fileName[0].addr, src[pos].addr, fileNameLen)
@@ -294,7 +270,7 @@ proc openZipArchive*(
       compressedSize: compressedSize,
       uncompressedSize: uncompressedSize,
       uncompressedCrc32: uncompressedCrc32,
-      filePermissions: parseFilePermissions(externalFileAttr)
+      filePermissions: parseFilePermissions(externalFileAttr.int shr 16)
     )
 
 proc extractAll*(
@@ -318,14 +294,7 @@ proc extractAll*(
 
   # Verify some things before attempting to write the files
   for _, record in reader.records:
-    if record.path.isAbsolute():
-      raise newException(ZippyError, "Absolute path not allowed " & record.path)
-
-    if record.path.startsWith("../") or record.path.startsWith(r"..\"):
-      raise newException(ZippyError, "Path ../ not allowed " & record.path)
-
-    if "/../" in record.path or r"\..\" in record.path:
-      raise newException(ZippyError, "Path /../ not allowed " & record.path)
+    record.path.verifyPathIsSafeToExtract()
 
   try:
     # Create the directories and write the extracted files
@@ -339,7 +308,7 @@ proc extractAll*(
         setFilePermissions(dest / record.path, record.filePermissions)
 
     # Set last modification time as a second pass otherwise directories get
-    # updated last modification times as files are added.
+    # updated last modification times as files are added on Mac.
     for _, record in reader.records:
       let
         lastModifiedTime = read16(src, record.fileHeaderOffset + 10)
