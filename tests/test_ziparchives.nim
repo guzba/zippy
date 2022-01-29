@@ -25,3 +25,5 @@ for path in walkDirRec("test_tmp/tar", relative = true):
 
   doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
   doAssert getLastModificationTime(goldPath) == getLastModificationTime(zippyPath)
+
+removeDir("test_tmp")
