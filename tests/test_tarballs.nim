@@ -24,12 +24,8 @@ for path in walkDirRec("tmp/tar/gold", relative = true):
     doAssert fileExists(zippyPath)
     doAssert readFile(goldPath) == readFile(zippyPath)
 
-  if getFilePermissions(goldPath) != getFilePermissions(zippyPath):
-    echo goldPath
-    echo getFilePermissions(goldPath)
-    echo getFilePermissions(zippyPath)
-    doAssert false
-  # doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
+  when defined(windows):
+    doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
   doAssert getLastModificationTime(goldPath) == getLastModificationTime(zippyPath)
 
 removeDir("tmp/tar")
