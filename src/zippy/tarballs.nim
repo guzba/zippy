@@ -1,4 +1,4 @@
-import common, internal, std/memfiles, std/os, std/times, tarballs_v1, zippy
+import common, internal, std/memfiles, std/os, std/times, tarballs_v1, gzip
 
 export common, tarballs_v1
 
@@ -38,7 +38,7 @@ proc extractAll*(
       let src = cast[ptr UncheckedArray[uint8]](memFile.mem)
       if src[0] == 31 and src[1] == 139:
         # Looks like a compressed tarball (.tar.gz)
-        uncompressed = uncompress(src, memFile.size, dfGzip)
+        uncompressGzip(uncompressed, src, memFile.size, trustSize = true)
       else:
         # Treat this as an uncompressed tarball (.tar)
         uncompressed.setLen(memFile.size)
