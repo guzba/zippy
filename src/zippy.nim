@@ -142,11 +142,17 @@ proc uncompress*(
     if fextra:
       raise newException(ZippyError, "Currently unsupported flags are set")
 
+    proc nextZeroByte(src: ptr UncheckedArray[uint8], len, start: int): int =
+      for i in start ..< len:
+        if src[i] == 0:
+          return i
+      failUncompress()
+
     if fname:
-      pos += cast[cstring](src[pos].unsafeAddr).len + 1
+      pos = nextZeroByte(src, len, pos) + 1
 
     if fcomment:
-      pos += cast[cstring](src[pos].unsafeAddr).len + 1
+      pos = nextZeroByte(src, len, pos) + 1
 
     if fhcrc:
       if pos + 2 >= len:
