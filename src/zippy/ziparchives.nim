@@ -337,7 +337,7 @@ proc extractAll*(
       of FileRecord:
         createDir(dest / splitFile(record.path).dir)
         writeFile(dest / record.path, reader.extractFile(record.path))
-      setFilePermissions(dest / record.path, record.filePermissions)
+        setFilePermissions(dest / record.path, record.filePermissions)
 
     # Set last modification time as a second pass otherwise directories get
     # updated last modification times as files are added.
