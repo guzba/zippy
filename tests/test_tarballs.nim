@@ -1,3 +1,7 @@
+import zippy/tarballs
+
+
+
 # import os, streams, strformat, tables, zippy/tarballs
 
 # proc testTempDir(): string =

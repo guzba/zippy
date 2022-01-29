@@ -190,7 +190,7 @@ else:
     ## archive.contents (clears any existing archive.contents entries).
     openStreamImpl(tarball, stream, tarballFormat)
 
-proc openPathImpl*(tarball: Tarball, path: string) =
+proc openPathImpl(tarball: Tarball, path: string) =
   let
     stream = newStringStream(readFile(path))
     ext = splitFile(path).ext
