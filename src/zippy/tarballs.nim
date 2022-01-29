@@ -82,13 +82,8 @@ proc extractAll*(
           createDir(dest / splitFile(path).dir)
           writeFile(
             dest / path,
-            if size > 0:
-              uncompressed.toOpenArray(pos, pos + size - 1)
-            else:
-              ""
+            uncompressed.toOpenArray(pos, max(pos + size - 1, 0))
           )
-          if mode > 0:
-            echo parseFilePermissions(mode)
           setFilePermissions(dest / path, parseFilePermissions(mode))
           lastModifiedTimes.add (path, initTime(mtime, 0))
         elif typeflag == '5':
