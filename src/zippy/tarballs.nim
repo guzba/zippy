@@ -3,21 +3,6 @@ import common, internal, std/os, std/streams, std/strutils, std/tables,
 
 export common
 
-const
-  # TSUID   =  0o04000  # set UID on execution */
-  # TSGID   =  0o02000  # set GID on execution */
-  # TSVTX   =  0o01000  # reserved */
-  #                     # file permissions */
-  TUREAD  =  0o00400  # read by owner */
-  TUWRITE =  0o00200  # write by owner */
-  TUEXEC  =  0o00100  # execute/search by owner */
-  TGREAD  =  0o00040  # read by group */
-  TGWRITE =  0o00020  # write by group */
-  TGEXEC  =  0o00010  # execute/search by group */
-  TOREAD  =  0o00004  # read by other */
-  TOWRITE =  0o00002  # write by other */
-  TOEXEC  =  0o00001  # execute/search by other */
-
 type
   EntryKind* = enum
     ekNormalFile = '0',

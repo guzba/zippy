@@ -104,6 +104,17 @@ const
     16.uint8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
+  S_IFDIR* = 0o0040000
+  TUREAD* = 0o00400 # read by owner */
+  TUWRITE* = 0o00200 # write by owner */
+  TUEXEC* = 0o00100 # execute/search by owner */
+  TGREAD* = 0o00040 # read by group */
+  TGWRITE* = 0o00020 # write by group */
+  TGEXEC* = 0o00010 # execute/search by group */
+  TOREAD* = 0o00004 # read by other */
+  TOWRITE* = 0o00002 # write by other */
+  TOEXEC* = 0o00001 # execute/search by other */
+
 type
   CompressionConfig* = object
     good*, lazy*, nice*, chain*: int

@@ -4,7 +4,6 @@ import common, crc, internal, std/memfiles, std/os, std/strutils, std/tables,
 export ziparchives_v1
 
 const
-  S_IFDIR = 0o0040000
   fileHeaderSignature = 0x04034b50.uint32
   centralDirectoryFileHeaderSignature = 0x02014b50.uint32
   endOfCentralDirectorySignature = 0x06054b50.uint32
