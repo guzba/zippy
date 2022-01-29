@@ -20,6 +20,7 @@ type
     uncompressedCrc32: uint32
     compressedSize: int
     uncompressedSize: int
+    filePermissions: set[FilePermission]
 
   ZipArchiveReader = ref object
     memFile: MemFile
@@ -112,6 +113,27 @@ proc parseMsDosDateTime(time, date: uint16): Time =
       seconds.SecondRange,
       local()
     ).toTime()
+
+proc parseFilePermissions(externalFileAttr: uint32): set[FilePermission] =
+  let permissions = externalFileAttr shr 16
+  if defined(windows) or permissions == 0:
+    # Ignore file permissions on Windows. If they are absent (.zip made on
+    # Windows for example), set default permissions.
+    result.incl fpUserRead
+    result.incl fpUserWrite
+    result.incl fpGroupRead
+    result.incl fpGroupWrite
+    result.incl fpOthersRead
+  else:
+    if (permissions and 0o00400) != 0: result.incl fpUserRead
+    if (permissions and 0o00200) != 0: result.incl fpUserWrite
+    if (permissions and 0o00100) != 0: result.incl fpUserExec
+    if (permissions and 0o00040) != 0: result.incl fpGroupRead
+    if (permissions and 0o00020) != 0: result.incl fpGroupWrite
+    if (permissions and 0o00010) != 0: result.incl fpGroupExec
+    if (permissions and 0o00004) != 0: result.incl fpOthersRead
+    if (permissions and 0o00002) != 0: result.incl fpOthersWrite
+    if (permissions and 0o00001) != 0: result.incl fpOthersExec
 
 proc utf8ify(fileName: string): string =
   const cp437AfterAscii = [
@@ -260,21 +282,21 @@ proc openZipArchive*(
     let
       dosDirectoryFlag = (externalFileAttr and 0x10) != 0
       unixDirectoryFlag = (externalFileAttr and (S_IFDIR.uint32 shl 16)) != 0
-    if dosDirectoryFlag or unixDirectoryFlag:
-      result.records[utf8FileName] = ZipArchiveRecord(
-        kind: DirectoryRecord,
-        fileHeaderOffset: fileHeaderOffset,
-        path: utf8FileName
-      )
-    else:
-      result.records[utf8FileName] = ZipArchiveRecord(
-        kind: FileRecord,
-        fileHeaderOffset: fileHeaderOffset,
-        path: utf8FileName,
-        compressedSize: compressedSize,
-        uncompressedSize: uncompressedSize,
-        uncompressedCrc32: uncompressedCrc32
-      )
+      recordKind =
+        if dosDirectoryFlag or unixDirectoryFlag:
+          DirectoryRecord
+        else:
+          FileRecord
+
+    result.records[utf8FileName] = ZipArchiveRecord(
+      kind: recordKind,
+      fileHeaderOffset: fileHeaderOffset,
+      path: utf8FileName,
+      compressedSize: compressedSize,
+      uncompressedSize: uncompressedSize,
+      uncompressedCrc32: uncompressedCrc32,
+      filePermissions: parseFilePermissions(externalFileAttr)
+    )
 
 proc extractAll*(
   zipPath, dest: string
@@ -315,6 +337,7 @@ proc extractAll*(
       of FileRecord:
         createDir(dest / splitFile(record.path).dir)
         writeFile(dest / record.path, reader.extractFile(record.path))
+        setFilePermissions(dest / record.path, record.filePermissions)
 
     # Set last modification time as a second pass otherwise directories get
     # updated last modification times as files are added.
