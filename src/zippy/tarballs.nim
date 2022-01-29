@@ -1,8 +1,12 @@
-import tarballs_v1
+import common, std/memfiles, tarballs_v1
 
-export tarballs_v1
+export common, tarballs_v1
 
 proc extractAll*(
   tarPath, dest: string
 ) {.raises: [IOError, OSError, ZippyError].} =
-  discard
+  var memFile = memfiles.open(tarPath)
+  try:
+    echo memFile.size
+  finally:
+    memFile.close()

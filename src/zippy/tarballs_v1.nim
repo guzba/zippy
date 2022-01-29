@@ -1,8 +1,6 @@
 import common, internal, std/os, std/streams, std/strutils, std/tables,
     std/times, zippy
 
-export common
-
 type
   EntryKind* = enum
     ekNormalFile = '0',

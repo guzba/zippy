@@ -1,4 +1,10 @@
-import zippy/tarballs
+import std/os, zippy/tarballs
+
+extractAll("tests/data/tarballs/Nim-1.6.2.tar.gz", "")
+
+# extractAll(getHomeDir() / "Downloads/csources-64e34778fa7e114b4afc753c7845dee250584167.tar.gz", "")
+
+
 
 
 
