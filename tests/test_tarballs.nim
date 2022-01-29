@@ -24,7 +24,8 @@ for path in walkDirRec("tmp/tar/gold", relative = true):
     doAssert fileExists(zippyPath)
     doAssert readFile(goldPath) == readFile(zippyPath)
 
-  doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
+  when not defined(windows):
+    doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
   doAssert getLastModificationTime(goldPath) == getLastModificationTime(zippyPath)
 
 removeDir("tmp/tar")
