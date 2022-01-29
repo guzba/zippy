@@ -1,12 +1,14 @@
-import std/os, zippy/tarballs
+import std/os, std/strformat, zippy/tarballs
+
+let testFilePath = "tests/data/tarballs/Nim-1.6.2.tar.gz"
 
 removeDir("tmp/tar")
 
 createDir("tmp/tar")
-extractAll("tests/data/tarballs/Nim-1.6.2.tar.gz", "tmp/tar/zippy")
+extractAll(testFilePath, "tmp/tar/zippy")
 
 createDir("tmp/tar/gold")
-let cmd = "tar -xf tests/data/tarballs/Nim-1.6.2.tar.gz -C tmp/tar/gold"
+let cmd = &"tar -xf {testFilePath} -C tmp/tar/gold"
 doAssert execShellCmd(cmd) == 0
 
 for path in walkDirRec("tmp/tar/gold", relative = true):

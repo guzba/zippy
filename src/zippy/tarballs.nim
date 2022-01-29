@@ -62,6 +62,7 @@ proc extractAll*(
         size = parseTarOctInt(uncompressed[pos + 124 ..< pos + 124 + 11])
         mtime = parseTarOctInt(uncompressed[pos + 136 ..< pos + 136 + 11])
         typeflag = uncompressed[pos + 156]
+        # linkname = $(uncompressed[pos + 157 ..< pos + 157 + 100]).cstring
         magic = $(uncompressed[pos + 257 ..< pos + 257 + 6]).cstring
         prefix =
           if magic == "ustar":
@@ -78,7 +79,7 @@ proc extractAll*(
         let path = prefix / name
         path.verifyPathIsSafeToExtract()
 
-        if typeflag == '0' or typeflag == '\0':
+        if typeflag == '0' or typeflag == '\0': # Files
           createDir(dest / splitFile(path).dir)
           writeFile(
             dest / path,
@@ -86,7 +87,7 @@ proc extractAll*(
           )
           setFilePermissions(dest / path, parseFilePermissions(mode))
           lastModifiedTimes.add (path, initTime(mtime, 0))
-        elif typeflag == '5':
+        elif typeflag == '5': # Directories
           createDir(dest / path)
           lastModifiedTimes.add (path, initTime(mtime, 0))
         elif typeflag in ['g', 'x']:
