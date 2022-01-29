@@ -24,7 +24,8 @@ Simple examples using Zippy can be found in the [examples/](https://github.com/g
 
 * [HTTP client gzip](https://github.com/guzba/zippy/blob/master/examples/http_client.nim)
 * [HTTP server gzip](https://github.com/guzba/zippy/blob/master/examples/http_server.nim)
-* Extract from a [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_extract.nim) or [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_extract.nim)
+* Extract individual files from [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_explore.nim).
+* Extract everything from a [zip archive](https://github.com/guzba/zippy/blob/master/examples/ziparchive_extract.nim) or [tarball](https://github.com/guzba/zippy/blob/master/examples/tarball_extract.nim)
 
 ## Performance
 
