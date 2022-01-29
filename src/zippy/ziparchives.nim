@@ -1,7 +1,7 @@
 import common, crc, internal, std/memfiles, std/os, std/strutils, std/tables,
     std/times, std/unicode, ziparchives_v1, zippy
 
-export ziparchives_v1
+export common, ziparchives_v1
 
 const
   fileHeaderSignature = 0x04034b50.uint32
