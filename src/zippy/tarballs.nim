@@ -47,7 +47,9 @@ proc extractAll*(
       memFile.close()
 
   try:
-    var lastModifiedTimes: seq[(string, Time)]
+    var
+      lastModifiedTimes: seq[(string, Time)]
+      longFileName: string # Set by 'L' blocks, used for subsequent file
 
     var pos: int
     while pos < uncompressed.len:
@@ -62,7 +64,7 @@ proc extractAll*(
         size = parseTarOctInt(uncompressed[pos + 124 ..< pos + 124 + 11])
         mtime = parseTarOctInt(uncompressed[pos + 136 ..< pos + 136 + 11])
         typeflag = uncompressed[pos + 156]
-        # linkname = $(uncompressed[pos + 157 ..< pos + 157 + 100]).cstring
+        linkname = $(uncompressed[pos + 157 ..< pos + 157 + 100]).cstring
         magic = $(uncompressed[pos + 257 ..< pos + 257 + 6]).cstring
         prefix =
           if magic == "ustar":
@@ -75,8 +77,14 @@ proc extractAll*(
       if pos + size > uncompressed.len:
         failArchiveEOF()
 
-      if name.len > 0:
-        let path = prefix / name
+      if name.len > 0 or longFileName.len > 0:
+        var path: string
+        if longFileName != "":
+          path = longFileName
+          longFileName = ""
+        else:
+          path = prefix / name
+
         path.verifyPathIsSafeToExtract()
 
         if typeflag == '0' or typeflag == '\0': # Files
@@ -90,7 +98,12 @@ proc extractAll*(
         elif typeflag == '5': # Directories
           createDir(dest / path)
           lastModifiedTimes.add (path, initTime(mtime, 0))
-        elif typeflag in ['g', 'x']:
+        elif typeflag == '2': # Symlinks
+          createDir(dest / splitFile(path).dir)
+          createSymlink(linkname, dest / path)
+        elif typeflag == 'L': # Long file names
+          longFileName = uncompressed[pos ..< pos + size]
+        elif typeflag in ['g', 'x'] or typeflag in {'A' .. 'Z'}:
           discard
         else:
           raise newException(ZippyError, "Unsupported header type " & typeflag)
