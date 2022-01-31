@@ -12,7 +12,11 @@ else:
   let cmd = "unzip tests/data/ziparchives/nim-1.6.2_x64.zip -d tmp/zip/gold"
 doAssert execShellCmd(cmd) == 0
 
-for path in walkDirRec("tmp/zip/gold", relative = true):
+for path in walkDirRec(
+  "tmp/zip/gold",
+  yieldFilter = {pcFile, pcDir},
+  relative = true
+):
   let
     goldPath = "tmp/zip/gold" / path
     zippyPath = "tmp/zip/zippy" / path
