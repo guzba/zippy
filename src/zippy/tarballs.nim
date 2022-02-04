@@ -5,11 +5,22 @@ export common, tarballs_v1
 import strutils
 
 proc parseTarOctInt(s: string): int =
+  # Walk the bytes to find the start and len of the acii digits
+  var start, len: int
+  for c in s:
+    if c in {'0' .. '9'}:
+      break
+    inc start
+  for i in start ..< s.len:
+    if s[i] notin {'0' .. '9'}:
+      break
+    inc len
+
   try:
-    if s[0] == '\0':
+    if len == 0:
       0
     else:
-      parseOctInt(s)
+      parseOctInt(s[start ..< start + len])
   except ValueError:
     raise currentExceptionAsZippyError()
 
