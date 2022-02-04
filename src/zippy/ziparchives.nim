@@ -1,4 +1,4 @@
-import common, crc, internal, std/memfiles, std/os, std/strutils, std/tables,
+import common, crc, internal, std/memfiles, std/os, std/tables,
     std/times, std/unicode, ziparchives_v1, zippy
 
 export common, ziparchives_v1
@@ -7,6 +7,8 @@ const
   fileHeaderSignature = 0x04034b50.uint32
   centralDirectoryFileHeaderSignature = 0x02014b50.uint32
   endOfCentralDirectorySignature = 0x06054b50.uint32
+  zip64EndOfCentralDirectorySignature = 0x06064b50.uint32
+  zip64EndOfCentralDirectoryLocatorSignature = 0x07064b50
 
 type
   ZipArchiveRecordKind = enum
@@ -174,17 +176,54 @@ proc openZipArchive*(
   if eocd + 22 > result.memFile.size:
     failArchiveEOF()
 
-  let
+  var zip64 = false
+  if eocd - 20 >= 0:
+    if read32(src, eocd - 20) == zip64EndOfCentralDirectoryLocatorSignature:
+      zip64 = true
+
+  var
+    diskNumber, startDisk, numRecordsOnDisk, numCentralDirectoryRecords: int
+    centralDirectorySize, centralDirectoryStart: int
+  if zip64:
+    let
+      zip64EndOfCentralDirectoryDiskNumber = read32(src, eocd - 20 + 4)
+      zip64EndOfCentralDirectoryStart = read64(src, eocd - 20 + 8).int
+      numDisks = read32(src, eocd - 20 + 16)
+
+    if zip64EndOfCentralDirectoryDiskNumber != 0:
+      raise newException(ZippyError, "Unsupported archive, disk number")
+
+    if numDisks != 1:
+      raise newException(ZippyError, "Unsupported archive, num disks")
+
+    var pos = zip64EndOfCentralDirectoryStart
+    if pos + 64 > result.memFile.size:
+      failArchiveEOF()
+
+    if read32(src, pos) != zip64EndOfCentralDirectorySignature:
+      raise newException(ZippyError, "Invalid central directory file header")
+
+    # let
+    #   endOfCentralDirectorySize = read64(src, pos + 4).int
+      # versionMadeBy = read16(src, pos + 12)
+      # minVersionToExtract = read16(src, pos + 14)
+    diskNumber = read32(src, pos + 16).int
+    startDisk = read32(src, pos + 20).int
+    numRecordsOnDisk = read64(src, pos + 24).int
+    numCentralDirectoryRecords = read64(src, pos + 32).int
+    centralDirectorySize = read64(src, pos + 40).int
+    centralDirectoryStart = read64(src, pos + 48).int
+      # anotherDisk = read64(src, pos + 56).int
+  else:
     diskNumber = read16(src, eocd + 4).int
     startDisk = read16(src, eocd + 6).int
     numRecordsOnDisk = read16(src, eocd + 8).int
     numCentralDirectoryRecords = read16(src, eocd + 10).int
     centralDirectorySize = read32(src, eocd + 12).int
     centralDirectoryStart = read32(src, eocd + 16).int
-    commentLen = read16(src, eocd + 20).int
+      # commentLen = read16(src, eocd + 20).int
 
-  if diskNumber == 0xffff:
-    raise newException(ZippyError, "Unsupported archive, ZIP64")
+  var pos = centralDirectoryStart
 
   if diskNumber != 0:
     raise newException(ZippyError, "Unsupported archive, disk number")
@@ -195,10 +234,8 @@ proc openZipArchive*(
   if numRecordsOnDisk != numCentralDirectoryRecords:
     raise newException(ZippyError, "Unsupported archive, record number")
 
-  if eocd + 22 + commentLen > result.memFile.size:
+  if eocd + 22 > result.memFile.size:
     failArchiveEOF()
-
-  var pos = centralDirectoryStart
 
   for _ in 0 ..< numCentralDirectoryRecords:
     if pos + 46 > result.memFile.size:
