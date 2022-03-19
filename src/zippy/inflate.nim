@@ -215,7 +215,7 @@ proc inflateBlock(
           copyTo += copyTo - copyFrom
         while remaining > 0:
           # This is extremely strange.
-          # Without this we segfault in test_ziparchives + -d:release on Windows
+          # Without this we segfault with -d:release on Windows
           if copyTo < 0:
             doAssert false
           copy64(dst, dst, copyTo, copyFrom)
