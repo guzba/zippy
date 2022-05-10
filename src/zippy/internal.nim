@@ -363,7 +363,7 @@ proc writeFile*(filename: string, content: openArray[char]) =
   var f: File = nil
   if open(f, filename, fmWrite):
     try:
-      f.writeBuffer(cast[pointer](content), content.len)
+      discard f.writeBuffer(cast[pointer](content), content.len)
     finally:
       close(f)
   else:
