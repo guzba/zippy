@@ -29,32 +29,27 @@ proc huffmanCodes(
   var
     numCodes = max(highestSymbol, minCodes) + 1
     codes = newSeq[uint16](numCodes)
-    lengths = newSeq[uint8](numCodes)
+    codeLens = newSeq[uint8](numCodes)
 
   if numSymbolsUsed == 0:
-    lengths[0] = 1
-    lengths[1] = 1
+    codeLens[0] = 1
+    codeLens[1] = 1
   elif numSymbolsUsed == 1:
     for i, freq in frequencies:
       if freq != 0:
-        lengths[i] = 1
+        codeLens[i] = 1
         if i == 0:
-          lengths[1] = 1
+          codeLens[1] = 1
         else:
-          lengths[0] = 1
+          codeLens[0] = 1
         break
   else:
     var nodes: seq[Node]
     for symbol, freq in frequencies:
       if freq > 0.uint16:
-        nodes.add(Node(
-          symbol: symbol,
-          freq: freq.int
-        ))
+        nodes.add(Node(symbol: symbol, freq: freq.int))
 
     proc buildTree(nodes: seq[Node]): bool =
-      var needsLengthLimiting: bool
-
       var heap: HeapQueue[Node]
       for node in nodes:
         heap.push(node)
@@ -68,50 +63,44 @@ proc huffmanCodes(
         node.freq = node.left.freq + node.right.freq
         heap.push(node)
 
-      proc walk(node: Node, level: int) =
+      proc visit(node: Node, level: int, needsLengthLimiting: var bool) =
         if node.symbol == -1:
           heap.push(node.left)
           heap.push(node.right)
-          walk(node.left, level + 1)
-          walk(node.right, level + 1)
+          visit(node.left, level + 1, needsLengthLimiting)
+          visit(node.right, level + 1, needsLengthLimiting)
         else:
           node.freq = level # Re-use freq for level
           if level > codeLengthLimit:
             needsLengthLimiting = true
 
-      walk(heap[0], 0)
-
-      needsLengthLimiting
+      visit(heap[0], 0, result)
 
     let needsLengthLimiting = buildTree(nodes)
-
-    if not needsLengthLimiting:
+    if needsLengthLimiting:
+      var longestCode: int
       for node in nodes:
-        lengths[node.symbol] = node.freq.uint8
-    else:
-      var maxLength: int
-      for node in nodes:
-        maxLength = max(maxLength, node.freq)
+        longestCode = max(longestCode, node.freq)
 
-      var histogramNumBits = newSeq[int](maxLength + 1)
+      var histogram = newSeq[int](longestCode + 1)
       for node in nodes:
-        inc histogramNumBits[node.freq]
+        inc histogram[node.freq]
 
-      var i = maxLength
+      var i = longestCode
       while i > codeLengthLimit:
-        if histogramNumBits[i] == 0:
+        if histogram[i] == 0:
           dec i
           continue
 
         var j = i - 2
-        while j > 0 and histogramNumBits[j] == 0:
+        while j > 0 and histogram[j] == 0:
           dec j
 
-        histogramNumBits[i] -= 2
-        inc histogramNumBits[i - 1]
+        histogram[i] -= 2
+        inc histogram[i - 1]
 
-        histogramNumBits[j + 1] += 2
-        dec histogramNumBits[j]
+        histogram[j + 1] += 2
+        dec histogram[j]
 
       proc quickSort(a: var seq[Node], inl, inr: int) =
         var
@@ -135,19 +124,19 @@ proc huffmanCodes(
 
       quicksort(nodes, 0, nodes.high)
 
-      var bitLen = 1
+      var codeLen = 1
       for node in nodes:
-        while histogramNumBits[bitLen] == 0:
-          inc bitLen
+        while histogram[codeLen] == 0:
+          inc codeLen
           continue
-        node.freq = bitLen
-        dec histogramNumBits[bitLen]
+        node.freq = codeLen
+        dec histogram[codeLen]
 
-      for node in nodes:
-        lengths[node.symbol] = node.freq.uint8
+    for node in nodes:
+      codeLens[node.symbol] = node.freq.uint8
 
   var histogram: array[maxCodeLength + 1, uint8]
-  for l in lengths:
+  for l in codeLens:
     inc histogram[l]
   histogram[0] = 0
 
@@ -157,11 +146,11 @@ proc huffmanCodes(
 
   # Convert to canonical codes (+ reversed)
   for i in 0 ..< codes.len:
-    if lengths[i] != 0:
-      codes[i] = reverseBits(nextCode[lengths[i]]) shr (16.uint8 - lengths[i])
-      inc nextCode[lengths[i]]
+    if codeLens[i] != 0:
+      codes[i] = reverseBits(nextCode[codeLens[i]]) shr (16.uint8 - codeLens[i])
+      inc nextCode[codeLens[i]]
 
-  (codes, lengths)
+  (codes, codeLens)
 
 proc encodeAllLiterals(
   encoding: var seq[uint16],
