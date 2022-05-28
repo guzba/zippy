@@ -65,8 +65,6 @@ proc huffmanCodes(
 
       proc visit(node: Node, level: int, needsLengthLimiting: var bool) =
         if node.symbol == -1:
-          heap.push(node.left)
-          heap.push(node.right)
           visit(node.left, level + 1, needsLengthLimiting)
           visit(node.right, level + 1, needsLengthLimiting)
         else:
