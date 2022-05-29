@@ -120,8 +120,8 @@ type
     good*, lazy*, nice*, chain*: int
 
   BlockMetadata* = object
-    litLenFreq*: array[maxLitLenCodes, uint16]
-    distanceFreq*: array[maxDistanceCodes, uint16]
+    litLenFreq*: array[maxLitLenCodes, uint32]
+    distanceFreq*: array[maxDistanceCodes, uint32]
     numLiterals*: int
 
 proc makeCodes(lengths: seq[uint8]): seq[uint16] =

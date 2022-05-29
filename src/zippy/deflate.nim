@@ -11,7 +11,7 @@ proc `<`(a, b: Node): bool {.inline.} =
   a.freq < b.freq
 
 proc huffmanCodes(
-  frequencies: openArray[uint16],
+  frequencies: openArray[uint32],
   minCodes, codeLengthLimit: int
 ): (seq[uint16], seq[uint8]) =
   # https://en.wikipedia.org/wiki/Huffman_coding#Length-limited_Huffman_coding
@@ -22,7 +22,7 @@ proc huffmanCodes(
     highestSymbol: int
     numSymbolsUsed: int
   for symbol, freq in frequencies:
-    if freq > 0.uint16:
+    if freq > 0.uint32:
       highestSymbol = symbol
       inc numSymbolsUsed
 
@@ -46,7 +46,7 @@ proc huffmanCodes(
   else:
     var nodes: seq[Node]
     for symbol, freq in frequencies:
-      if freq > 0.uint16:
+      if freq > 0.uint32:
         nodes.add(Node(symbol: symbol, freq: freq.int))
 
     proc buildTree(nodes: seq[Node]): bool =
@@ -342,7 +342,7 @@ proc deflate*(dst: var string, src: ptr UncheckedArray[uint8], len, level: int) 
             codeLengthsRle.add(codeLengths[i])
           inc i
 
-      var clFreq: array[19, uint16]
+      var clFreq: array[19, uint32]
       block:
         var i: int
         while i < codeLengthsRle.len:
