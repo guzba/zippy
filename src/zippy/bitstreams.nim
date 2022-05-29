@@ -17,9 +17,8 @@ when defined(release):
   {.push checks: off.}
 
 proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
-  while b.bitsBuffered <= 56:
-    if b.pos >= b.len:
-      break
+  let iterations = min((64 - b.bitsBuffered) div 8, b.len - b.pos)
+  for _ in 0 ..< iterations:
     b.bitBuffer = b.bitBuffer or (b.src[b.pos].uint64 shl b.bitsBuffered)
     inc b.pos
     b.bitsBuffered += 8
