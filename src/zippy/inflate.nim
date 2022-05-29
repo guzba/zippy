@@ -2,7 +2,7 @@ import bitstreams, common, internal, std/bitops
 
 const
   fastBits = 9
-  fastMask = (1 shl 9) - 1
+  fastMask = (1 shl fastBits) - 1
 
 type Huffman = object
   firstCode, firstSymbol: array[16, uint16]
@@ -14,7 +14,7 @@ type Huffman = object
 when defined(release):
   {.push checks: off.}
 
-proc init(huffman: var Huffman, codeLengths: openArray[uint8]) =
+proc initHuffman(codeLengths: openArray[uint8]): Huffman =
   ## See https://raw.githubusercontent.com/madler/zlib/master/doc/algorithm.txt
 
   var histogram: array[17, uint16]
@@ -32,34 +32,34 @@ proc init(huffman: var Huffman, codeLengths: openArray[uint8]) =
     nextCode: array[16, uint32]
   for i in 1 ..< 16:
     nextCode[i] = code
-    huffman.firstCode[i] = code.uint16
-    huffman.firstSymbol[i] = k
+    result.firstCode[i] = code.uint16
+    result.firstSymbol[i] = k
     code = code + histogram[i]
     if histogram[i] > 0.uint16 and code - 1 >= (1.uint32 shl i):
       failUncompress()
-    huffman.maxCodes[i] = (code shl (16 - i))
+    result.maxCodes[i] = (code shl (16 - i))
     code = code shl 1
     k += histogram[i]
 
-  huffman.maxCodes[16] = 1 shl 16
+  result.maxCodes[16] = 1 shl 16
 
   for i, len in codeLengths:
     if len > 0.uint8:
       let symbolId =
-        nextCode[len] - huffman.firstCode[len] + huffman.firstSymbol[len]
-      huffman.lengths[symbolId] = len
-      huffman.values[symbolId] = i.uint16
+        nextCode[len] - result.firstCode[len] + result.firstSymbol[len]
+      result.lengths[symbolId] = len
+      result.values[symbolId] = i.uint16
       if len <= fastBits:
         let fast = (len.uint16 shl 9) or i.uint16
         var k = reverseBits(nextCode[len].uint16) shr (16.uint16 - len)
         while k < (1 shl fastBits):
-          huffman.fast[k] = fast
+          result.fast[k] = fast
           k += (1.uint16 shl len)
       inc nextCode[len]
 
 proc decodeSymbol(
   b: var BitStreamReader,
-  h: var Huffman,
+  h: Huffman,
   fillsBitBuffer: static[bool] = true
 ): uint16 {.inline.} =
   ## This function is the most important for inflate performance.
@@ -104,8 +104,8 @@ proc inflateBlock(
 ) =
   var literalsHuffman, distancesHuffman: Huffman
   if fixedCodes:
-    literalsHuffman.init(fixedLitLenCodeLengths)
-    distancesHuffman.init(fixedDistanceCodeLengths)
+    literalsHuffman = initHuffman(fixedLitLenCodeLengths)
+    distancesHuffman = initHuffman(fixedDistanceCodeLengths)
   else:
     let
       hlit = b.readBits(5).int + 257
@@ -122,8 +122,7 @@ proc inflateBlock(
     for i in 0 ..< hclen:
       clcls[clclOrder[i]] = b.readBits(3).uint8
 
-    var clclsHuffman: Huffman
-    clclsHuffman.init(clcls)
+    let clclsHuffman = initHuffman(clcls)
 
     # From RFC 1951, all code lengths form a single sequence of HLIT + HDIST
     # This means the max unpacked length is 31 + 31 + 257 + 1 = 320
@@ -159,8 +158,8 @@ proc inflateBlock(
       if i > hlit + hdist:
         failUncompress()
 
-    literalsHuffman.init(unpacked.toOpenArray(0, hlit - 1))
-    distancesHuffman.init(unpacked.toOpenArray(hlit, hlit + hdist - 1))
+    literalsHuffman= initHuffman(unpacked.toOpenArray(0, hlit - 1))
+    distancesHuffman = initHuffman(unpacked.toOpenArray(hlit, hlit + hdist - 1))
 
   while true:
     let symbol = decodeSymbol(b, literalsHuffman)
@@ -250,7 +249,7 @@ proc inflate*(dst: var string, src: ptr UncheckedArray[uint8], len, pos: int) =
       bfinal = b.readBits(1)
       btype = b.readBits(2)
 
-    if bfinal > 0.uint16:
+    if bfinal != 0.uint16:
       finalBlock = true
 
     case btype:
