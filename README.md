@@ -39,14 +39,14 @@ The times below are measured on a Ryzen 5 5600X.
 
 ```
 https://github.com/guzba/zippy compress [best speed]
-alice29.txt ........................ 0.646 ms      0.651 ms    ±0.006  x1000
-urls.10K ........................... 1.956 ms      1.966 ms    ±0.013  x1000
+alice29.txt ........................ 0.645 ms      0.651 ms    ±0.006  x1000
+urls.10K ........................... 1.941 ms      1.954 ms    ±0.017  x1000
 rfctest3.gold ...................... 0.119 ms      0.121 ms    ±0.002  x1000
-randtest3.gold ..................... 0.007 ms      0.008 ms    ±0.001  x1000
-paper-100k.pdf ..................... 0.240 ms      0.243 ms    ±0.002  x1000
-geo.protodata ...................... 0.189 ms      0.192 ms    ±0.003  x1000
+randtest3.gold ..................... 0.005 ms      0.006 ms    ±0.001  x1000
+paper-100k.pdf ..................... 0.230 ms      0.234 ms    ±0.002  x1000
+geo.protodata ...................... 0.193 ms      0.195 ms    ±0.002  x1000
 gzipfiletest.txt ................... 0.002 ms      0.002 ms    ±0.000  x1000
-tor-list.gold ..................... 27.618 ms     27.756 ms    ±0.134   x180
+tor-list.gold ..................... 26.067 ms     26.301 ms    ±0.280   x190
 https://github.com/nim-lang/zip compress [best speed]
 alice29.txt ........................ 1.233 ms      1.244 ms    ±0.009  x1000
 urls.10K ........................... 5.135 ms      5.169 ms    ±0.025   x966
@@ -59,14 +59,14 @@ tor-list.gold .................... 177.602 ms    178.482 ms    ±0.547    x29
 
 https://github.com/guzba/zippy compress [default]
 name ............................... min time      avg time    std dv   runs
-alice29.txt ........................ 2.332 ms      2.392 ms    ±0.042  x1000
-urls.10K .......................... 13.271 ms     13.366 ms    ±0.126   x373
-rfctest3.gold ...................... 0.334 ms      0.337 ms    ±0.003  x1000
-randtest3.gold ..................... 0.048 ms      0.048 ms    ±0.001  x1000
-paper-100k.pdf ..................... 0.824 ms      0.841 ms    ±0.011  x1000
-geo.protodata ...................... 0.549 ms      0.553 ms    ±0.004  x1000
+alice29.txt ........................ 2.353 ms      2.364 ms    ±0.010  x1000
+urls.10K .......................... 13.275 ms     13.388 ms    ±0.046   x373
+rfctest3.gold ...................... 0.335 ms      0.339 ms    ±0.007  x1000
+randtest3.gold ..................... 0.048 ms      0.049 ms    ±0.000  x1000
+paper-100k.pdf ..................... 0.832 ms      0.840 ms    ±0.007  x1000
+geo.protodata ...................... 0.563 ms      0.570 ms    ±0.009  x1000
 gzipfiletest.txt ................... 0.008 ms      0.009 ms    ±0.001  x1000
-tor-list.gold .................... 419.855 ms    422.444 ms    ±1.826    x12
+tor-list.gold .................... 409.257 ms    410.822 ms    ±1.533    x13
 https://github.com/nim-lang/zip compress [default]
 alice29.txt ........................ 5.721 ms      5.738 ms    ±0.016   x870
 urls.10K .......................... 13.021 ms     13.081 ms    ±0.050   x382
