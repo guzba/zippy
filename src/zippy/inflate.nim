@@ -64,7 +64,7 @@ proc decodeSymbol(
 ): uint16 {.inline.} =
   ## This function is the most important for inflate performance.
   when fillsBitBuffer:
-    if b.bitsBuffered < 16:
+    if b.bitsBuffered < 15:
       b.fillBitBuffer()
 
   let fast = h.fast[b.bitBuffer and fastMask]
@@ -171,7 +171,8 @@ proc inflateBlock(
     elif symbol == 256:
       break
     else:
-      b.fillBitBuffer()
+      if b.bitsBuffered < 33:
+        b.fillBitBuffer()
 
       let lengthIdx = (symbol - 257).int
       if lengthIdx >= baseLengths.len:

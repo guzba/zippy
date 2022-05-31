@@ -16,12 +16,36 @@ template failEndOfBuffer*() =
 when defined(release):
   {.push checks: off.}
 
-proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
+proc safeFillBitBuffer(b: var BitStreamReader) =
   let iterations = min((64 - b.bitsBuffered) div 8, b.len - b.pos)
   for _ in 0 ..< iterations:
     b.bitBuffer = b.bitBuffer or (b.src[b.pos].uint64 shl b.bitsBuffered)
     inc b.pos
     b.bitsBuffered += 8
+
+proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
+  if b.pos + 8 > b.len:
+    b.safeFillBitBuffer()
+  else:
+    let bitsNeeded = 64 - b.bitsBuffered
+    if bitsNeeded < 8:
+      return
+
+    let
+      bytesNeeded = bitsNeeded div 8
+      bitsAdded = bytesNeeded * 8
+      bits = cast[ptr uint64](b.src[b.pos].addr)[]
+      mask = uint64.high shr (64 - bitsAdded)
+    b.bitBuffer = b.bitBuffer or ((bits and mask) shl b.bitsBuffered)
+    b.bitsBuffered += bitsAdded
+    b.pos += bytesNeeded
+
+# proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
+#   let iterations = min((64 - b.bitsBuffered) div 8, b.len - b.pos)
+#   for _ in 0 ..< iterations:
+#     b.bitBuffer = b.bitBuffer or (b.src[b.pos].uint64 shl b.bitsBuffered)
+#     inc b.pos
+#     b.bitsBuffered += 8
 
 proc readBits*(
   b: var BitStreamReader,
