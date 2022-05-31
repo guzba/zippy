@@ -74,7 +74,7 @@ proc decodeSymbol(
     result = fast and 511
   else: # Slow path
     let k = reverseBits(b.bitBuffer.uint16)
-    codeLength = 1
+    codeLength = fastBits + 1
     let maxCodeLength = h.maxCodes.len.uint16
     while codeLength < maxCodeLength:
       if k.uint32 < h.maxCodes[codeLength]:
