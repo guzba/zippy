@@ -171,8 +171,7 @@ proc inflateBlock(
     elif symbol == 256:
       break
     else:
-      if b.bitsBuffered < 33:
-        b.fillBitBuffer()
+      b.fillBitBuffer()
 
       let lengthIdx = (symbol - 257).int
       if lengthIdx >= baseLengths.len:
