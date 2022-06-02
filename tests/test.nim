@@ -1,17 +1,17 @@
 import std/strformat, zippy
 
 const
-  zs = [
-    "randtest1.z",
-    "randtest2.z",
-    "randtest3.z",
-    "rfctest1.z",
-    "rfctest2.z",
-    "rfctest3.z",
-    # "tor-list.z",
-    "zerotest1.z",
-    "zerotest2.z",
-    # "zerotest3.z",
+  gzs = [
+    "randtest1.gz",
+    "randtest2.gz",
+    "randtest3.gz",
+    "rfctest1.gz",
+    "rfctest2.gz",
+    "rfctest3.gz",
+    # "tor-list.gz",
+    "zerotest1.gz",
+    "zerotest2.gz",
+    # "zerotest3.gz",
   ]
   golds = [
     "randtest1.gold",
@@ -38,11 +38,11 @@ const
     "urls.10K"
   ]
 
-for i, z in zs:
+for i, gz in gzs:
   let
-    compressed = readFile(&"tests/data/{z}")
+    compressed = readFile(&"tests/data/{gz}")
     gold = readFile(&"tests/data/{golds[i]}")
-  echo &"{z} compressed: {compressed.len} gold: {gold.len}"
+  echo &"{gz} compressed: {compressed.len} gold: {gold.len}"
   doAssert uncompress(compressed) == gold
 
 block fixed:

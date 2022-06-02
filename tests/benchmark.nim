@@ -2,13 +2,13 @@ import benchy, std/strformat, zip/zlib, zippy
 
 const
   zs = [
-    "alice29.txt.z",
-    "urls.10K.z",
-    "rfctest3.z",
-    "randtest3.z",
-    "paper-100k.pdf.z",
-    "geo.protodata.z",
-    "tor-list.z"
+    "alice29.txt.gz",
+    "urls.10K.gz",
+    "rfctest3.gz",
+    "randtest3.gz",
+    "paper-100k.pdf.gz",
+    "geo.protodata.gz",
+    "tor-list.gz"
   ]
   golds = [
     "alice29.txt",
@@ -45,17 +45,17 @@ for gold in golds:
   timeIt gold:
     discard zlib.compress(uncompressed, stream = RAW_DEFLATE)
 
-echo "https://github.com/guzba/zippy compress [best compression]"
-for gold in golds:
-  let uncompressed = readFile(&"tests/data/{gold}")
-  timeIt gold:
-    discard zippy.compress(uncompressed, BestCompression, dfDeflate)
+# echo "https://github.com/guzba/zippy compress [best compression]"
+# for gold in golds:
+#   let uncompressed = readFile(&"tests/data/{gold}")
+#   timeIt gold:
+#     discard zippy.compress(uncompressed, BestCompression, dfDeflate)
 
-echo "https://github.com/nim-lang/zip compress [best compression]" # Requires zlib1.dll
-for gold in golds:
-  let uncompressed = readFile(&"tests/data/{gold}")
-  timeIt gold:
-    discard zlib.compress(uncompressed, Z_BEST_COMPRESSION, RAW_DEFLATE)
+# echo "https://github.com/nim-lang/zip compress [best compression]" # Requires zlib1.dll
+# for gold in golds:
+#   let uncompressed = readFile(&"tests/data/{gold}")
+#   timeIt gold:
+#     discard zlib.compress(uncompressed, Z_BEST_COMPRESSION, RAW_DEFLATE)
 
 echo "https://github.com/guzba/zippy uncompress"
 for z in zs:

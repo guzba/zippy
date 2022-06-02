@@ -3,14 +3,14 @@ import std/random, std/strformat, zippy
 randomize()
 
 const files = [
-  "randtest1.z",
-  "randtest2.z",
-  "randtest3.z",
-  "rfctest1.z",
-  "rfctest2.z",
-  "rfctest3.z",
-  "zerotest1.z",
-  "zerotest2.z",
+  "randtest1.gz",
+  "randtest2.gz",
+  "randtest3.gz",
+  "rfctest1.gz",
+  "rfctest2.gz",
+  "rfctest3.gz",
+  "zerotest1.gz",
+  "zerotest2.gz",
 ]
 
 for i in 0 ..< 10_000:
