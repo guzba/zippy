@@ -1,29 +1,35 @@
 import std/os, std/strformat, zippy/tarballs
 
+let testDir = getTempDir()
+
 block:
   let testFilePaths = [
     # "tests/data/tarballs/Nim-1.6.2.tar.gz",
     "tests/data/tarballs/libressl-3.4.2.tar.gz"
   ]
 
-  for testFilePath in testFilePaths:
-    removeDir("tmp/tar")
-    createDir("tmp/tar")
+  for i, testFilePath in testFilePaths:
+    let
+      goldDir = testDir / "gold" & $i
+      zippyDir = testDir / "zippy" & $i
 
-    extractAll(testFilePath, "tmp/tar/zippy")
+    removeDir(goldDir)
+    removeDir(zippyDir)
 
-    createDir("tmp/tar/gold")
-    let cmd = &"tar -xf {testFilePath} -C tmp/tar/gold"
+    extractAll(testFilePath, zippyDir)
+
+    createDir(goldDir)
+    let cmd = &"tar -xf {testFilePath} -C " & goldDir
     doAssert execShellCmd(cmd) == 0
 
     for path in walkDirRec(
-      "tmp/tar/gold",
+      goldDir,
       yieldFilter = {pcFile, pcDir, pcLinkToFile, pcLinkToDir},
       relative = true
     ):
       let
-        goldPath = "tmp/tar/gold" / path
-        zippyPath = "tmp/tar/zippy" / path
+        goldPath = goldDir / path
+        zippyPath = zippyDir / path
 
       if dirExists(goldPath):
         doAssert dirExists(zippyPath)
@@ -39,23 +45,27 @@ when not defined(windows):
   block:
     let testFilePath = "tests/data/tarballs/julia-1.7.1.tar.gz"
 
-    removeDir("tmp/tar")
-    createDir("tmp/tar")
+    let
+      goldDir = testDir / "julia_gold"
+      zippyDir = testDir / "julia_zippy"
 
-    extractAll(testFilePath, "tmp/tar/zippy")
+    removeDir(goldDir)
+    removeDir(zippyDir)
 
-    createDir("tmp/tar/gold")
-    let cmd = &"tar -xf {testFilePath} -C tmp/tar/gold"
+    extractAll(testFilePath, zippyDir)
+
+    createDir(goldDir)
+    let cmd = &"tar -xf {testFilePath} -C " & goldDir
     doAssert execShellCmd(cmd) == 0
 
     for path in walkDirRec(
-      "tmp/tar/gold",
+      goldDir,
       yieldFilter = {pcFile, pcDir, pcLinkToFile, pcLinkToDir},
       relative = true
     ):
       let
-        goldPath = "tmp/tar/gold" / path
-        zippyPath = "tmp/tar/zippy" / path
+        goldPath = goldDir / path
+        zippyPath = zippyDir / path
 
       if dirExists(goldPath):
         doAssert dirExists(zippyPath)
@@ -65,5 +75,3 @@ when not defined(windows):
       else:
         doAssert fileExists(zippyPath)
         doAssert readFile(goldPath) == readFile(zippyPath)
-
-    removeDir("tmp/tar")

@@ -1,26 +1,32 @@
 import std/os, zippy/ziparchives
 
-removeDir("tmp/zip")
+const testDir = getTempDir() # "tmp/zip"
 
-createDir("tmp/zip")
-extractAll("tests/data/ziparchives/nim-1.6.2_x64.zip", "tmp/zip/zippy")
+let
+  goldDir = testDir / "gold"
+  zippyDir = testDir / "zippy"
+
+removeDir(goldDir)
+removeDir(zippyDir)
+
+extractAll("tests/data/ziparchives/nim-1.6.2_x64.zip", zippyDir)
 
 when not defined(macosx):
-  createDir("tmp/zip/gold")
+  createDir(goldDir)
   when defined(windows):
-    let cmd = "tar -xf tests/data/ziparchives/nim-1.6.2_x64.zip -C tmp/zip/gold"
+    let cmd = "tar -xf tests/data/ziparchives/nim-1.6.2_x64.zip -C " & goldDir
   else:
-    let cmd = "unzip tests/data/ziparchives/nim-1.6.2_x64.zip -d tmp/zip/gold"
+    let cmd = "unzip tests/data/ziparchives/nim-1.6.2_x64.zip -d " & goldDir
   doAssert execShellCmd(cmd) == 0
 
   for path in walkDirRec(
-    "tmp/zip/gold",
+    goldDir,
     yieldFilter = {pcFile, pcDir},
     relative = true
   ):
     let
-      goldPath = "tmp/zip/gold" / path
-      zippyPath = "tmp/zip/zippy" / path
+      goldPath = goldDir / path
+      zippyPath = zippyDir / path
 
     if dirExists(goldPath):
       doAssert dirExists(zippyPath)
@@ -30,5 +36,3 @@ when not defined(macosx):
 
     doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
     doAssert getLastModificationTime(goldPath) == getLastModificationTime(zippyPath)
-
-  removeDir("tmp/zip")
