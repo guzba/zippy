@@ -280,33 +280,29 @@ proc adler32*(src: pointer, len: int): uint32 =
     s1 += src[pos + i]
     s2 += s1
 
-  template do8(i: int) =
-    do1(i + 0)
-    do1(i + 1)
-    do1(i + 2)
-    do1(i + 3)
-    do1(i + 4)
-    do1(i + 5)
-    do1(i + 6)
-    do1(i + 7)
-
-  template do16() =
-    do8(0)
-    do8(8)
+  template do8() =
+    do1(0)
+    do1(1)
+    do1(2)
+    do1(3)
+    do1(4)
+    do1(5)
+    do1(6)
+    do1(7)
 
   while l >= nmax:
     l -= nmax
-    for i in 0 ..< nmax div 16:
-      do16()
-      pos += 16
+    for i in 0 ..< nmax div 8:
+      do8()
+      pos += 8
 
     s1 = s1 mod 65521
     s2 = s2 mod 65521
 
-  while l >= 16:
-    l -= 16
-    do16()
-    pos += 16
+  while l >= 8:
+    l -= 8
+    do8()
+    pos += 8
 
   for i in 0 ..< l:
     s1 += src[pos + i]
