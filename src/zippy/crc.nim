@@ -29,25 +29,24 @@ proc crc32*(src: pointer, len: int): uint32 =
 
   result = 0xffffffff.uint32
 
-  var pos: int
-  while len - pos >= 8:
+  var i: int
+  for _ in 0 ..< len div 8:
     let
-      one = read32(src, pos) xor result
-      two = read32(src, pos + 4)
+      one = read32(src, i) xor result
+      two = read32(src, i + 4)
     result =
-      crcTables[7][(one shr 0) and 255] xor
+      crcTables[7][one and 255] xor
       crcTables[6][(one shr 8) and 255] xor
       crcTables[5][(one shr 16) and 255] xor
       crcTables[4][one shr 24] xor
-      crcTables[3][(two shr 0) and 255] xor
+      crcTables[3][two and 255] xor
       crcTables[2][(two shr 8) and 255] xor
       crcTables[1][(two shr 16) and 255] xor
       crcTables[0][two shr 24]
-    pos += 8
+    i += 8
 
-  while pos < len:
-    result = crcTables[0][(result xor src[pos]) and 255] xor (result shr 8)
-    inc pos
+  for j in i ..< len:
+    result = crcTables[0][(result xor src[j]) and 255] xor (result shr 8)
 
   result = not result
 
