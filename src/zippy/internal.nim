@@ -314,10 +314,7 @@ proc adler32*(src: pointer, len: int): uint32 =
   result = (s2 shl 16) or s1
 
 proc adler32*(src: string): uint32 {.inline.} =
-  if src.len > 0:
-    adler32(src[0].unsafeAddr, src.len)
-  else:
-    adler32(nil, 0)
+  adler32(src.cstring, src.len)
 
 proc toUnixPath*(path: string): string =
   path.replace('\\', '/')

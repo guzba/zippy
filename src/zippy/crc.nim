@@ -51,10 +51,7 @@ proc crc32*(src: pointer, len: int): uint32 =
   result = not result
 
 proc crc32*(src: string): uint32 {.inline.} =
-  if src.len > 0:
-    crc32(src[0].unsafeAddr, src.len)
-  else:
-    crc32(nil, 0)
+  crc32(src.cstring, src.len)
 
 when defined(release):
   {.pop.}
