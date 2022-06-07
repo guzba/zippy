@@ -151,10 +151,7 @@ proc uncompress*(
   src: string,
   dataFormat = dfDetect
 ): string {.inline, raises: [ZippyError].} =
-  if src.len > 0:
-    uncompress(src[0].unsafeAddr, src.len, dataFormat)
-  else:
-    uncompress(nil, 0, dataFormat)
+  uncompress(src.cstring, src.len, dataFormat)
 
 proc uncompress*(
   src: seq[uint8],
