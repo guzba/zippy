@@ -65,10 +65,7 @@ proc compress*(
   level = DefaultCompression,
   dataFormat = dfGzip
 ): string {.inline, raises: [ZippyError].} =
-  if src.len > 0:
-    compress(src[0].unsafeAddr, src.len, level, dataFormat)
-  else:
-    compress(nil, 0, level, dataFormat)
+  compress(src.cstring, src.len, level, dataFormat)
 
 proc compress*(
   src: seq[uint8],
