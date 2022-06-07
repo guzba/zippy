@@ -21,6 +21,7 @@ jobs:
       with:
         nim-version: ${{ matrix.nim-version }}
     - run: nimble test -d:release -y
+    - run: nimble test -d:release -d:lto -y
     - run: nimble test --gc:orc -d:release -y
       if: ${{ matrix.gc_orc }}
     - run: nim cpp -d:release -r tests/all.nim
