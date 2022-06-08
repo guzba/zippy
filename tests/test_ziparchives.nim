@@ -34,5 +34,5 @@ when not defined(macosx):
       doAssert fileExists(zippyPath)
       doAssert readFile(goldPath) == readFile(zippyPath)
 
-    doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
+    # doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
     doAssert getLastModificationTime(goldPath) == getLastModificationTime(zippyPath)
