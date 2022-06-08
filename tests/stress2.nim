@@ -1,4 +1,4 @@
-import std/random, std/times, zippy, zip/zlib
+import std/random, std/times, zip/zlib, zippy
 
 let gold = readFile("tests/data/rfctest3.gold")
 

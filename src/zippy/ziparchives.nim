@@ -1,5 +1,5 @@
-import common, crc, internal, std/memfiles, std/os, std/tables,
-    std/times, std/unicode, ziparchives_v1, zippy
+import common, crc, internal, std/memfiles, std/os, std/tables, std/times,
+    std/unicode, ziparchives_v1, zippy
 
 export common, ziparchives_v1
 

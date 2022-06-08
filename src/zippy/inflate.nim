@@ -158,7 +158,7 @@ proc inflateBlock(
       if i > hlit + hdist:
         failUncompress()
 
-    literalsHuffman= initHuffman(unpacked.toOpenArray(0, hlit - 1))
+    literalsHuffman = initHuffman(unpacked.toOpenArray(0, hlit - 1))
     distancesHuffman = initHuffman(unpacked.toOpenArray(hlit, hlit + hdist - 1))
 
   while true:

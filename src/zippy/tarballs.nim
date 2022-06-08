@@ -1,8 +1,6 @@
-import common, internal, std/memfiles, std/os, std/times, tarballs_v1, gzip
+import common, gzip, internal, std/memfiles, std/os, std/times, strutils, tarballs_v1
 
 export common, tarballs_v1
-
-import strutils
 
 proc parseTarOctInt(s: string): int =
   # Walk the bytes to find the start and len of the acii digits
