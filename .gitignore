@@ -13,3 +13,4 @@ nimcache
 tmp/
 dump.txt
 test_tmp/
+*.dSYM/
