@@ -64,14 +64,14 @@ proc compress*(
   src: string,
   level = DefaultCompression,
   dataFormat = dfGzip
-): string {.inline, raises: [ZippyError].} =
+): string {.raises: [ZippyError].} =
   compress(src.cstring, src.len, level, dataFormat)
 
 proc compress*(
   src: seq[uint8],
   level = DefaultCompression,
   dataFormat = dfGzip
-): seq[uint8] {.inline, raises: [ZippyError].} =
+): seq[uint8] {.raises: [ZippyError].} =
   cast[seq[uint8]](compress(cast[string](src).cstring, src.len, level, dataFormat))
 
 proc uncompress*(
@@ -144,11 +144,11 @@ proc uncompress*(
 proc uncompress*(
   src: string,
   dataFormat = dfDetect
-): string {.inline, raises: [ZippyError].} =
+): string {.raises: [ZippyError].} =
   uncompress(src.cstring, src.len, dataFormat)
 
 proc uncompress*(
   src: seq[uint8],
   dataFormat = dfDetect
-): seq[uint8] {.inline, raises: [ZippyError].} =
+): seq[uint8] {.raises: [ZippyError].} =
   cast[seq[uint8]](uncompress(cast[string](src).cstring, src.len, dataFormat))
