@@ -195,25 +195,25 @@ when defined(release):
   {.push checks: off.}
 
 proc read16*(src: ptr UncheckedArray[uint8], ip: int): uint16 {.inline.} =
-  cast[ptr uint16](src[ip].unsafeAddr)[]
+  copyMem(result.addr, src[ip].unsafeAddr, 2)
 
 proc read32*(src: ptr UncheckedArray[uint8], ip: int): uint32 {.inline.} =
-  cast[ptr uint32](src[ip].unsafeAddr)[]
+  copyMem(result.addr, src[ip].unsafeAddr, 4)
 
 proc read64*(src: ptr UncheckedArray[uint8], ip: int): uint64 {.inline.} =
-  cast[ptr uint64](src[ip].addr)[]
+  copyMem(result.addr, src[ip].unsafeAddr, 8)
 
 proc write64*(dst: ptr UncheckedArray[uint8], op: int, v: uint64) {.inline.} =
-  cast[ptr uint64](dst[op].addr)[] = v
+  copyMem(dst[op].unsafeAddr, v.unsafeAddr, 8)
 
 proc copy64*(dst, src: ptr UncheckedArray[uint8], op, ip: int) {.inline.} =
   write64(dst, op, read64(src, ip))
 
 proc read16*(s: string, pos: int): uint16 {.inline.} =
-  cast[ptr uint16](s[pos].unsafeAddr)[]
+  copyMem(result.addr, s[pos].unsafeAddr, 2)
 
 proc read32*(s: string, pos: int): uint32 {.inline.} =
-  cast[ptr uint32](s[pos].unsafeAddr)[]
+  copyMem(result.addr, s[pos].unsafeAddr, 4)
 
 proc distanceCodeIndex*(value: uint16): uint16 =
   const distanceCodes = [
