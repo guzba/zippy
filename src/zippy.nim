@@ -72,10 +72,7 @@ proc compress*(
   level = DefaultCompression,
   dataFormat = dfGzip
 ): seq[uint8] {.inline, raises: [ZippyError].} =
-  if src.len > 0:
-    cast[seq[uint8]](compress(src[0].unsafeAddr, src.len, level, dataFormat))
-  else:
-    cast[seq[uint8]](compress(nil, 0, level, dataFormat))
+  cast[seq[uint8]](compress(cast[string](src).cstring, src.len, level, dataFormat))
 
 proc uncompress*(
   src: pointer,
@@ -154,7 +151,4 @@ proc uncompress*(
   src: seq[uint8],
   dataFormat = dfDetect
 ): seq[uint8] {.inline, raises: [ZippyError].} =
-  if src.len > 0:
-    cast[seq[uint8]](uncompress(src[0].unsafeAddr, src.len, dataFormat))
-  else:
-    cast[seq[uint8]](uncompress(nil, 0, dataFormat))
+  cast[seq[uint8]](uncompress(cast[string](src).cstring, src.len, dataFormat))
