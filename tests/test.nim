@@ -72,9 +72,9 @@ for dataFormat in [dfDeflate, dfZlib, dfGzip]:
     doAssert original == uncompressed
 
   block all_uint8:
-    var original: string
+    var original: seq[uint8]
     for i in 0.uint8 .. high(uint8):
-      original.add(i.char)
+      original.add(i)
     let
       compressed = compress(original, dataFormat = dataFormat)
       uncompressed = uncompress(
