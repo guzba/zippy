@@ -23,7 +23,7 @@ when defined(release):
   {.push checks: off.}
 
 when allowSimd and defined(amd64):
-  when defined(gcc):
+  when defined(gcc) or defined(clang):
     {.localPassc: "-msse4.1 -mpclmul".}
 
   {.push header: "emmintrin.h".}
