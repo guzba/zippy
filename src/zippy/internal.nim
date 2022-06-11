@@ -1,5 +1,7 @@
 import common, std/bitops, std/os, std/strutils
 
+const allowSimd* = not defined(zippyNoSimd) and not defined(tcc)
+
 const
   maxCodeLength* = 15
   maxLitLenCodes* = 286
