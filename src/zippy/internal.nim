@@ -1,6 +1,10 @@
 import common, std/bitops, std/os, std/strutils
 
-const allowSimd* = not defined(zippyNoSimd) and not defined(tcc)
+const allowSimd* =
+  when (NimMajor, NimMinor, NimPatch) >= (1, 2, 0):
+    not defined(zippyNoSimd) and not defined(tcc)
+  else:
+    false
 
 const
   maxCodeLength* = 15
