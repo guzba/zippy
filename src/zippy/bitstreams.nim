@@ -17,11 +17,21 @@ when defined(release):
   {.push checks: off.}
 
 proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
-  let iterations = min((64 - b.bitsBuffered) div 8, b.len - b.pos)
-  for _ in 0 ..< iterations:
-    b.bitBuffer = b.bitBuffer or (b.src[b.pos].uint64 shl b.bitsBuffered)
-    inc b.pos
-    b.bitsBuffered += 8
+  let
+    bytesNeeded = (64 - b.bitsBuffered) div 8
+    bytesAvailable = b.len - b.pos
+
+  var src: uint64
+  if bytesAvailable < 8:
+    copyMem(src.addr, b.src[b.len - 8].addr, 8)
+    src = src shr (8 * (8 - bytesAvailable))
+  else:
+    copyMem(src.addr, b.src[b.pos].addr, 8)
+
+  let bytesAdded = min(bytesNeeded, bytesAvailable)
+  b.bitBuffer = b.bitBuffer or (src shl b.bitsBuffered)
+  b.pos += bytesAdded
+  b.bitsBuffered += (8 * bytesAdded)
 
 proc readBits*(
   b: var BitStreamReader,
