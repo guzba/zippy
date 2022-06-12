@@ -82,8 +82,7 @@ proc crc32*(src: pointer, len: int): uint32 =
         pos += simdLen
 
   if pos < len:
-    result = crc32(src[pos].addr, len - pos, not result)
-    result = not result
+    result = not crc32(src[pos].addr, len - pos, not result)
 
 proc crc32*(src: string): uint32 {.inline.} =
   crc32(src.cstring, src.len)
