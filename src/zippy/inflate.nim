@@ -50,7 +50,7 @@ proc initHuffman(codeLengths: openArray[uint8]): Huffman =
       result.lengths[symbolId] = len
       result.values[symbolId] = i.uint16
       if len <= fastBits:
-        let fast = (len.uint16 shl 9) or i.uint16
+        let fast = (len.uint16 shl fastBits) or i.uint16
         var k = reverseBits(nextCode[len].uint16) shr (16.uint16 - len)
         while k < (1 shl fastBits):
           result.fast[k] = fast
@@ -70,8 +70,8 @@ proc decodeSymbol(
   let fast = h.fast[b.bitBuffer and fastMask]
   var codeLength: uint16
   if fast > 0.uint16:
-    codeLength = (fast shr 9)
-    result = fast and 511
+    codeLength = (fast shr fastBits)
+    result = fast and fastMask
   else: # Slow path
     let k = reverseBits(b.bitBuffer.uint16)
     codeLength = fastBits + 1
