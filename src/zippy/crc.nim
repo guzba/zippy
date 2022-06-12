@@ -26,7 +26,7 @@ when defined(release):
   {.push checks: off.}
 
 ## See https://create.stephan-brumme.com/crc32/
-proc crc32(src: pointer, len: int, crc32: uint32): uint32 {.inline.} =
+proc crc32(src: pointer, len: int, crc32: uint32): uint32 =
   let src = cast[ptr UncheckedArray[uint8]](src)
 
   result = crc32
