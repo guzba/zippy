@@ -90,7 +90,7 @@ proc extractFile*(
   if crc32(result) != record.uncompressedCrc32:
     raise newException(ZippyError, "Verifying crc32 failed")
 
-proc close*(reader: ZipArchiveReader) =
+proc close*(reader: ZipArchiveReader) {.raises: [OSError].} =
   reader.memFile.close()
 
 proc parseMsDosDateTime(time, date: uint16): Time =
@@ -170,145 +170,155 @@ proc openZipArchive*(
   result = ZipArchiveReader()
   result.memFile = memfiles.open(zipPath)
 
-  let src = cast[ptr UncheckedArray[uint8]](result.memFile.mem)
+  try:
+    let src = cast[ptr UncheckedArray[uint8]](result.memFile.mem)
 
-  let eocd = result.findEndOfCentralDirectory()
-  if eocd + 22 > result.memFile.size:
-    failArchiveEOF()
+    let eocd = result.findEndOfCentralDirectory()
+    if eocd + 22 > result.memFile.size:
+      failArchiveEOF()
 
-  var zip64 = false
-  if eocd - 20 >= 0:
-    if read32(src, eocd - 20) == zip64EndOfCentralDirectoryLocatorSignature:
-      zip64 = true
+    var zip64 = false
+    if eocd - 20 >= 0:
+      if read32(src, eocd - 20) == zip64EndOfCentralDirectoryLocatorSignature:
+        zip64 = true
 
-  var
-    diskNumber, startDisk, numRecordsOnDisk, numCentralDirectoryRecords: int
-    centralDirectorySize, centralDirectoryStart: int
-  if zip64:
-    let
-      zip64EndOfCentralDirectoryDiskNumber = read32(src, eocd - 20 + 4)
-      zip64EndOfCentralDirectoryStart = read64(src, eocd - 20 + 8).int
-      numDisks = read32(src, eocd - 20 + 16)
+    var
+      diskNumber, startDisk, numRecordsOnDisk, numCentralDirectoryRecords: int
+      centralDirectorySize, centralDirectoryStart: int
+    if zip64:
+      let
+        zip64EndOfCentralDirectoryDiskNumber = read32(src, eocd - 20 + 4)
+        zip64EndOfCentralDirectoryStart = read64(src, eocd - 20 + 8).int
+        numDisks = read32(src, eocd - 20 + 16)
 
-    if zip64EndOfCentralDirectoryDiskNumber != 0:
+      if zip64EndOfCentralDirectoryDiskNumber != 0:
+        raise newException(ZippyError, "Unsupported archive, disk number")
+
+      if numDisks != 1:
+        raise newException(ZippyError, "Unsupported archive, num disks")
+
+      var pos = zip64EndOfCentralDirectoryStart
+      if pos + 64 > result.memFile.size:
+        failArchiveEOF()
+
+      if read32(src, pos) != zip64EndOfCentralDirectorySignature:
+        raise newException(ZippyError, "Invalid central directory file header")
+
+      # let
+      #   endOfCentralDirectorySize = read64(src, pos + 4).int
+        # versionMadeBy = read16(src, pos + 12)
+        # minVersionToExtract = read16(src, pos + 14)
+      diskNumber = read32(src, pos + 16).int
+      startDisk = read32(src, pos + 20).int
+      numRecordsOnDisk = read64(src, pos + 24).int
+      numCentralDirectoryRecords = read64(src, pos + 32).int
+      centralDirectorySize = read64(src, pos + 40).int
+      centralDirectoryStart = read64(src, pos + 48).int
+        # anotherDisk = read64(src, pos + 56).int
+    else:
+      diskNumber = read16(src, eocd + 4).int
+      startDisk = read16(src, eocd + 6).int
+      numRecordsOnDisk = read16(src, eocd + 8).int
+      numCentralDirectoryRecords = read16(src, eocd + 10).int
+      centralDirectorySize = read32(src, eocd + 12).int
+      centralDirectoryStart = read32(src, eocd + 16).int
+        # commentLen = read16(src, eocd + 20).int
+
+    var pos = centralDirectoryStart
+
+    if diskNumber != 0:
       raise newException(ZippyError, "Unsupported archive, disk number")
 
-    if numDisks != 1:
-      raise newException(ZippyError, "Unsupported archive, num disks")
+    if startDisk != 0:
+      raise newException(ZippyError, "Unsupported archive, start disk")
 
-    var pos = zip64EndOfCentralDirectoryStart
-    if pos + 64 > result.memFile.size:
+    if numRecordsOnDisk != numCentralDirectoryRecords:
+      raise newException(ZippyError, "Unsupported archive, record number")
+
+    if eocd + 22 > result.memFile.size:
       failArchiveEOF()
 
-    if read32(src, pos) != zip64EndOfCentralDirectorySignature:
-      raise newException(ZippyError, "Invalid central directory file header")
+    for _ in 0 ..< numCentralDirectoryRecords:
+      if pos + 46 > result.memFile.size:
+        failArchiveEOF()
 
-    # let
-    #   endOfCentralDirectorySize = read64(src, pos + 4).int
-      # versionMadeBy = read16(src, pos + 12)
-      # minVersionToExtract = read16(src, pos + 14)
-    diskNumber = read32(src, pos + 16).int
-    startDisk = read32(src, pos + 20).int
-    numRecordsOnDisk = read64(src, pos + 24).int
-    numCentralDirectoryRecords = read64(src, pos + 32).int
-    centralDirectorySize = read64(src, pos + 40).int
-    centralDirectoryStart = read64(src, pos + 48).int
-      # anotherDisk = read64(src, pos + 56).int
-  else:
-    diskNumber = read16(src, eocd + 4).int
-    startDisk = read16(src, eocd + 6).int
-    numRecordsOnDisk = read16(src, eocd + 8).int
-    numCentralDirectoryRecords = read16(src, eocd + 10).int
-    centralDirectorySize = read32(src, eocd + 12).int
-    centralDirectoryStart = read32(src, eocd + 16).int
-      # commentLen = read16(src, eocd + 20).int
+      if read32(src, pos) != centralDirectoryFileHeaderSignature:
+        raise newException(ZippyError, "Invalid central directory file header")
 
-  var pos = centralDirectoryStart
+      let
+        # versionMadeBy = read16(src, pos + 4)
+        # minVersionToExtract = read16(src, pos + 6)
+        generalPurposeFlag = read16(src, pos + 8)
+        compressionMethod = read16(src, pos + 10)
+        # lastModifiedTime = read16(src, pos + 12)
+        # lastModifiedDate = read16(src, pos + 14)
+        uncompressedCrc32 = read32(src, pos + 16)
+        compressedSize = read32(src, pos + 20).int
+        uncompressedSize = read32(src, pos + 24).int
+        fileNameLen = read16(src, pos + 28).int
+        extraFieldLen = read16(src, pos + 30).int
+        fileCommentLen = read16(src, pos + 32).int
+        fileDiskNumber = read16(src, pos + 34).int
+        # internalFileAttr = read16(src, pos + 36)
+        externalFileAttr = read32(src, pos + 38)
+        fileHeaderOffset = read32(src, pos + 42).int
 
-  if diskNumber != 0:
-    raise newException(ZippyError, "Unsupported archive, disk number")
+      if compressionMethod notin [0.uint16, 8]:
+        raise newException(ZippyError, "Unsupported archive, compression method")
 
-  if startDisk != 0:
-    raise newException(ZippyError, "Unsupported archive, start disk")
+      if fileDiskNumber != 0:
+        raise newException(ZippyError, "Invalid file disk number")
 
-  if numRecordsOnDisk != numCentralDirectoryRecords:
-    raise newException(ZippyError, "Unsupported archive, record number")
+      pos += 46
 
-  if eocd + 22 > result.memFile.size:
-    failArchiveEOF()
+      if pos + fileNameLen > result.memFile.size:
+        failArchiveEOF()
 
-  for _ in 0 ..< numCentralDirectoryRecords:
-    if pos + 46 > result.memFile.size:
-      failArchiveEOF()
+      var fileName = newString(fileNameLen)
+      copyMem(fileName[0].addr, src[pos].addr, fileNameLen)
 
-    if read32(src, pos) != centralDirectoryFileHeaderSignature:
-      raise newException(ZippyError, "Invalid central directory file header")
+      if fileName in result.records:
+        raise newException(ZippyError, "Unsupported archive, duplicate entry")
 
-    let
-      # versionMadeBy = read16(src, pos + 4)
-      # minVersionToExtract = read16(src, pos + 6)
-      generalPurposeFlag = read16(src, pos + 8)
-      compressionMethod = read16(src, pos + 10)
-      # lastModifiedTime = read16(src, pos + 12)
-      # lastModifiedDate = read16(src, pos + 14)
-      uncompressedCrc32 = read32(src, pos + 16)
-      compressedSize = read32(src, pos + 20).int
-      uncompressedSize = read32(src, pos + 24).int
-      fileNameLen = read16(src, pos + 28).int
-      extraFieldLen = read16(src, pos + 30).int
-      fileCommentLen = read16(src, pos + 32).int
-      fileDiskNumber = read16(src, pos + 34).int
-      # internalFileAttr = read16(src, pos + 36)
-      externalFileAttr = read32(src, pos + 38)
-      fileHeaderOffset = read32(src, pos + 42).int
+      pos += fileNameLen + extraFieldLen + fileCommentLen
 
-    if compressionMethod notin [0.uint16, 8]:
-      raise newException(ZippyError, "Unsupported archive, compression method")
+      if pos > centralDirectoryStart + centralDirectorySize:
+        raise newException(ZippyError, "Invalid central directory size")
 
-    if fileDiskNumber != 0:
-      raise newException(ZippyError, "Invalid file disk number")
-
-    pos += 46
-
-    if pos + fileNameLen > result.memFile.size:
-      failArchiveEOF()
-
-    var fileName = newString(fileNameLen)
-    copyMem(fileName[0].addr, src[pos].addr, fileNameLen)
-
-    if fileName in result.records:
-      raise newException(ZippyError, "Unsupported archive, duplicate entry")
-
-    pos += fileNameLen + extraFieldLen + fileCommentLen
-
-    if pos > centralDirectoryStart + centralDirectorySize:
-      raise newException(ZippyError, "Invalid central directory size")
-
-    let utf8FileName =
-      if (generalPurposeFlag and 0b100000000000) != 0:
-        # Language encoding flag (EFS) set, assume utf-8
-        fileName
-      else:
-        fileName.utf8ify()
-
-    let
-      dosDirectoryFlag = (externalFileAttr and 0x10) != 0
-      unixDirectoryFlag = (externalFileAttr and (S_IFDIR.uint32 shl 16)) != 0
-      recordKind =
-        if dosDirectoryFlag or unixDirectoryFlag:
-          DirectoryRecord
+      let utf8FileName =
+        if (generalPurposeFlag and 0b100000000000) != 0:
+          # Language encoding flag (EFS) set, assume utf-8
+          fileName
         else:
-          FileRecord
+          fileName.utf8ify()
 
-    result.records[utf8FileName] = ZipArchiveRecord(
-      kind: recordKind,
-      fileHeaderOffset: fileHeaderOffset,
-      path: utf8FileName,
-      compressedSize: compressedSize,
-      uncompressedSize: uncompressedSize,
-      uncompressedCrc32: uncompressedCrc32,
-      filePermissions: parseFilePermissions(externalFileAttr.int shr 16)
-    )
+      let
+        dosDirectoryFlag = (externalFileAttr and 0x10) != 0
+        unixDirectoryFlag = (externalFileAttr and (S_IFDIR.uint32 shl 16)) != 0
+        recordKind =
+          if dosDirectoryFlag or unixDirectoryFlag:
+            DirectoryRecord
+          else:
+            FileRecord
+
+      result.records[utf8FileName] = ZipArchiveRecord(
+        kind: recordKind,
+        fileHeaderOffset: fileHeaderOffset,
+        path: utf8FileName,
+        compressedSize: compressedSize,
+        uncompressedSize: uncompressedSize,
+        uncompressedCrc32: uncompressedCrc32,
+        filePermissions: parseFilePermissions(externalFileAttr.int shr 16)
+      )
+  except IOError as e:
+    result.close()
+    raise e
+  except OSError as e:
+    result.close()
+    raise e
+  except ZippyError as e:
+    result.close()
+    raise e
 
 proc extractAll*(
   zipPath, dest: string
