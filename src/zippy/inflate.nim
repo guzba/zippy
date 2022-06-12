@@ -59,14 +59,9 @@ proc initHuffman(codeLengths: openArray[uint8]): Huffman =
 
 proc decodeSymbol(
   b: var BitStreamReader,
-  h: Huffman,
-  fillsBitBuffer: static[bool] = true
+  h: Huffman
 ): uint16 {.inline.} =
   ## This function is the most important for inflate performance.
-  when fillsBitBuffer:
-    if b.bitsBuffered < 15:
-      b.fillBitBuffer()
-
   let fast = h.fast[b.bitBuffer and fastMask]
   var codeLength: uint16
   if fast > 0.uint16:
@@ -89,9 +84,6 @@ proc decodeSymbol(
       h.firstCode[codeLength] +
       h.firstSymbol[codeLength]
     result = h.values[symbolId]
-
-  if codeLength.int > b.bitsBuffered:
-    failEndOfBuffer()
 
   b.bitBuffer = b.bitBuffer shr codeLength
   b.bitsBuffered -= codeLength.int
@@ -131,7 +123,11 @@ proc inflateBlock(
       unpacked: array[320, uint8]
       i: int
     while i != hlit + hdist:
+      if b.bitsBuffered < 15:
+        b.fillBitBuffer()
       let symbol = decodeSymbol(b, clclsHuffman)
+      if b.bitsBuffered < 0:
+        failEndOfBuffer()
       if symbol <= 15:
         unpacked[i] = symbol.uint8
         inc i
@@ -162,7 +158,11 @@ proc inflateBlock(
     distancesHuffman = initHuffman(unpacked.toOpenArray(hlit, hlit + hdist - 1))
 
   while true:
+    if b.bitsBuffered < 15:
+      b.fillBitBuffer()
     let symbol = decodeSymbol(b, literalsHuffman)
+    if b.bitsBuffered < 0:
+      failEndOfBuffer()
     if symbol <= 255:
       if op >= dst.len:
         dst.setLen(max(op * 2, 2))
@@ -182,7 +182,7 @@ proc inflateBlock(
         b.readBits(baseLengthsExtraBits[lengthIdx].int, false)
       ).int
 
-      let distanceIdx = decodeSymbol(b, distancesHuffman, false)
+      let distanceIdx = decodeSymbol(b, distancesHuffman)
       if distanceIdx >= baseDistances.len.uint16:
         failUncompress()
 
