@@ -18,7 +18,7 @@ when defined(release):
 
 proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
   let
-    bytesNeeded = (64 - b.bitsBuffered) div 8
+    bytesNeeded = cast[int]((64 - cast[uint](b.bitsBuffered)) div 8)
     bytesAvailable = b.len - b.pos
 
   var src: uint64
