@@ -7,7 +7,7 @@ const
 type Huffman = object
   firstCode, firstSymbol: array[16, uint16]
   maxCodes: array[17, uint32]
-  lengths: array[288, uint8]
+  # lengths: array[288, uint8]
   values: array[288, uint16]
   fast: array[1 shl fastBits, uint16]
 
@@ -47,7 +47,7 @@ proc initHuffman(codeLengths: openArray[uint8]): Huffman =
     if len > 0.uint8:
       let symbolId =
         nextCode[len] - result.firstCode[len] + result.firstSymbol[len]
-      result.lengths[symbolId] = len
+      # result.lengths[symbolId] = len
       result.values[symbolId] = i.uint16
       if len <= fastBits:
         let fast = (len.uint16 shl fastBits) or i.uint16
@@ -213,10 +213,6 @@ proc inflateBlock(
           remaining -= copyTo - copyFrom
           copyTo += copyTo - copyFrom
         while remaining > 0:
-          # This is extremely strange.
-          # Without this we segfault with -d:release on Windows
-          if copyTo < 0:
-            doAssert false
           copy64(dst, dst, copyTo, copyFrom)
           copyFrom += 8
           copyTo += 8
