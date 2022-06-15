@@ -269,59 +269,6 @@ proc determineMatchLength*(
     inc s2
     inc result
 
-proc adler32*(src: pointer, len: int): uint32 =
-  ## See https://github.com/madler/zlib/blob/master/adler32.c
-
-  let src = cast[ptr UncheckedArray[uint8]](src)
-
-  const nmax = 5552
-
-  var
-    s1 = 1.uint32
-    s2 = 0.uint32
-    l = len
-    pos: int
-
-  template do1(i: int) =
-    s1 += src[pos + i]
-    s2 += s1
-
-  template do8() =
-    do1(0)
-    do1(1)
-    do1(2)
-    do1(3)
-    do1(4)
-    do1(5)
-    do1(6)
-    do1(7)
-
-  while l >= nmax:
-    l -= nmax
-    for i in 0 ..< nmax div 8:
-      do8()
-      pos += 8
-
-    s1 = s1 mod 65521
-    s2 = s2 mod 65521
-
-  while l >= 8:
-    l -= 8
-    do8()
-    pos += 8
-
-  for i in 0 ..< l:
-    s1 += src[pos + i]
-    s2 += s1
-
-  s1 = s1 mod 65521
-  s2 = s2 mod 65521
-
-  result = (s2 shl 16) or s1
-
-proc adler32*(src: string): uint32 {.inline.} =
-  adler32(src.cstring, src.len)
-
 proc toUnixPath*(path: string): string =
   path.replace('\\', '/')
 
@@ -372,6 +319,21 @@ template currentExceptionAsZippyError*(): untyped =
   ## Gets the current exception and returns it as a ZippyError with stack trace.
   let e = getCurrentException()
   newException(ZippyError, e.getStackTrace & e.msg, e)
+
+when defined(amd64):
+  # Runtime check if SSE 4.1 and PCLMULQDQ are available
+  proc cpuid*(eaxi, ecxi: int32): tuple[eax, ebx, ecx, edx: int32] =
+    when defined(vcc):
+      proc cpuid(cpuInfo: ptr int32, functionId, subFunctionId: int32)
+        {.cdecl, importc: "__cpuidex", header: "intrin.h".}
+      cpuid(result.eax.addr, eaxi, ecxi)
+    else:
+      var (eaxr, ebxr, ecxr, edxr) = (0'i32, 0'i32, 0'i32, 0'i32)
+      asm """
+        cpuid
+        :"=a"(`eaxr`), "=b"(`ebxr`), "=c"(`ecxr`), "=d"(`edxr`)
+        :"a"(`eaxi`), "c"(`ecxi`)"""
+      (eaxr, ebxr, ecxr, edxr)
 
 when defined(release):
   {.pop.}

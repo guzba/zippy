@@ -1,4 +1,4 @@
-import benchy, zippy/crc, zippy/internal
+import benchy, zippy/adler32, zippy/crc
 
 let data = readFile("tests/data/fireworks.jpg")
 
