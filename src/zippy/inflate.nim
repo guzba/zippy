@@ -1,4 +1,11 @@
-import bitstreams, common, internal, std/bitops
+import bitstreams, common, internal
+
+when defined(clang):
+  func bitreverse16(v: uint16): uint16 {.importc: "__builtin_bitreverse16", nodecl.}
+  proc reverseBits(v: uint16): uint16 {.inline.} =
+    bitreverse16(v)
+else:
+  import std/bitops
 
 const
   fastBits = 9
