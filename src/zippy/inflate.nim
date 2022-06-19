@@ -57,36 +57,38 @@ proc initHuffman(codeLengths: openArray[uint8]): Huffman =
           k += (1.uint16 shl len)
       inc nextCode[len]
 
-proc decodeSymbol(
-  b: var BitStreamReader,
-  h: Huffman
-): uint16 {.inline.} =
-  ## This function is the most important for inflate performance.
-  let fast = h.fast[b.bitBuffer and fastMask]
-  var codeLength: uint16
-  if fast > 0.uint16:
-    codeLength = (fast shr fastBits)
-    result = fast and fastMask
-  else: # Slow path
-    let k = reverseBits(b.bitBuffer.uint16)
-    codeLength = fastBits + 1
-    let maxCodeLength = h.maxCodes.len.uint16
-    while codeLength < maxCodeLength:
-      if k.uint32 < h.maxCodes[codeLength]:
-        break
-      inc codeLength
+proc decodeSymbolSlow(b: var BitStreamReader, h: Huffman): uint16 =
+  let
+    k = reverseBits(b.bitBuffer.uint16)
+    maxCodeLength = h.maxCodes.len.uint16
+  var codeLength = fastBits.uint16 + 1
+  while codeLength < maxCodeLength:
+    if k.uint32 < h.maxCodes[codeLength]:
+      break
+    inc codeLength
 
-    if codeLength >= 16.uint16:
-      failUncompress()
+  if codeLength >= 16.uint16:
+    failUncompress()
 
-    let symbolId =
-      (k shr (16.uint16 - codeLength)) -
-      h.firstCode[codeLength] +
-      h.firstSymbol[codeLength]
-    result = h.values[symbolId]
+  let symbolId =
+    (k shr (16.uint16 - codeLength)) -
+    h.firstCode[codeLength] +
+    h.firstSymbol[codeLength]
 
+  result = h.values[symbolId]
   b.bitBuffer = b.bitBuffer shr codeLength
   b.bitsBuffered -= codeLength.int
+
+proc decodeSymbol(b: var BitStreamReader, h: Huffman): uint16 {.inline.} =
+  ## This function is the most important for inflate performance.
+  let fast = h.fast[b.bitBuffer and fastMask]
+  if fast > 0.uint16:
+    let codeLength = fast shr fastBits
+    result = fast and fastMask
+    b.bitBuffer = b.bitBuffer shr codeLength
+    b.bitsBuffered -= codeLength.int
+  else: # Slow path
+    result = b.decodeSymbolSlow(h)
 
 proc inflateBlock(
   dst: var string,
