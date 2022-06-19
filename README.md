@@ -35,6 +35,27 @@ Benchmarks can be run comparing different deflate implementations. My benchmarki
 
 The times below are measured on a Ryzen 5 5600X.
 
+### Uncompress
+
+```
+https://github.com/guzba/zippy uncompress
+alice29.txt.gz ..................... 0.233 ms      0.235 ms    ±0.003  x1000
+urls.10K.gz ........................ 1.140 ms      1.148 ms    ±0.007  x1000
+rfctest3.gz ........................ 0.047 ms      0.048 ms    ±0.001  x1000
+randtest3.gz ....................... 0.001 ms      0.001 ms    ±0.000  x1000
+paper-100k.pdf.gz .................. 0.210 ms      0.212 ms    ±0.001  x1000
+geo.protodata.gz ................... 0.068 ms      0.071 ms    ±0.002  x1000
+tor-list.gz ....................... 27.297 ms     27.520 ms    ±0.277   x182
+https://github.com/nim-lang/zip uncompress
+alice29.txt.gz ..................... 0.397 ms      0.403 ms    ±0.004  x1000
+urls.10K.gz ........................ 1.719 ms      1.731 ms    ±0.009  x1000
+rfctest3.gz ........................ 0.054 ms      0.055 ms    ±0.002  x1000
+randtest3.gz ....................... 0.008 ms      0.008 ms    ±0.000  x1000
+paper-100k.pdf.gz .................. 0.250 ms      0.252 ms    ±0.001  x1000
+geo.protodata.gz ................... 0.126 ms      0.132 ms    ±0.005  x1000
+tor-list.gz ....................... 36.613 ms     37.061 ms    ±0.423   x135
+```
+
 ### Compress
 
 ```
@@ -77,27 +98,6 @@ paper-100k.pdf ..................... 1.467 ms      1.490 ms    ±0.023  x1000
 geo.protodata ...................... 0.867 ms      0.879 ms    ±0.011  x1000
 gzipfiletest.txt ................... 0.009 ms      0.010 ms    ±0.001  x1000
 tor-list.gold .................... 244.424 ms    246.601 ms    ±1.630    x21
-```
-
-### Uncompress
-
-```
-https://github.com/guzba/zippy uncompress
-alice29.txt.gz ..................... 0.233 ms      0.235 ms    ±0.003  x1000
-urls.10K.gz ........................ 1.140 ms      1.148 ms    ±0.007  x1000
-rfctest3.gz ........................ 0.047 ms      0.048 ms    ±0.001  x1000
-randtest3.gz ....................... 0.001 ms      0.001 ms    ±0.000  x1000
-paper-100k.pdf.gz .................. 0.210 ms      0.212 ms    ±0.001  x1000
-geo.protodata.gz ................... 0.068 ms      0.071 ms    ±0.002  x1000
-tor-list.gz ....................... 27.297 ms     27.520 ms    ±0.277   x182
-https://github.com/nim-lang/zip uncompress
-alice29.txt.gz ..................... 0.397 ms      0.403 ms    ±0.004  x1000
-urls.10K.gz ........................ 1.719 ms      1.731 ms    ±0.009  x1000
-rfctest3.gz ........................ 0.054 ms      0.055 ms    ±0.002  x1000
-randtest3.gz ....................... 0.008 ms      0.008 ms    ±0.000  x1000
-paper-100k.pdf.gz .................. 0.250 ms      0.252 ms    ±0.001  x1000
-geo.protodata.gz ................... 0.126 ms      0.132 ms    ±0.005  x1000
-tor-list.gz ....................... 36.613 ms     37.061 ms    ±0.423   x135
 ```
 
 ## Testing
