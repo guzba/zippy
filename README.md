@@ -1,8 +1,12 @@
 # Zippy
 
-![Github Actions](https://github.com/guzba/zippy/workflows/Github%20Actions/badge.svg)
-
 `nimble install zippy`
+
+![Github Actions](https://github.com/treeform/zippy/workflows/Github%20Actions/badge.svg)
+
+[API reference](https://nimdocs.com/treeform/zippy)
+
+This library has no dependencies other than the Nim standard library.
 
 Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [ZLIB](https://tools.ietf.org/html/rfc1950) and [GZIP](https://tools.ietf.org/html/rfc1952) data compression formats.
 
@@ -13,10 +17,6 @@ The goal of this library is to be a pure Nim implementation that is small, perfo
 To ensure Zippy is compatible with other implementations, `tests/validate.nim` can be run. This script verifies that data compressed by Zippy can be uncompressed by other implementations (and that other implementations can uncompress data compressed by Zippy).
 
 This library works well using Nim's `--gc:arc` and `--gc:orc` as well as the default garbage collector. This library also works using both `nim c` and `nim cpp`, in addition to `--cc:vcc` on Windows.
-
-## Documentation
-
-https://nimdocs.com/guzba/zippy/zippy.html
 
 ## Examples
 
