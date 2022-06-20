@@ -75,7 +75,11 @@ proc decodeSymbolSlow(b: var BitStreamReader, h: Huffman): uint16 =
     inc codeLength
 
   if codeLength >= 16.uint16:
-    failUncompress()
+    # Bad code length. Instead of raising an exception here though,
+    # let the checks handling this return value call failUncompress().
+    # For some reason failUncompress() here has significant performance impact
+    # on M1 arm64.
+    return uint16.high
 
   let symbolId =
     (k shr (16.uint16 - codeLength)) -
