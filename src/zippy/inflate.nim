@@ -171,9 +171,22 @@ proc inflateBlock(
     distancesHuffman = initHuffman(unpacked.toOpenArray(hlit, hlit + hdist - 1))
 
   while true:
-    if b.bitsBuffered < 15:
+    when sizeof(b.bitBuffer) == 4:
       b.fillBitBuffer()
-    let symbol = decodeSymbol(b, literalsHuffman)
+      var symbol: uint16
+      while true:
+        symbol = decodeSymbol(b, literalsHuffman)
+        if symbol <= 255 and b.bitsBuffered >= 15:
+          if op >= dst.len:
+            dst.setLen(max(op * 2, 2))
+          dst[op] = symbol.char
+          inc op
+        else:
+          break
+    else:
+      if b.bitsBuffered < 15:
+        b.fillBitBuffer()
+      let symbol = decodeSymbol(b, literalsHuffman)
     if b.bitsBuffered < 0:
       failEndOfBuffer()
     if symbol <= 255:
@@ -192,16 +205,20 @@ proc inflateBlock(
 
       let copyLength = (
         baseLengths[lengthIdx] +
-        b.readBits(baseLengthsExtraBits[lengthIdx].int, false)
+        b.readBits(baseLengthsExtraBits[lengthIdx].int, false) # Up to 5
       ).int
 
-      let distanceIdx = decodeSymbol(b, distancesHuffman)
+      let distanceIdx = decodeSymbol(b, distancesHuffman) # Up to 15
       if distanceIdx >= baseDistances.len.uint16:
         failUncompress()
 
+      when sizeof(b.bitBuffer) == 4:
+        if b.bitsBuffered < 13:
+          b.fillBitBuffer()
+
       let distance = (
         baseDistances[distanceIdx] +
-        b.readBits(baseDistanceExtraBits[distanceIdx].int, false)
+        b.readBits(baseDistanceExtraBits[distanceIdx].int, false) # Up to 13
       ).int
 
       if distance > op:

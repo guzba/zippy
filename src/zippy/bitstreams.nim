@@ -4,7 +4,10 @@ type
   BitStreamReader* = object
     src*: ptr UncheckedArray[uint8]
     len*, pos*: int
-    bitBuffer*: uint64
+    when defined(arm64) or sizeof(int) == 4:
+      bitBuffer*: uint32
+    else:
+      bitBuffer*: uint64
     bitsBuffered*: int
 
   BitStreamWriter* = object
@@ -18,20 +21,31 @@ when defined(release):
 
 proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
   let
-    bytesNeeded = cast[int]((64.uint - cast[uint](b.bitsBuffered)) div 8)
+    bufferBitSize = sizeof(b.bitBuffer).uint * 8
+    bytesNeeded = cast[int]((bufferBitSize - cast[uint](b.bitsBuffered)) div 8)
     bytesAvailable = b.len - b.pos
+    bytesAdded = min(bytesNeeded, bytesAvailable)
+    pos = b.pos
 
-  var src: uint64
-  if bytesAvailable < 8:
-    copyMem(src.addr, b.src[b.len - 8].addr, 8)
-    src = src shr (8 * (8 - bytesAvailable))
-  else:
-    copyMem(src.addr, b.src[b.pos].addr, 8)
-
-  let bytesAdded = min(bytesNeeded, bytesAvailable)
-  b.bitBuffer = b.bitBuffer or (src shl b.bitsBuffered)
   b.pos += bytesAdded
-  b.bitsBuffered += (8 * bytesAdded)
+
+  when sizeof(b.bitBuffer) == 4:
+    var src: uint32
+    if bytesAvailable < 4:
+      copyMem(src.addr, b.src[b.len - 4].addr, 4)
+      src = src shr (8 * (4 - bytesAvailable))
+    else:
+      copyMem(src.addr, b.src[pos].addr, 4)
+  else:
+    var src: uint64
+    if bytesAvailable < 8:
+      copyMem(src.addr, b.src[b.len - 8].addr, 8)
+      src = src shr (8 * (8 - bytesAvailable))
+    else:
+      copyMem(src.addr, b.src[pos].addr, 8)
+
+  b.bitBuffer = b.bitBuffer or (src shl b.bitsBuffered)
+  b.bitsBuffered += 8 * bytesAdded
 
 proc readBits*(
   b: var BitStreamReader,
@@ -43,7 +57,7 @@ proc readBits*(
   when fillBitBuffer:
     b.fillBitBuffer()
 
-  result = (b.bitBuffer and ((1.uint64 shl bits) - 1)).uint16
+  result = (b.bitBuffer and ((1.uint32 shl bits) - 1)).uint16
   b.bitBuffer = b.bitBuffer shr bits
   b.bitsBuffered -= bits # Can go negative if we've read past the end
 
