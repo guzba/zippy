@@ -4,7 +4,7 @@ type
   BitStreamReader* = object
     src*: ptr UncheckedArray[uint8]
     len*, pos*: int
-    when defined(arm64) or sizeof(int) == 4:
+    when (defined(arm64) and defined(macosx)) or sizeof(int) == 4:
       bitBuffer*: uint32
     else:
       bitBuffer*: uint64

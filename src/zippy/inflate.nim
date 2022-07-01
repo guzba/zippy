@@ -171,7 +171,7 @@ proc inflateBlock(
     distancesHuffman = initHuffman(unpacked.toOpenArray(hlit, hlit + hdist - 1))
 
   while true:
-    when sizeof(b.bitBuffer) == 4:
+    when defined(arm64) and defined(macosx):
       b.fillBitBuffer()
       var symbol: uint16
       while true:
