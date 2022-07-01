@@ -65,7 +65,7 @@ proc crc32*(src: pointer, len: int): uint32 =
         let simdLen = (len div 16) * 16 # Multiple of 16
         result = not crc32_sse41_pcmul(src[0].addr, simdLen, not result)
         pos += simdLen
-    elif defined(arm64):
+    elif defined(arm64) and defined(macosx): # M1 has CRC32*, Pi 3, 4 does not
       return crc32_armv8a_crypto(src, len)
 
   if pos < len:
