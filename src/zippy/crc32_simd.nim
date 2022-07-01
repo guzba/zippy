@@ -1,3 +1,10 @@
+# These functions are Nim conversions of an original implementation
+# from the Chromium repository. That implementation is:
+#
+# Copyright 2017 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the Chromium source repository LICENSE file.
+
 when defined(amd64):
   when defined(gcc) or defined(clang):
     {.localPassc: "-msse4.1 -mpclmul".}
@@ -29,19 +36,9 @@ when defined(amd64):
 
   {.pop.}
 
-  # Computes the crc32 of the buffer, where the buffer
-  # length must be at least 64, and a multiple of 16. Based on
-  #
-  # "Fast CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction"
-  #  V. Gopal, E. Ozturk, et al., 2009, http://intel.ly/2ySEwL0
-  #
-  # This function is a Nim conversion of an original implementation
-  # from the Chromium repository. That implementation is:
-  #
-  # Copyright 2017 The Chromium Authors. All rights reserved.
-  # Use of this source code is governed by a BSD-style license that can be
-  # found in the Chromium source repository LICENSE file.
   proc crc32_sse41_pcmul*(src: pointer, len: int, crc32: uint32): uint32 =
+    ## Computes the crc32 of the buffer, where the buffer
+    ## length must be at least 64, and a multiple of 16.
     let
       k1k2 = [0x0154442bd4.uint64, 0x01c6e41596.uint64]
       k3k4 = [0x01751997d0.uint64, 0x00ccaa009e.uint64]
@@ -145,3 +142,31 @@ when defined(amd64):
     x1 = mm_xor_si128(x1, x2)
 
     cast[uint32](mm_extract_epi32(x1, 1))
+
+elif defined(arm64):
+  func crc32b(crc: uint32, v: uint8): uint32 {.importc: "__builtin_arm_crc32b", nodecl.}
+  func crc32d(crc: uint32, v: uint64): uint32 {.importc: "__builtin_arm_crc32d", nodecl.}
+
+  proc crc32_armv8a_crypto*(src: pointer, len: int): uint32 =
+    let src = cast[ptr UncheckedArray[uint8]](src)
+
+    var pos = 0
+
+    result = not result
+
+    # Align
+    while pos < len and (cast[uint](src[pos].addr) and 7) != 0:
+      result = crc32b(result, src[pos])
+      inc pos
+
+    while pos + 8 <= len:
+      var tmp: uint64
+      copyMem(tmp.addr, src[pos].addr, 8)
+      result = crc32d(result, tmp)
+      pos += 8
+
+    while pos < len:
+      result = crc32b(result, src[pos])
+      inc pos
+
+    result = not result

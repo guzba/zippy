@@ -61,11 +61,12 @@ proc crc32*(src: pointer, len: int): uint32 =
         leaf1 = cpuid(1, 0)
         sse41 = (leaf1[2] and (1 shl 19)) != 0
         pclmulqdq = (leaf1[2] and (1 shl 1)) != 0
-
       if sse41 and pclmulqdq and len >= 64:
         let simdLen = (len div 16) * 16 # Multiple of 16
         result = not crc32_sse41_pcmul(src[0].addr, simdLen, not result)
         pos += simdLen
+    elif defined(arm64):
+      return crc32_armv8a_crypto(src, len)
 
   if pos < len:
     result = not crc32(src[pos].addr, len - pos, not result)
