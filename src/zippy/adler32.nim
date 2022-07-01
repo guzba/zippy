@@ -13,6 +13,8 @@ proc adler32*(src: pointer, len: int): uint32 =
         ssse3 = (leaf1[2] and (1 shl 9)) != 0
       if ssse3:
         return adler32_ssse3(src, len)
+    elif defined(arm64):
+      return adler32_neon(src, len)
 
   let src = cast[ptr UncheckedArray[uint8]](src)
 
