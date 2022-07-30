@@ -8,4 +8,3 @@ timeIt "zippy":
   var i: int
   for path, entry in archive.contents:
     inc i
-  keep i

@@ -6,7 +6,6 @@ timeIt "untar":
   var i: int
   for info, contents in tarFile.walk:
     inc i
-  keep i
 
 timeIt "zippy":
   let tarball = Tarball()
@@ -15,4 +14,3 @@ timeIt "zippy":
   var i: int
   for path, entry in tarball.contents:
     inc i
-  keep i
