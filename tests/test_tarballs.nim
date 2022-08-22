@@ -4,7 +4,6 @@ let testDir = getTempDir()
 
 block:
   let testFilePaths = [
-    # "tests/data/tarballs/Nim-1.6.2.tar.gz",
     "tests/data/tarballs/libressl-3.4.2.tar.gz"
   ]
 

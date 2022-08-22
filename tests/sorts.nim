@@ -1,4 +1,4 @@
-import fidget/opengl/perf, std/algorithm, std/random
+import benchy, std/algorithm, std/random
 
 randomize()
 
