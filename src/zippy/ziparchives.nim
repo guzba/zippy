@@ -1,5 +1,5 @@
-import common, crc, internal, std/memfiles, std/os, std/tables, std/times,
-    std/unicode, ziparchives_v1, zippy
+import common, crc, internal, std/memfiles, std/os, std/strutils, std/tables,
+    std/times, std/unicode, ziparchives_v1, zippy
 
 export common, ziparchives_v1
 
@@ -296,7 +296,7 @@ proc openZipArchive*(
         dosDirectoryFlag = (externalFileAttr and 0x10) != 0
         unixDirectoryFlag = (externalFileAttr and (S_IFDIR.uint32 shl 16)) != 0
         recordKind =
-          if dosDirectoryFlag or unixDirectoryFlag:
+          if dosDirectoryFlag or unixDirectoryFlag or utf8FileName.endsWith("/"):
             DirectoryRecord
           else:
             FileRecord
