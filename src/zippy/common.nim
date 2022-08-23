@@ -1,5 +1,5 @@
 type
-  ZippyError* = object of ValueError ## Raised if an operation fails.
+  ZippyError* = object of CatchableError ## Raised if an operation fails.
 
   CompressedDataFormat* = enum ## Supported compressed data formats
     dfDetect, dfZlib, dfGzip, dfDeflate
