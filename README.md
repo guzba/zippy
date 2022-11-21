@@ -39,6 +39,7 @@ The times below are measured on a Ryzen 5 5600X.
 
 ```
 https://github.com/guzba/zippy uncompress
+name ............................... min time      avg time    std dv   runs
 alice29.txt.gz ..................... 0.233 ms      0.235 ms    ±0.003  x1000
 urls.10K.gz ........................ 1.140 ms      1.148 ms    ±0.007  x1000
 rfctest3.gz ........................ 0.047 ms      0.048 ms    ±0.001  x1000
