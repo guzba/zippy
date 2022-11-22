@@ -4,7 +4,7 @@
 
 ![Github Actions](https://github.com/guzba/zippy/workflows/Github%20Actions/badge.svg)
 
-[API reference](https://nimdocs.com/treeform/zippy)
+[API reference](https://nimdocs.com/guzba/zippy)
 
 This library has no dependencies other than the Nim standard library.
 
