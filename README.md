@@ -105,4 +105,4 @@ tor-list.gold .................... 244.424 ms    246.601 ms    ±1.630    x21
 
 `nimble test`
 
-To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can do run the fuzzer any time by running `nim c -r tests/fuzz.nim` and `nim c -r tests/stress.nim`
+To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can run the fuzzer any time by running `nim c -r tests/fuzz.nim` and `nim c -r tests/stress.nim`
