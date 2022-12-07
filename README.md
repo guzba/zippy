@@ -4,7 +4,7 @@
 
 ![Github Actions](https://github.com/guzba/zippy/workflows/Github%20Actions/badge.svg)
 
-[API reference](https://nimdocs.com/treeform/zippy)
+[API reference](https://nimdocs.com/guzba/zippy)
 
 This library has no dependencies other than the Nim standard library.
 
@@ -39,6 +39,7 @@ The times below are measured on a Ryzen 5 5600X.
 
 ```
 https://github.com/guzba/zippy uncompress
+name ............................... min time      avg time    std dv   runs
 alice29.txt.gz ..................... 0.233 ms      0.235 ms    ±0.003  x1000
 urls.10K.gz ........................ 1.140 ms      1.148 ms    ±0.007  x1000
 rfctest3.gz ........................ 0.047 ms      0.048 ms    ±0.001  x1000
@@ -104,4 +105,4 @@ tor-list.gold .................... 244.424 ms    246.601 ms    ±1.630    x21
 
 `nimble test`
 
-To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can do run the fuzzer any time by running `nim c -r tests/fuzz.nim` and `nim c -r tests/stress.nim`
+To prevent Zippy from causing a crash or otherwise misbehaving on bad input data, a fuzzer has been run against it. You can run the fuzzer any time by running `nim c -r tests/fuzz.nim` and `nim c -r tests/stress.nim`
