@@ -36,3 +36,13 @@ when not defined(macosx):
 
     # doAssert getFilePermissions(goldPath) == getFilePermissions(zippyPath)
     # doAssert getLastModificationTime(goldPath) == getLastModificationTime(zippyPath)
+
+block: # Test zip archive concatenated to the end of another file
+  let
+    archive = openZipArchive("tests/data/ziparchives/cat.jpg")
+    entries = ["a.txt", "b.txt", "c.txt"]
+  var numEntries: int
+  for entry in archive.walkFiles:
+    doAssert entry == entries[numEntries]
+    inc numEntries
+  doAssert numEntries == 3

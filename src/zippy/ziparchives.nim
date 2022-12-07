@@ -155,7 +155,7 @@ proc utf8ify(fileName: string): string =
 proc findEndOfCentralDirectory(reader: ZipArchiveReader): int =
   let src = cast[ptr UncheckedArray[uint8]](reader.memFile.mem)
 
-  result = reader.memFile.size - 22
+  result = reader.memFile.size - 22 # Work backwards in the file starting here
   while true:
     if result < 0:
       failArchiveEOF()
@@ -164,17 +164,20 @@ proc findEndOfCentralDirectory(reader: ZipArchiveReader): int =
     else:
       dec result
 
-proc findStartOfCentralDirectory(reader: ZipArchiveReader, eocd: int, records: int): int =
+proc findStartOfCentralDirectory(
+  reader: ZipArchiveReader,
+  start, numRecordEntries: int
+): int =
   let src = cast[ptr UncheckedArray[uint8]](reader.memFile.mem)
-  var count = 0
 
-  result = eocd
+  result = start # Work backwards in the file starting here
+  var numRecordsFound: int
   while true:
     if result < 0:
       failArchiveEOF()
     if read32(src, result) == centralDirectoryFileHeaderSignature:
-      count.inc
-      if count == records:
+      inc numRecordsFound
+      if numRecordsFound == numRecordEntries:
         return
     dec result
 
@@ -219,7 +222,7 @@ proc openZipArchive*(
         raise newException(ZippyError, "Invalid central directory file header")
 
       # let
-      #   endOfCentralDirectorySize = read64(src, pos + 4).int
+        # endOfCentralDirectorySize = read64(src, pos + 4).int
         # versionMadeBy = read16(src, pos + 12)
         # minVersionToExtract = read16(src, pos + 14)
       diskNumber = read32(src, pos + 16).int
@@ -247,9 +250,14 @@ proc openZipArchive*(
     if numRecordsOnDisk != numCentralDirectoryRecords:
       raise newException(ZippyError, "Unsupported archive, record number")
 
-    let socd = result.findStartOfCentralDirectory(eocd, numCentralDirectoryRecords)
-    let offset = socd - centralDirectoryStart
-    var pos = offset + centralDirectoryStart
+    # A zip archive may be concatenated to the end of another file (like an
+    # exe). This handles that by determining where the zip archive is from
+    # the start of the file.
+    let
+      socd = result.findStartOfCentralDirectory(eocd, numCentralDirectoryRecords)
+      socdOffset = socd - centralDirectoryStart
+
+    var pos = socdOffset + centralDirectoryStart
 
     if eocd + 22 > result.memFile.size:
       failArchiveEOF()
@@ -277,7 +285,7 @@ proc openZipArchive*(
         fileDiskNumber = read16(src, pos + 34).int
         # internalFileAttr = read16(src, pos + 36)
         externalFileAttr = read32(src, pos + 38)
-        fileHeaderOffset = read32(src, pos + 42).int + offset
+        fileHeaderOffset = read32(src, pos + 42).int + socdOffset
 
       if compressionMethod notin [0.uint16, 8]:
         raise newException(ZippyError, "Unsupported archive, compression method")
@@ -298,7 +306,7 @@ proc openZipArchive*(
 
       pos += fileNameLen + extraFieldLen + fileCommentLen
 
-      if pos > offset + centralDirectoryStart + centralDirectorySize:
+      if pos > socdOffset + centralDirectoryStart + centralDirectorySize:
         raise newException(ZippyError, "Invalid central directory size")
 
       let utf8FileName =
