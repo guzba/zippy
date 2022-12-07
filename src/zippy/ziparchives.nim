@@ -164,6 +164,20 @@ proc findEndOfCentralDirectory(reader: ZipArchiveReader): int =
     else:
       dec result
 
+proc findStartOfCentralDirectory(reader: ZipArchiveReader, eocd: int, records: int): int =
+  let src = cast[ptr UncheckedArray[uint8]](reader.memFile.mem)
+  var count = 0
+
+  result = eocd
+  while true:
+    if result < 0:
+      failArchiveEOF()
+    if read32(src, result) == centralDirectoryFileHeaderSignature:
+      count.inc
+      if count == records:
+        return
+    dec result
+
 proc openZipArchive*(
   zipPath: string
 ): ZipArchiveReader {.raises: [IOError, OSError, ZippyError].} =
@@ -224,8 +238,6 @@ proc openZipArchive*(
       centralDirectoryStart = read32(src, eocd + 16).int
         # commentLen = read16(src, eocd + 20).int
 
-    var pos = centralDirectoryStart
-
     if diskNumber != 0:
       raise newException(ZippyError, "Unsupported archive, disk number")
 
@@ -234,6 +246,10 @@ proc openZipArchive*(
 
     if numRecordsOnDisk != numCentralDirectoryRecords:
       raise newException(ZippyError, "Unsupported archive, record number")
+
+    let socd = result.findStartOfCentralDirectory(eocd, numCentralDirectoryRecords)
+    let offset = socd - centralDirectoryStart
+    var pos = offset + centralDirectoryStart
 
     if eocd + 22 > result.memFile.size:
       failArchiveEOF()
@@ -261,7 +277,7 @@ proc openZipArchive*(
         fileDiskNumber = read16(src, pos + 34).int
         # internalFileAttr = read16(src, pos + 36)
         externalFileAttr = read32(src, pos + 38)
-        fileHeaderOffset = read32(src, pos + 42).int
+        fileHeaderOffset = read32(src, pos + 42).int + offset
 
       if compressionMethod notin [0.uint16, 8]:
         raise newException(ZippyError, "Unsupported archive, compression method")
@@ -282,7 +298,7 @@ proc openZipArchive*(
 
       pos += fileNameLen + extraFieldLen + fileCommentLen
 
-      if pos > centralDirectoryStart + centralDirectorySize:
+      if pos > offset + centralDirectoryStart + centralDirectorySize:
         raise newException(ZippyError, "Invalid central directory size")
 
       let utf8FileName =
