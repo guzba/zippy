@@ -254,7 +254,14 @@ proc openZipArchive*(
     # exe). This handles that by determining where the zip archive is from
     # the start of the file.
     let
-      socd = result.findStartOfCentralDirectory(eocd, numCentralDirectoryRecords)
+      socd =
+        try:
+          # Try to find the start relative to the end of the file, supporting
+          # zip archives being concatenated to the end. If this fails for any
+          # reason, fall back to the default behavior.
+          result.findStartOfCentralDirectory(eocd, numCentralDirectoryRecords)
+        except ZippyError:
+          centralDirectoryStart
       socdOffset = socd - centralDirectoryStart
 
     var pos = socdOffset + centralDirectoryStart
