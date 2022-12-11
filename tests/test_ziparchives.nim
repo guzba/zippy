@@ -1,4 +1,4 @@
-import std/os, zippy/ziparchives
+import std/os, zippy/ziparchives, tables
 
 const testDir = getTempDir() # "tmp/zip"
 
@@ -46,3 +46,17 @@ block: # Test zip archive concatenated to the end of another file
     doAssert entry == entries[numEntries]
     inc numEntries
   doAssert numEntries == 3
+
+block:
+  let archive = ZipArchive()
+  archive.addFile("tests/data/ziparchives/cat.jpg")
+  let fromZip: string = archive.contents["cat.jpg"].contents
+  let fromDisk: string = readFile("tests/data/ziparchives/cat.jpg")
+  doAssert fromZip == fromDisk
+
+  try:
+    archive.addFile("tests/data/ziparchives/")
+    doAssert false
+  except:
+    let e = getCurrentException()
+    doAssert e.msg == "Error adding file tests/data/ziparchives/ to archive, appears to be a directory?"

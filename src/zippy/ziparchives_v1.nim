@@ -48,6 +48,26 @@ proc addDir*(
   let (head, tail) = splitPath(dir)
   archive.addDir(head, tail)
 
+proc addFile*(
+  archive: ZipArchive, path: string
+) {.raises: [IOError, OSError, ZippyError].} =
+  ## Adds a single file to the archive.
+
+  let fileInfo = getFileInfo(path)
+  case fileInfo.kind:
+  of {pcFile, pcLinkToFile}:
+    archive.contents[path.extractFilename] = ArchiveEntry(
+      kind: ekFile,
+      contents: readFile(path),
+      lastModified: fileInfo.lastWriteTime,
+      permissions: fileInfo.permissions,
+    )
+  else:
+    raise newException(
+      ZippyError,
+      "Error adding file " & path & " to archive, appears to be a directory?"
+    )
+
 proc clear*(archive: ZipArchive) {.raises: [].} =
   archive.contents.clear()
 
