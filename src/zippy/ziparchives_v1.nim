@@ -3,6 +3,11 @@ import common, crc, internal, std/os, std/streams, std/strutils, std/tables,
 
 export common
 
+## NOTE: This file exists for backward compatibility. I already reworked how
+## reading zip archives works, but have not reworked writing them. Keeping this
+## original version around ensures people's code doesn't break and atleast there
+## exists an option, even if I no longer like how this approach worked out.
+
 type
   EntryKind* = enum
     ekFile, ekDirectory
