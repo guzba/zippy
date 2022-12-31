@@ -128,7 +128,7 @@ elif defined(arm64):
     uint32x4 {.importc: "uint32x4_t".} = object
     uint8x8 {.importc: "uint8x8_t".} = object
     uint16x4 {.importc: "uint16x4_t".} = object
-    uint32x2 {.importc: "uint8x8_t".} = object
+    uint32x2 {.importc: "uint32x2_t".} = object
 
   func vmovq_n_u32(a: uint32): uint32x4
   func vmovq_n_u16(a: uint16): uint16x8
