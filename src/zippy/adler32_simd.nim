@@ -48,7 +48,7 @@ when defined(amd64):
 
     if len < 0:
       raise newException(ZippyError, "Adler-32 len < 0")
-    if len > uint32.high.int:
+    if len.uint64 > uint32.high:
       raise newException(ZippyError, "Adler-32 len > uint32.high")
 
     let src = cast[ptr UncheckedArray[uint8]](src)
@@ -160,7 +160,7 @@ elif defined(arm64):
 
     if len < 0:
       raise newException(ZippyError, "Adler-32 len < 0")
-    if len > uint32.high.int:
+    if len.uint64 > uint32.high:
       raise newException(ZippyError, "Adler-32 len > uint32.high")
 
     let src = cast[ptr UncheckedArray[uint8]](src)
