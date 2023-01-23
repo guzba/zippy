@@ -6,8 +6,6 @@
 
 [API reference](https://nimdocs.com/guzba/zippy)
 
-This library has no dependencies other than the Nim standard library.
-
 Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [ZLIB](https://tools.ietf.org/html/rfc1950) and [GZIP](https://tools.ietf.org/html/rfc1952) data compression formats.
 
 Zippy can also open [ZIP archives](https://en.wikipedia.org/wiki/Zip_(file_format)) (.zip) and [Tarballs](https://en.wikipedia.org/wiki/Tar_(computing)) (.tar, .tar.gz, .tgz, .taz).
@@ -29,7 +27,7 @@ Simple examples using Zippy can be found in the [examples/](https://github.com/g
 
 ## Performance
 
-Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well, a bit faster than zlib in some cases and a bit slower in others. Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
+Benchmarks can be run comparing different deflate implementations. My benchmarking shows this library performs very well, around 1.5x - 2x faster than zlib found on a fresh Linux install. Check the performance yourself by running [tests/benchmark.nim](https://github.com/guzba/zippy/blob/master/tests/benchmark.nim).
 
 `nim c --gc:arc -d:release -r .\tests\benchmark.nim`
 
