@@ -64,8 +64,8 @@ proc extractFile*(
     # lastModifiedTime = read16(src, pos + 10)
     # lastModifiedDate = read16(src, pos + 12)
     # uncompressedCrc32 = read32(src, pos + 14)
-    # compressedSize = read32(src, pos + 18).int
-    # uncompressedSize = read32(src, pos + 22).int
+    # compressedSize = read32(src, pos + 18)
+    # uncompressedSize = read32(src, pos + 22)
     fileNameLen = read16(src, pos + 26).int
     extraFieldLen = read16(src, pos + 28).int
 
@@ -284,21 +284,23 @@ proc openZipArchive*(
         # lastModifiedTime = read16(src, pos + 12)
         # lastModifiedDate = read16(src, pos + 14)
         uncompressedCrc32 = read32(src, pos + 16)
-        compressedSize = read32(src, pos + 20).int
-        uncompressedSize = read32(src, pos + 24).int
         fileNameLen = read16(src, pos + 28).int
         extraFieldLen = read16(src, pos + 30).int
         fileCommentLen = read16(src, pos + 32).int
         fileDiskNumber = read16(src, pos + 34).int
         # internalFileAttr = read16(src, pos + 36)
         externalFileAttr = read32(src, pos + 38)
-        fileHeaderOffset = read32(src, pos + 42).int + socdOffset
 
       if compressionMethod notin [0.uint16, 8]:
         raise newException(ZippyError, "Unsupported archive, compression method")
 
       if fileDiskNumber != 0:
         raise newException(ZippyError, "Invalid file disk number")
+
+      var
+        compressedSize = read32(src, pos + 20).int
+        uncompressedSize = read32(src, pos + 24).int
+        fileHeaderOffset = read32(src, pos + 42).int
 
       pos += 46
 
@@ -311,7 +313,47 @@ proc openZipArchive*(
       if fileName in result.records:
         raise newException(ZippyError, "Unsupported archive, duplicate entry")
 
-      pos += fileNameLen + extraFieldLen + fileCommentLen
+      pos += fileNameLen
+
+      block: # Handle zip64 values as needed
+        var extraFieldsOffset = pos
+
+        while extraFieldsOffset < pos + extraFieldLen:
+          if pos + 4 > result.memFile.size:
+            failArchiveEOF()
+
+          let
+            fieldId = read16(src, pos + 0)
+            fieldLen = read16(src, pos + 2).int
+
+          extraFieldsOffset += 4
+
+          if fieldId != 1:
+            extraFieldsOffset += fieldLen
+          else:
+            # These are the zip64 sizes
+            var zip64ExtrasOffset = extraFieldsOffset
+
+            if uncompressedSize == 0xffffffff:
+              if zip64ExtrasOffset + 8 > extraFieldsOffset + fieldLen:
+                failArchiveEOF()
+              uncompressedSize = read64(src, zip64ExtrasOffset).int
+              zip64ExtrasOffset += 8
+
+            if compressedSize == 0xffffffff:
+              if zip64ExtrasOffset + 8 > extraFieldsOffset + fieldLen:
+                failArchiveEOF()
+              compressedSize = read64(src, zip64ExtrasOffset).int
+              zip64ExtrasOffset += 8
+
+            if fileHeaderOffset == 0xffffffff:
+              if zip64ExtrasOffset + 8 > extraFieldsOffset + fieldLen:
+                failArchiveEOF()
+              fileHeaderOffset = read64(src, zip64ExtrasOffset).int
+              zip64ExtrasOffset += 8
+            break
+
+      pos += extraFieldLen + fileCommentLen
 
       if pos > socdOffset + centralDirectoryStart + centralDirectorySize:
         raise newException(ZippyError, "Invalid central directory size")
@@ -334,7 +376,7 @@ proc openZipArchive*(
 
       result.records[utf8FileName] = ZipArchiveRecord(
         kind: recordKind,
-        fileHeaderOffset: fileHeaderOffset,
+        fileHeaderOffset: fileHeaderOffset.int + socdOffset,
         path: utf8FileName,
         compressedSize: compressedSize,
         uncompressedSize: uncompressedSize,

@@ -1,4 +1,4 @@
-version       = "0.10.6"
+version       = "0.10.7"
 author        = "Ryan Oldenburg"
 description   = "Pure Nim implementation of deflate, zlib, gzip and zip."
 license       = "MIT"
