@@ -13,7 +13,7 @@ const
 
 when defined(amd64):
   when defined(gcc) or defined(clang):
-    {.localPassc: "-mssse3".}
+    {.localPassC: "-mssse3".}
 
   {.push header: "emmintrin.h".}
 
