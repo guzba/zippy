@@ -7,7 +7,7 @@
 
 when defined(amd64):
   when defined(gcc) or defined(clang):
-    {.localPassc: "-msse4.1 -mpclmul".}
+    {.localPassC: "-msse4.1 -mpclmul".}
 
   {.push header: "emmintrin.h".}
 
