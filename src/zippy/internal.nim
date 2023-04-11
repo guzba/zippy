@@ -201,19 +201,19 @@ when defined(release):
   {.push checks: off.}
 
 proc read16*(src: ptr UncheckedArray[uint8], ip: int): uint16 {.inline.} =
-  copyMem(result.addr, src[ip].addr, 2)
+  copyMem(result.addr, src[ip].unsafeAddr, 2)
 
 proc read32*(src: ptr UncheckedArray[uint8], ip: int): uint32 {.inline.} =
-  copyMem(result.addr, src[ip].addr, 4)
+  copyMem(result.addr, src[ip].unsafeAddr, 4)
 
 proc read64*(src: ptr UncheckedArray[uint8], ip: int): uint64 {.inline.} =
-  copyMem(result.addr, src[ip].addr, 8)
+  copyMem(result.addr, src[ip].unsafeAddr, 8)
 
 proc write64*(dst: ptr UncheckedArray[uint8], op: int, v: uint64) {.inline.} =
-  copyMem(dst[op].addr, v.unsafeAddr, 8)
+  copyMem(dst[op].unsafeAddr, v.unsafeAddr, 8)
 
 proc copy64*(dst, src: ptr UncheckedArray[uint8], op, ip: int) {.inline.} =
-  copyMem(dst[op].addr, dst[ip].addr, 8)
+  write64(dst, op, read64(src, ip))
 
 proc read16*(s: string, pos: int): uint16 {.inline.} =
   copyMem(result.addr, s[pos].unsafeAddr, 2)
