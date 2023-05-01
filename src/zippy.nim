@@ -18,7 +18,7 @@ proc compress*(
     result[0] = 31.char
     result[1] = 139.char
     result[2] = 8.char
-    result[3] = (1.uint8 shl 3).char
+    result[3] = (1.uint8 shl 3).char # Set the fname flag
 
     block: # https://github.com/guzba/zippy/issues/61
       let now = getTime()
