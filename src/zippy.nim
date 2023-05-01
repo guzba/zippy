@@ -1,5 +1,10 @@
-import std/random, std/times, zippy/adler32, zippy/common, zippy/crc, zippy/deflate,
+import zippy/adler32, zippy/common, zippy/crc, zippy/deflate,
     zippy/gzip, zippy/inflate, zippy/internal
+
+when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
+  import std/sysrand
+else:
+  import std/random, std/times
 
 export common
 
@@ -21,10 +26,18 @@ proc compress*(
     result[3] = (1.uint8 shl 3).char # Set the fname flag
 
     block: # https://github.com/guzba/zippy/issues/61
-      let now = getTime()
-      var rand = initRand(now.toUnix * 1_000_000_000 + now.nanosecond)
+      let htbLen =
+        when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
+          var urand: array[1, uint8]
+          if not urandom(urand):
+            raise newException(ZippyError, "Failed to generate random number")
+          (urand[0] mod 26).int
+        else:
+          let now = getTime()
+          var rand = initRand(now.toUnix * 1_000_000_000 + now.nanosecond)
+          (rand.next() mod 26).int # mod the uint first to ensure a positive int
       # Add up to 26 characters as the gzip header file name
-      for i in 0 ..< (rand.next() mod 26).int:
+      for i in 0 ..< htbLen:
         result.add (97 + i).char
       result.add '\0'
 
