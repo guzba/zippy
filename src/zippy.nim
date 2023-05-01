@@ -1,5 +1,5 @@
-import zippy/adler32, zippy/common, zippy/crc, zippy/deflate, zippy/gzip,
-    zippy/inflate, zippy/internal
+import std/random, std/times, zippy/adler32, zippy/common, zippy/crc, zippy/deflate,
+    zippy/gzip, zippy/inflate, zippy/internal
 
 export common
 
@@ -18,6 +18,15 @@ proc compress*(
     result[0] = 31.char
     result[1] = 139.char
     result[2] = 8.char
+    result[3] = (1.uint8 shl 3).char
+
+    block: # https://github.com/guzba/zippy/issues/61
+      let now = getTime()
+      var rand = initRand(now.toUnix * 1_000_000_000 + now.nanosecond)
+      # Add up to 26 characters as the gzip header file name
+      for i in 0 ..< (rand.next() mod 26).int:
+        result.add (97 + i).char
+      result.add '\0'
 
     deflate(result, src, len, level)
 
