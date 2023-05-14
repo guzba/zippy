@@ -1,0 +1,2 @@
+adler32	zippy/adler32.html#adler32,pointer,int	adler32: adler32(src: pointer; len: int): uint32	
+adler32	zippy/adler32.html#adler32,string	adler32: adler32(src: string): uint32	

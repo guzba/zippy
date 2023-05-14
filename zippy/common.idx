@@ -1,0 +1,11 @@
+ZippyError	zippy/common.html#ZippyError	common: ZippyError	
+dfDetect	zippy/common.html#dfDetect	CompressedDataFormat.dfDetect	
+dfZlib	zippy/common.html#dfZlib	CompressedDataFormat.dfZlib	
+dfGzip	zippy/common.html#dfGzip	CompressedDataFormat.dfGzip	
+dfDeflate	zippy/common.html#dfDeflate	CompressedDataFormat.dfDeflate	
+CompressedDataFormat	zippy/common.html#CompressedDataFormat	common: CompressedDataFormat	
+NoCompression	zippy/common.html#NoCompression	common: NoCompression	
+BestSpeed	zippy/common.html#BestSpeed	common: BestSpeed	
+BestCompression	zippy/common.html#BestCompression	common: BestCompression	
+DefaultCompression	zippy/common.html#DefaultCompression	common: DefaultCompression	
+HuffmanOnly	zippy/common.html#HuffmanOnly	common: HuffmanOnly	

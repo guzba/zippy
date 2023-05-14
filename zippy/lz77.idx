@@ -1,0 +1,1 @@
+encodeLz77	zippy/lz77.html#encodeLz77,seq[uint16],int,CompressionConfig,BlockMetadata,ptr.UncheckedArray[uint8],int,int	lz77: encodeLz77(encoding: var seq[uint16]; ep: var int; config: CompressionConfig;\n           metadata: var BlockMetadata; src: ptr UncheckedArray[uint8];\n           blockStart, blockLen: int)	

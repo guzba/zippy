@@ -1,0 +1,54 @@
+allowSimd	zippy/internal.html#allowSimd	internal: allowSimd	
+maxCodeLength	zippy/internal.html#maxCodeLength	internal: maxCodeLength	
+maxLitLenCodes	zippy/internal.html#maxLitLenCodes	internal: maxLitLenCodes	
+maxDistanceCodes	zippy/internal.html#maxDistanceCodes	internal: maxDistanceCodes	
+maxFixedLitLenCodes	zippy/internal.html#maxFixedLitLenCodes	internal: maxFixedLitLenCodes	
+maxWindowSize	zippy/internal.html#maxWindowSize	internal: maxWindowSize	
+maxUncompressedBlockSize	zippy/internal.html#maxUncompressedBlockSize	internal: maxUncompressedBlockSize	
+maxBlockSize	zippy/internal.html#maxBlockSize	internal: maxBlockSize	
+firstLengthCodeIndex	zippy/internal.html#firstLengthCodeIndex	internal: firstLengthCodeIndex	
+baseMatchLen	zippy/internal.html#baseMatchLen	internal: baseMatchLen	
+minMatchLen	zippy/internal.html#minMatchLen	internal: minMatchLen	
+maxMatchLen	zippy/internal.html#maxMatchLen	internal: maxMatchLen	
+maxLiteralLength	zippy/internal.html#maxLiteralLength	internal: maxLiteralLength	
+baseLengths	zippy/internal.html#baseLengths	internal: baseLengths	
+baseLengthsExtraBits	zippy/internal.html#baseLengthsExtraBits	internal: baseLengthsExtraBits	
+baseLengthIndices	zippy/internal.html#baseLengthIndices	internal: baseLengthIndices	
+baseDistances	zippy/internal.html#baseDistances	internal: baseDistances	
+baseDistanceExtraBits	zippy/internal.html#baseDistanceExtraBits	internal: baseDistanceExtraBits	
+clclOrder	zippy/internal.html#clclOrder	internal: clclOrder	
+S_IFDIR	zippy/internal.html#S_IFDIR	internal: S_IFDIR	
+TUREAD	zippy/internal.html#TUREAD	internal: TUREAD	
+TUWRITE	zippy/internal.html#TUWRITE	internal: TUWRITE	
+TUEXEC	zippy/internal.html#TUEXEC	internal: TUEXEC	
+TGREAD	zippy/internal.html#TGREAD	internal: TGREAD	
+TGWRITE	zippy/internal.html#TGWRITE	internal: TGWRITE	
+TGEXEC	zippy/internal.html#TGEXEC	internal: TGEXEC	
+TOREAD	zippy/internal.html#TOREAD	internal: TOREAD	
+TOWRITE	zippy/internal.html#TOWRITE	internal: TOWRITE	
+TOEXEC	zippy/internal.html#TOEXEC	internal: TOEXEC	
+CompressionConfig	zippy/internal.html#CompressionConfig	internal: CompressionConfig	
+BlockMetadata	zippy/internal.html#BlockMetadata	internal: BlockMetadata	
+fixedLitLenCodeLengths	zippy/internal.html#fixedLitLenCodeLengths	internal: fixedLitLenCodeLengths	
+fixedLitLenCodes	zippy/internal.html#fixedLitLenCodes	internal: fixedLitLenCodes	
+fixedDistanceCodeLengths	zippy/internal.html#fixedDistanceCodeLengths	internal: fixedDistanceCodeLengths	
+fixedDistanceCodes	zippy/internal.html#fixedDistanceCodes	internal: fixedDistanceCodes	
+configurationTable	zippy/internal.html#configurationTable	internal: configurationTable	
+failUncompress	zippy/internal.html#failUncompress.t	internal: failUncompress()	
+failCompress	zippy/internal.html#failCompress.t	internal: failCompress()	
+failArchiveEOF	zippy/internal.html#failArchiveEOF.t	internal: failArchiveEOF()	
+read16	zippy/internal.html#read16,ptr.UncheckedArray[uint8],int	internal: read16(src: ptr UncheckedArray[uint8]; ip: int): uint16	
+read32	zippy/internal.html#read32,ptr.UncheckedArray[uint8],int	internal: read32(src: ptr UncheckedArray[uint8]; ip: int): uint32	
+read64	zippy/internal.html#read64,ptr.UncheckedArray[uint8],int	internal: read64(src: ptr UncheckedArray[uint8]; ip: int): uint64	
+write64	zippy/internal.html#write64,ptr.UncheckedArray[uint8],int,uint64	internal: write64(dst: ptr UncheckedArray[uint8]; op: int; v: uint64)	
+copy64	zippy/internal.html#copy64,ptr.UncheckedArray[uint8],ptr.UncheckedArray[uint8],int,int	internal: copy64(dst, src: ptr UncheckedArray[uint8]; op, ip: int)	
+read16	zippy/internal.html#read16,string,int	internal: read16(s: string; pos: int): uint16	
+read32	zippy/internal.html#read32,string,int	internal: read32(s: string; pos: int): uint32	
+distanceCodeIndex	zippy/internal.html#distanceCodeIndex,uint16	internal: distanceCodeIndex(value: uint16): uint16	
+determineMatchLength	zippy/internal.html#determineMatchLength,ptr.UncheckedArray[uint8],int,int,int	internal: determineMatchLength(src: ptr UncheckedArray[uint8]; s1, s2, limit: int): int	
+toUnixPath	zippy/internal.html#toUnixPath,string	internal: toUnixPath(path: string): string	
+parseFilePermissions	zippy/internal.html#parseFilePermissions,int	internal: parseFilePermissions(permissions: int): set[FilePermission]	
+verifyPathIsSafeToExtract	zippy/internal.html#verifyPathIsSafeToExtract,string	internal: verifyPathIsSafeToExtract(path: string)	
+writeFile	zippy/internal.html#writeFile,string,openArray[char]	internal: writeFile(filename: string; content: openArray[char])	
+currentExceptionAsZippyError	zippy/internal.html#currentExceptionAsZippyError.t	internal: currentExceptionAsZippyError(): untyped	
+cpuid	zippy/internal.html#cpuid,int32,int32	internal: cpuid(eaxi, ecxi: int32): tuple[eax, ebx, ecx, edx: int32]	

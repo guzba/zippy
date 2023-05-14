@@ -1,0 +1,1 @@
+inflate	zippy/inflate.html#inflate,string,ptr.UncheckedArray[uint8],int,int	inflate: inflate(dst: var string; src: ptr UncheckedArray[uint8]; len, pos: int)	

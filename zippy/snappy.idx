@@ -1,0 +1,1 @@
+encodeSnappy	zippy/snappy.html#encodeSnappy,seq[uint16],int,BlockMetadata,ptr.UncheckedArray[uint8],int,int	snappy: encodeSnappy(encoding: var seq[uint16]; ep: var int;\n             metadata: var BlockMetadata; src: ptr UncheckedArray[uint8];\n             blockStart, blockLen: int)	

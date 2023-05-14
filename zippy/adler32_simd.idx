@@ -1,0 +1,1 @@
+adler32_ssse3	zippy/adler32_simd.html#adler32_ssse3,pointer,int	adler32_simd: adler32_ssse3(src: pointer; len: int): uint32	

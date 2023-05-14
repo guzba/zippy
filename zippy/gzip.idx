@@ -1,0 +1,1 @@
+uncompressGzip	zippy/gzip.html#uncompressGzip,string,ptr.UncheckedArray[uint8],int	gzip: uncompressGzip(dst: var string; src: ptr UncheckedArray[uint8]; len: int;\n               trustSize = false)	

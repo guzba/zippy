@@ -1,0 +1,1 @@
+crc32_sse41_pcmul	zippy/crc32_simd.html#crc32_sse41_pcmul,pointer,int,uint32	crc32_simd: crc32_sse41_pcmul(src: pointer; len: int; crc32: uint32): uint32	

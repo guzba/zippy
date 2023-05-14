@@ -1,0 +1,1 @@
+deflate	zippy/deflate.html#deflate,string,ptr.UncheckedArray[uint8],int,int	deflate: deflate(dst: var string; src: ptr UncheckedArray[uint8]; len, level: int)	

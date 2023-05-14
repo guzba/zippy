@@ -1,0 +1,2 @@
+crc32	zippy/crc.html#crc32,pointer,int	crc: crc32(src: pointer; len: int): uint32	
+crc32	zippy/crc.html#crc32,string	crc: crc32(src: string): uint32	
