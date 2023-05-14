@@ -4,7 +4,7 @@
 
 ![Github Actions](https://github.com/guzba/zippy/workflows/Github%20Actions/badge.svg)
 
-[API reference](https://nimdocs.com/guzba/zippy)
+[API reference](https://guzba.github.io/zippy/)
 
 Zippy is an implementation of [DEFLATE](https://tools.ietf.org/html/rfc1951), [ZLIB](https://tools.ietf.org/html/rfc1950) and [GZIP](https://tools.ietf.org/html/rfc1952) data compression formats.
 
