@@ -23,7 +23,7 @@ type
     uncompressedSize: int
     filePermissions: set[FilePermission]
 
-  ZipArchiveReader = ref object
+  ZipArchiveReader* = ref object
     memFile: MemFile
     records: Table[string, ZipArchiveRecord]
 
