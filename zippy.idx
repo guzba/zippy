@@ -1,6 +1,9 @@
-compress	zippy.html#compress,pointer,int	zippy: compress(src: pointer; len: int; level = DefaultCompression; dataFormat = dfGzip): string	
-compress	zippy.html#compress,string	zippy: compress(src: string; level = DefaultCompression; dataFormat = dfGzip): string	
-compress	zippy.html#compress,seq[uint8]	zippy: compress(src: seq[uint8]; level = DefaultCompression; dataFormat = dfGzip): seq[\n    uint8]	
-uncompress	zippy.html#uncompress,pointer,int	zippy: uncompress(src: pointer; len: int; dataFormat = dfDetect): string	
-uncompress	zippy.html#uncompress,string	zippy: uncompress(src: string; dataFormat = dfDetect): string	
-uncompress	zippy.html#uncompress,seq[uint8]	zippy: uncompress(src: seq[uint8]; dataFormat = dfDetect): seq[uint8]	
+nimTitle	zippy	zippy.html	module src/zippy		0
+nim	compress	zippy.html#compress,pointer,int	proc compress(src: pointer; len: int; level = DefaultCompression; dataFormat = dfGzip): string		11
+nim	compress	zippy.html#compress,string	proc compress(src: string; level = DefaultCompression; dataFormat = dfGzip): string		86
+nim	compress	zippy.html#compress,seq[uint8]	proc compress(src: seq[uint8]; level = DefaultCompression; dataFormat = dfGzip): seq[\n    uint8]		93
+nim	uncompress	zippy.html#uncompress,pointer,int	proc uncompress(src: pointer; len: int; dataFormat = dfDetect): string		100
+nim	uncompress	zippy.html#uncompress,string	proc uncompress(src: string; dataFormat = dfDetect): string		167
+nim	uncompress	zippy.html#uncompress,seq[uint8]	proc uncompress(src: seq[uint8]; dataFormat = dfDetect): seq[uint8]		173
+nimgrp	compress	zippy.html#compress-procs-all	proc		11
+nimgrp	uncompress	zippy.html#uncompress-procs-all	proc		100

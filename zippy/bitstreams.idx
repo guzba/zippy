@@ -1,10 +1,12 @@
-BitStreamReader	zippy/bitstreams.html#BitStreamReader	bitstreams: BitStreamReader	
-BitStreamWriter	zippy/bitstreams.html#BitStreamWriter	bitstreams: BitStreamWriter	
-failEndOfBuffer	zippy/bitstreams.html#failEndOfBuffer.t	bitstreams: failEndOfBuffer()	
-fillBitBuffer	zippy/bitstreams.html#fillBitBuffer,BitStreamReader	bitstreams: fillBitBuffer(b: var BitStreamReader)	
-readBits	zippy/bitstreams.html#readBits,BitStreamReader,int,static[bool]	bitstreams: readBits(b: var BitStreamReader; bits: int; fillBitBuffer: static[bool] = true): uint16	
-readBytes	zippy/bitstreams.html#readBytes,BitStreamReader,pointer,int	bitstreams: readBytes(b: var BitStreamReader; dst: pointer; len: int)	
-skipRemainingBitsInCurrentByte	zippy/bitstreams.html#skipRemainingBitsInCurrentByte,BitStreamReader	bitstreams: skipRemainingBitsInCurrentByte(b: var BitStreamReader)	
-addBits	zippy/bitstreams.html#addBits,BitStreamWriter,string,uint32,int	bitstreams: addBits(b: var BitStreamWriter; dst: var string; value: uint32; bitLen: int)	
-addBytes	zippy/bitstreams.html#addBytes,BitStreamWriter,string,ptr.UncheckedArray[uint8],int,int	bitstreams: addBytes(b: var BitStreamWriter; dst: var string;\n         src: ptr UncheckedArray[uint8]; srcPos, len: int)	
-skipRemainingBitsInCurrentByte	zippy/bitstreams.html#skipRemainingBitsInCurrentByte,BitStreamWriter	bitstreams: skipRemainingBitsInCurrentByte(b: var BitStreamWriter)	
+nimTitle	bitstreams	zippy/bitstreams.html	module src/zippy/bitstreams		0
+nim	BitStreamReader	zippy/bitstreams.html#BitStreamReader	object BitStreamReader		4
+nim	BitStreamWriter	zippy/bitstreams.html#BitStreamWriter	object BitStreamWriter		13
+nim	failEndOfBuffer	zippy/bitstreams.html#failEndOfBuffer.t	template failEndOfBuffer()		16
+nim	fillBitBuffer	zippy/bitstreams.html#fillBitBuffer,BitStreamReader	proc fillBitBuffer(b: var BitStreamReader)		22
+nim	readBits	zippy/bitstreams.html#readBits,BitStreamReader,int,static[bool]	proc readBits(b: var BitStreamReader; bits: int; fillBitBuffer: static[bool] = true): uint16		50
+nim	readBytes	zippy/bitstreams.html#readBytes,BitStreamReader,pointer,int	proc readBytes(b: var BitStreamReader; dst: pointer; len: int)		64
+nim	skipRemainingBitsInCurrentByte	zippy/bitstreams.html#skipRemainingBitsInCurrentByte,BitStreamReader	proc skipRemainingBitsInCurrentByte(b: var BitStreamReader)		78
+nim	addBits	zippy/bitstreams.html#addBits,BitStreamWriter,string,uint32,int	proc addBits(b: var BitStreamWriter; dst: var string; value: uint32; bitLen: int)		88
+nim	addBytes	zippy/bitstreams.html#addBytes,BitStreamWriter,string,ptr.UncheckedArray[uint8],int,int	proc addBytes(b: var BitStreamWriter; dst: var string;\n         src: ptr UncheckedArray[uint8]; srcPos, len: int)		106
+nim	skipRemainingBitsInCurrentByte	zippy/bitstreams.html#skipRemainingBitsInCurrentByte,BitStreamWriter	proc skipRemainingBitsInCurrentByte(b: var BitStreamWriter)		121
+nimgrp	skipremainingbitsincurrentbyte	zippy/bitstreams.html#skipRemainingBitsInCurrentByte-procs-all	proc		78

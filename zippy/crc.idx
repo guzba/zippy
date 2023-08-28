@@ -1,2 +1,4 @@
-crc32	zippy/crc.html#crc32,pointer,int	crc: crc32(src: pointer; len: int): uint32	
-crc32	zippy/crc.html#crc32,string	crc: crc32(src: string): uint32	
+nimTitle	crc	zippy/crc.html	module src/zippy/crc		0
+nim	crc32	zippy/crc.html#crc32,pointer,int	proc crc32(src: pointer; len: int): uint32		53
+nim	crc32	zippy/crc.html#crc32,string	proc crc32(src: string): uint32		74
+nimgrp	crc32	zippy/crc.html#crc32-procs-all	proc		53

@@ -1,1 +1,2 @@
-inflate	zippy/inflate.html#inflate,string,ptr.UncheckedArray[uint8],int,int	inflate: inflate(dst: var string; src: ptr UncheckedArray[uint8]; len, pos: int)	
+nimTitle	inflate	zippy/inflate.html	module src/zippy/inflate		0
+nim	inflate	zippy/inflate.html#inflate,string,ptr.UncheckedArray[uint8],int,int	proc inflate(dst: var string; src: ptr UncheckedArray[uint8]; len, pos: int)		268

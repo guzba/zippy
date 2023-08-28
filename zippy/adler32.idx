@@ -1,2 +1,4 @@
-adler32	zippy/adler32.html#adler32,pointer,int	adler32: adler32(src: pointer; len: int): uint32	
-adler32	zippy/adler32.html#adler32,string	adler32: adler32(src: string): uint32	
+nimTitle	adler32	zippy/adler32.html	module src/zippy/adler32		0
+nim	adler32	zippy/adler32.html#adler32,pointer,int	proc adler32(src: pointer; len: int): uint32		6
+nim	adler32	zippy/adler32.html#adler32,string	proc adler32(src: string): uint32		65
+nimgrp	adler32	zippy/adler32.html#adler32-procs-all	proc		6
