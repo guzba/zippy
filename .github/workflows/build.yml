@@ -6,11 +6,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        nim-version: ['1.0.x', '1.2.x', '1.4.x', 'stable']
+        nim-version: ['1.0.x', '1.2.x', '1.4.x', '1.6.x', 'stable']
         include:
           - nim-version: '1.4.x'
             gc_orc: true
-          - nim-version: 'stable'
+          - nim-version: '1.6.x'
             gc_orc: true
 
     runs-on: ${{ matrix.os }}
