@@ -1,4 +1,4 @@
-import std/os, zippy/ziparchives, tables
+import std/os, zippy/ziparchives, std/tables
 
 const testDir = getTempDir() # "tmp/zip"
 
