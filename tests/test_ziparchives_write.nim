@@ -1,7 +1,7 @@
 import std/os, zippy/ziparchives, std/tables, std/strutils
 
 # var entries: OrderedTable[string, string]
-# entries["a/b/tmp.txt"] = "a text file's contents here"
+# entries["README.txt"] = "Hello, World!"
 
 # let archive = createZipArchive(entries)
 # echo archive.len
@@ -15,8 +15,8 @@ import std/os, zippy/ziparchives, std/tables, std/strutils
 #     echo path
 
 #   # # Extract a file from the archive.
-#   let contents = reader.extractFile("a/b/tmp.txt")
-#   echo contents.len
+#   # let contents = reader.extractFile("tmp.txt")
+#   # echo contents.len
 # finally:
 #   # Remember to close the reader when done.
 #   reader.close()
@@ -29,3 +29,14 @@ import std/os, zippy/ziparchives, std/tables, std/strutils
 #     continue
 #   entries[path] = readFile(path)
 # writeFile("tmp.zip", createZipArchive(entries))
+
+# let reader = openZipArchive("tmp.zip")
+
+# try:
+#   # Iterate over the paths in the zip archive.
+#   for path in reader.walkFiles:
+#     echo path
+
+# finally:
+#   # Remember to close the reader when done.
+#   reader.close()

@@ -6,13 +6,11 @@ export common, ziparchives_v1
 const
   fileHeaderLen = 30
   fileHeaderSignature = 0x04034b50.uint32
-  dataDescriptorSignature = 0x08074b50.uint32
   centralDirectoryFileHeaderSignature = 0x02014b50.uint32
   endOfCentralDirectorySignature = 0x06054b50.uint32
   zip64EndOfCentralDirectorySignature = 0x06064b50.uint32
   zip64EndOfCentralDirectoryLocatorSignature = 0x07064b50.uint32
   zip64ExtraFieldId = 1.uint16
-  zip64FileHeaderExtraLen = 28
 
 type
   ZipArchiveRecordKind = enum
@@ -533,17 +531,22 @@ proc createZipArchive*(
 
     result.add32(fileHeaderSignature)
     result.add16(45) # Min version to extract
-    result.add16((1.uint16 shl 3) or (1.uint16 shl 11)) # General purpose flags
+    result.add16(1.uint16 shl 11) # General purpose flags
     result.add16(compressionMethod)
     result.add16(lastModifiedTime)
     result.add16(lastModifiedDate)
-    result.add32(0) # CRC-32 of uncompressed data (in trailing data descriptor)
+    result.add32(uncompressedCrc32) # CRC-32 of uncompressed data
     result.add32(uint32.high) # Compressed size (or 0xffffffff for ZIP64)
     result.add32(uint32.high) # Uncompressed size (or 0xffffffff for ZIP64)
     result.add16(cast[uint16](path.len)) # File name length
-    result.add16(0) # Extra field length
+    result.add16(20) # Extra field length
 
     result.add(path)
+
+    result.add16(zip64ExtraFieldId)
+    result.add16(16)
+    result.add64(contents.len)
+    result.add64(compressed.len)
 
     # result.add(compressed)
     if compressed != "":
@@ -554,18 +557,13 @@ proc createZipArchive*(
         compressed.len
       )
 
-    result.add32(dataDescriptorSignature)
-    result.add32(uncompressedCrc32)
-    result.add64(compressed.len)
-    result.add64(contents.len)
-
   let centralDirectoryStart = result.len
 
   for i in 0 ..< records.len:
     let entry = records[i][1]
     result.add32(centralDirectoryFileHeaderSignature)
-    result.add16(20) # Version made by
-    result.add16(20) # Min version to extract
+    result.add16(45) # Version made by
+    result.add16(45) # Min version to extract
     result.add16(1.uint16 shl 11) # General purpose flags
     result.add16(entry.compressionMethod)
     result.add16(lastModifiedTime)
@@ -608,10 +606,10 @@ proc createZipArchive*(
   result.add32(1)
 
   result.add32(endOfCentralDirectorySignature)
-  result.add32(0) # Number of this disk
-  result.add32(0) # Disk where central directory starts
-  result.add32(uint32.high) # Number of central directory records on this disk (or 0xffff for ZIP64)
-  result.add32(uint32.high) # Total number of central directory records (or 0xffff for ZIP64)
+  result.add16(0) # Number of this disk
+  result.add16(0) # Disk where central directory starts
+  result.add16(uint16.high) # Number of central directory records on this disk (or 0xffff for ZIP64)
+  result.add16(uint16.high) # Total number of central directory records (or 0xffff for ZIP64)
   result.add32(uint32.high) # Size of central directory (bytes) (or 0xffffffff for ZIP64)
   result.add32(uint32.high) # Offset of start of central directory, relative to start of archive (or 0xffffffff for ZIP64)
   result.add16(0)
