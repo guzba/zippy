@@ -546,12 +546,13 @@ proc createZipArchive*(
     result.add(path)
 
     # result.add(compressed)
-    result.setLen(result.len + compressed.len)
-    copyMem(
-      result[result.len - compressed.len].addr,
-      compressed.cstring,
-      compressed.len
-    )
+    if compressed != "":
+      result.setLen(result.len + compressed.len)
+      copyMem(
+        result[result.len - compressed.len].addr,
+        compressed.cstring,
+        compressed.len
+      )
 
     result.add32(dataDescriptorSignature)
     result.add32(uncompressedCrc32)
