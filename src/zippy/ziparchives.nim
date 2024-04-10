@@ -501,14 +501,16 @@ proc createZipArchive*(
     uncompressedCrc32: uint32
 
   var records: seq[(string, ArchiveEntry)]
-  for path in toSeq(entries.keys): # The entries table is modified so use toSeq
-    if path == "":
-      raise newException(ZippyError, "Invalid empty path")
-    if path.len > uint16.high.int:
-      raise newException(ZippyError, "Zip archive entry path len > uint16.high")
+  for fileName in toSeq(entries.keys): # The entries table is modified so use toSeq
+    if fileName == "":
+      raise newException(ZippyError, "Invalid empty file name")
+    if fileName[0] == '/':
+      raise newException(ZippyError, "File paths must be relative")
+    if fileName.len > uint16.high.int:
+      raise newException(ZippyError, "File name len > uint16.high")
 
     var contents: string
-    discard entries.pop(path, contents)
+    discard entries.pop(fileName, contents)
 
     var
       compressed: string
@@ -521,7 +523,7 @@ proc createZipArchive*(
 
     let uncompressedCrc32 = crc32(contents)
 
-    records.add((path, ArchiveEntry(
+    records.add((fileName, ArchiveEntry(
       fileHeaderOffset: result.len,
       uncompressedLen: contents.len,
       compressedLen: compressed.len,
@@ -538,10 +540,10 @@ proc createZipArchive*(
     result.add32(uncompressedCrc32) # CRC-32 of uncompressed data
     result.add32(uint32.high) # Compressed size (or 0xffffffff for ZIP64)
     result.add32(uint32.high) # Uncompressed size (or 0xffffffff for ZIP64)
-    result.add16(cast[uint16](path.len)) # File name length
+    result.add16(cast[uint16](fileName.len)) # File name length
     result.add16(20) # Extra field length
 
-    result.add(path)
+    result.add(fileName)
 
     result.add16(zip64ExtraFieldId)
     result.add16(16)
