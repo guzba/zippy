@@ -510,23 +510,25 @@ when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
       if fileName.len > uint16.high.int:
         raise newException(ZippyError, "File name len > uint16.high")
 
-      var contents: string
-      discard entries.pop(fileName, contents)
-
       var
+        uncompressedLen: int
+        uncompressedCrc32: uint32
         compressed: string
         compressionMethod: uint16
-      if contents == "":
-        discard
-      else:
-        compressed = compress(contents, BestSpeed, dfDeflate)
-        compressionMethod = 8
-
-      let uncompressedCrc32 = crc32(contents)
+      block: # Free `contents` after this block
+        var contents: string
+        discard entries.pop(fileName, contents)
+        uncompressedLen = contents.len
+        uncompressedCrc32 = crc32(contents)
+        if contents == "":
+          discard
+        else:
+          compressed = compress(contents, BestSpeed, dfDeflate)
+          compressionMethod = 8
 
       records.add((fileName, ArchiveEntry(
         fileHeaderOffset: result.len,
-        uncompressedLen: contents.len,
+        uncompressedLen: uncompressedLen,
         compressedLen: compressed.len,
         compressionMethod: compressionMethod,
         uncompressedCrc32: uncompressedCrc32
@@ -548,7 +550,7 @@ when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
 
       result.add16(zip64ExtraFieldId)
       result.add16(16)
-      result.add64(contents.len)
+      result.add64(uncompressedLen)
       result.add64(compressed.len)
 
       # result.add(compressed)
