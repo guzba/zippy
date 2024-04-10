@@ -1,10 +1,10 @@
 import std/os, zippy/ziparchives, std/tables, std/strutils
 
-# var entries: OrderedTable[string, string]
-# entries["README.txt"] = "Hello, World!"
+var entries: OrderedTable[string, string]
+entries["README.txt"] = "Hello, World!"
 
-# let archive = createZipArchive(entries)
-# echo archive.len
+let archive = createZipArchive(entries)
+echo archive.len
 # writeFile("tmp.zip", archive)
 
 # let reader = openZipArchive("tmp.zip")
