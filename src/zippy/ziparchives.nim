@@ -1,14 +1,16 @@
 import common, crc, internal, std/memfiles, std/os, std/strutils, std/tables,
-    std/times, std/unicode, ziparchives_v1, zippy
+    std/times, std/unicode, ziparchives_v1, zippy, std/sequtils
 
 export common, ziparchives_v1
 
 const
+  fileHeaderLen = 30
   fileHeaderSignature = 0x04034b50.uint32
   centralDirectoryFileHeaderSignature = 0x02014b50.uint32
   endOfCentralDirectorySignature = 0x06054b50.uint32
   zip64EndOfCentralDirectorySignature = 0x06064b50.uint32
-  zip64EndOfCentralDirectoryLocatorSignature = 0x07064b50
+  zip64EndOfCentralDirectoryLocatorSignature = 0x07064b50.uint32
+  zip64ExtraFieldId = 1.uint16
 
 type
   ZipArchiveRecordKind = enum
@@ -51,7 +53,7 @@ proc extractFile*(
 
   var pos = record.fileHeaderOffset
 
-  if pos + 30 > reader.memFile.size:
+  if pos + fileHeaderLen > reader.memFile.size:
     failArchiveEOF()
 
   if read32(src, pos) != fileHeaderSignature:
@@ -69,7 +71,7 @@ proc extractFile*(
     fileNameLen = read16(src, pos + 26).int
     extraFieldLen = read16(src, pos + 28).int
 
-  pos += 30 + fileNameLen + extraFieldLen
+  pos += fileHeaderLen + fileNameLen + extraFieldLen
 
   if pos + record.compressedSize > reader.memFile.size:
     failArchiveEOF()
@@ -328,7 +330,7 @@ proc openZipArchive*(
 
           extraFieldsOffset += 4
 
-          if fieldId != 1:
+          if fieldId != zip64ExtraFieldId:
             extraFieldsOffset += fieldLen
           else:
             # These are the zip64 sizes
@@ -449,3 +451,170 @@ proc extractAll*(
     raise e
   finally:
     reader.close()
+
+when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
+  proc createZipArchive*(
+    entries: sink OrderedTable[string, string]
+  ): string {.raises: [ZippyError].} =
+
+    proc add16(dst: var string, v: int16 | uint16) =
+      dst.setLen(dst.len + 2)
+      var tmp = v
+      copyMem(dst[^2].addr, tmp.addr, 2)
+
+    proc add32(dst: var string, v: int32 | uint32) =
+      dst.setLen(dst.len + 4)
+      var tmp = v
+      copyMem(dst[^4].addr, tmp.addr, 4)
+
+    proc add64(dst: var string, v: int | int64 | uint | uint64) =
+      dst.setLen(dst.len + 8)
+      var tmp = v
+      copyMem(dst[^8].addr, tmp.addr, 8)
+
+    proc msdos(time: Time): (uint16, uint16) =
+      let
+        dt = time.local()
+        seconds = (dt.second div 2).uint16
+        minutes = dt.minute.uint16
+        hours = dt.hour.uint16
+        days = dt.monthday.uint16
+        months = dt.month.uint16
+        years = (max(0, dt.year - 1980)).uint16
+
+      var time = seconds
+      time = (minutes shl 5) or time
+      time = (hours shl 11) or time
+
+      var date = days
+      date = (months shl 5) or date
+      date = (years shl 9) or date
+
+      (time, date)
+
+    let (lastModifiedTime, lastModifiedDate) = msdos(getTime())
+
+    type ArchiveEntry = object
+      fileHeaderOffset: int
+      uncompressedLen: int
+      compressedLen: int
+      compressionMethod: uint16
+      uncompressedCrc32: uint32
+
+    var records: seq[(string, ArchiveEntry)]
+    for fileName in toSeq(entries.keys): # The entries table is modified so use toSeq
+      if fileName == "":
+        raise newException(ZippyError, "Invalid empty file name")
+      if fileName[0] == '/':
+        raise newException(ZippyError, "File paths must be relative")
+      if fileName.len > uint16.high.int:
+        raise newException(ZippyError, "File name len > uint16.high")
+
+      var
+        uncompressedLen: int
+        uncompressedCrc32: uint32
+        compressed: string
+        compressionMethod: uint16
+      block: # Free `contents` after this block
+        var contents: string
+        discard entries.pop(fileName, contents)
+        uncompressedLen = contents.len
+        uncompressedCrc32 = crc32(contents)
+        if contents == "":
+          discard
+        else:
+          compressed = compress(contents, BestSpeed, dfDeflate)
+          compressionMethod = 8
+
+      records.add((fileName, ArchiveEntry(
+        fileHeaderOffset: result.len,
+        uncompressedLen: uncompressedLen,
+        compressedLen: compressed.len,
+        compressionMethod: compressionMethod,
+        uncompressedCrc32: uncompressedCrc32
+      )))
+
+      result.add32(fileHeaderSignature)
+      result.add16(45) # Min version to extract
+      result.add16(1.uint16 shl 11) # General purpose flags
+      result.add16(compressionMethod)
+      result.add16(lastModifiedTime)
+      result.add16(lastModifiedDate)
+      result.add32(uncompressedCrc32) # CRC-32 of uncompressed data
+      result.add32(uint32.high) # Compressed size (or 0xffffffff for ZIP64)
+      result.add32(uint32.high) # Uncompressed size (or 0xffffffff for ZIP64)
+      result.add16(cast[uint16](fileName.len)) # File name length
+      result.add16(20) # Extra field length
+
+      result.add(fileName)
+
+      result.add16(zip64ExtraFieldId)
+      result.add16(16)
+      result.add64(uncompressedLen)
+      result.add64(compressed.len)
+
+      # result.add(compressed)
+      if compressed != "":
+        result.setLen(result.len + compressed.len)
+        copyMem(
+          result[result.len - compressed.len].addr,
+          compressed.cstring,
+          compressed.len
+        )
+
+    let centralDirectoryStart = result.len
+
+    for i in 0 ..< records.len:
+      let entry = records[i][1]
+      result.add32(centralDirectoryFileHeaderSignature)
+      result.add16(45) # Version made by
+      result.add16(45) # Min version to extract
+      result.add16(1.uint16 shl 11) # General purpose flags
+      result.add16(entry.compressionMethod)
+      result.add16(lastModifiedTime)
+      result.add16(lastModifiedDate)
+      result.add32(entry.uncompressedCrc32)
+      result.add32(uint32.high) # Compressed size (or 0xffffffff for ZIP64)
+      result.add32(uint32.high) # Uncompressed size (or 0xffffffff for ZIP64)
+      result.add16(cast[uint16](records[i][0].len)) # File name length
+      result.add16(28) # Extra field length
+      result.add16(0) # File comment length
+      result.add16(0) # Disk number where file starts
+      result.add16(0) # Internal file attributes
+      result.add32(0) # External file attributes
+      result.add32(uint32.high) # Relative offset of local file header (or 0xffffffff for ZIP64)
+
+      result.add(records[i][0])
+
+      result.add16(zip64ExtraFieldId)
+      result.add16(24)
+      result.add64(entry.uncompressedLen)
+      result.add64(entry.compressedLen)
+      result.add64(entry.fileHeaderOffset)
+
+    let centralDirectoryEnd = result.len
+
+    result.add32(zip64EndOfCentralDirectorySignature)
+    result.add64(44)
+    result.add16(45)
+    result.add16(45)
+    result.add32(0)
+    result.add32(0)
+    result.add64(records.len)
+    result.add64(records.len)
+    result.add64(centralDirectoryEnd - centralDirectoryStart)
+    result.add64(centralDirectoryStart)
+
+    result.add32(zip64EndOfCentralDirectoryLocatorSignature)
+    result.add32(0)
+    result.add64(centralDirectoryEnd)
+    result.add32(1)
+
+    result.add32(endOfCentralDirectorySignature)
+    result.add16(0) # Number of this disk
+    result.add16(0) # Disk where central directory starts
+    result.add16(uint16.high) # Number of central directory records on this disk (or 0xffff for ZIP64)
+    result.add16(uint16.high) # Total number of central directory records (or 0xffff for ZIP64)
+    result.add32(uint32.high) # Size of central directory (bytes) (or 0xffffffff for ZIP64)
+    result.add32(uint32.high) # Offset of start of central directory, relative to start of archive (or 0xffffffff for ZIP64)
+    result.add16(0)
