@@ -453,9 +453,10 @@ proc extractAll*(
     reader.close()
 
 when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
-  proc createZipArchive*(
-    entries: sink OrderedTable[string, string]
-  ): string {.raises: [ZippyError].} =
+  # For some reason `sink Table | OrderedTable` does not work, so work around:
+  template createZipArchiveImpl(
+    entries: var Table[string, string] | var OrderedTable[string, string]
+  ) =
 
     proc add16(dst: var string, v: int16 | uint16) =
       dst.setLen(dst.len + 2)
@@ -618,3 +619,13 @@ when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
     result.add32(uint32.high) # Size of central directory (bytes) (or 0xffffffff for ZIP64)
     result.add32(uint32.high) # Offset of start of central directory, relative to start of archive (or 0xffffffff for ZIP64)
     result.add16(0)
+
+  proc createZipArchive*(
+    entries: sink Table[string, string]
+  ): string {.raises: [ZippyError].} =
+    createZipArchiveImpl(entries)
+
+  proc createZipArchive*(
+    entries: sink OrderedTable[string, string]
+  ): string {.raises: [ZippyError].} =
+    createZipArchiveImpl(entries)
