@@ -502,8 +502,11 @@ when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
       compressionMethod: uint16
       uncompressedCrc32: uint32
 
-    var records: seq[(string, ArchiveEntry)]
-    for fileName in toSeq(entries.keys): # The entries table is modified so use toSeq
+    var
+      keys = toSeq(entries.keys) # The entries table is modified so use toSeq
+      records: seq[(string, ArchiveEntry)]
+    while keys.len > 0:
+      let fileName = keys.pop()
       if fileName == "":
         raise newException(ZippyError, "Invalid empty file name")
       if fileName[0] == '/':
