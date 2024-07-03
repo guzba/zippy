@@ -27,7 +27,7 @@ type
 
   ZipArchiveReader* = ref object
     memFile: MemFile
-    records: Table[string, ZipArchiveRecord]
+    records: OrderedTable[string, ZipArchiveRecord]
 
 iterator walkFiles*(reader: ZipArchiveReader): string =
   ## Walks over all files in the archive and returns the file name
