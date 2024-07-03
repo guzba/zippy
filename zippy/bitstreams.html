@@ -12,10 +12,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4QQQEwksSS9ZWwAAAk1JREFUWMPtll2ITVEUx39nn/O7Y5qR8f05wtCUUr6ZIS++8pEnkZInPImneaCQ5METNdOkeFBKUhMPRIkHKfEuUZSUlGlKPN2TrgfncpvmnntnmlEyq1Z7t89/rf9a6+y99oZxGZf/XeIq61EdtgKXgdXA0xrYAvBjOIF1AI9zvjcC74BSpndrJPkBWDScTF8Aa4E3wDlgHbASaANmVqlcCnwHvgDvgVfAJ+AikAAvgfVZwLnSVZHZaOuKoQi3ZOMi4NkYkpe1p4J7A8BpYAD49hfIy/oqG0+hLomiKP2L5L+1ubn5115S+3OAn4EnwBlgMzCjyt6ZAnQCJ4A7wOs88iRJHvw50HoujuPBoCKwHWiosy8MdfZnAdcHk8dxXFJ3VQbQlCTJvRBCGdRbD4M6uc5glpY3eAihpN5S5w12diSEcCCEcKUO4ljdr15T76ur1FDDLIQQ3qv71EdDOe3Kxj3leRXyk+pxdWnFWod6Wt2bY3de3aSuUHcPBVimHs7mK9WrmeOF6lR1o9qnzskh2ar2qm1qizpfXaPeVGdlmGN5pb09qMxz1Xb1kLqgzn1RyH7JUXW52lr5e/Kqi9qpto7V1atuUzfnARrV7jEib1T76gG2qxdGmXyiekkt1GswPTtek0aBfJp6YySGBfWg2tPQ0FAYgf1stUfdmdcjarbYJEniKIq6gY/Aw+zWHAC+p2labGpqiorFYgGYCEzN7oQdQClN07O1/EfDyGgC0ALMBdYAi4FyK+4H3gLPsxfR1zRNi+NP7nH5J+QntnXe5B5mpfQAAAAASUVORK5CYII=">
 
 <!-- CSS -->
-<link rel="stylesheet" type="text/css" href="../nimdoc.out.css?v=2.0.4">
+<link rel="stylesheet" type="text/css" href="../nimdoc.out.css?v=2.0.8">
 
 <!-- JS -->
-<script type="text/javascript" src="../dochack.js?v=2.0.4"></script>
+<script type="text/javascript" src="../dochack.js?v=2.0.8"></script>
 </head>
 <body>
   <div class="document" id="documentId">
@@ -58,11 +58,9 @@
   src*: ptr UncheckedArray[uint8]
   len*, pos*: int
   when (defined(arm64) and defined(macosx)) or sizeof(int) == 4:
-      bitBuffer*: uint32
-
+    bitBuffer*: uint32
   else:
-      bitBuffer*: uint64
-
+    bitBuffer*: uint64
   bitsBuffered*: int">BitStreamReader</a></li>
 <li><a class="reference" href="#BitStreamWriter" title="BitStreamWriter = object
   pos*, bitPos*: int">BitStreamWriter</a></li>
@@ -142,13 +140,10 @@
   <span class="Identifier">src</span><span class="Operator">*</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">uint8</span><span class="Other">]</span>
   <span class="Identifier">len</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">pos</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span>
   <span class="Keyword">when</span> <span class="Other">(</span><span class="Identifier">defined</span><span class="Other">(</span><span class="Identifier">arm64</span><span class="Other">)</span> <span class="Keyword">and</span> <span class="Identifier">defined</span><span class="Other">(</span><span class="Identifier">macosx</span><span class="Other">)</span><span class="Other">)</span> <span class="Keyword">or</span> <span class="Identifier">sizeof</span><span class="Other">(</span><span class="Identifier">int</span><span class="Other">)</span> <span class="Operator">==</span> <span class="DecNumber">4</span><span class="Other">:</span>
-      <span class="Identifier">bitBuffer</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint32</span>
-
+    <span class="Identifier">bitBuffer</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint32</span>
   <span class="Keyword">else</span><span class="Other">:</span>
-      <span class="Identifier">bitBuffer</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint64</span>
-
-  <span class="Identifier">bitsBuffered</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span>
-</pre></dt>
+    <span class="Identifier">bitBuffer</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint64</span>
+  <span class="Identifier">bitsBuffered</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span></pre></dt>
   <dd>
     
     
@@ -159,8 +154,7 @@
 </div>
 <div id="BitStreamWriter">
   <dt><pre><a href="bitstreams.html#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
-  <span class="Identifier">pos</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">bitPos</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span>
-</pre></dt>
+  <span class="Identifier">pos</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">bitPos</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span></pre></dt>
   <dd>
     
     
@@ -300,7 +294,7 @@
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2024-04-18 17:40:01 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2024-07-03 17:55:27 UTC</small>
       </div>
     </div>
   </div>
