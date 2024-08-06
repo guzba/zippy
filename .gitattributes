@@ -1,1 +1,2 @@
 tests/data/* -crlf
+tests/data/ziparchives/deflate64/* crlf
