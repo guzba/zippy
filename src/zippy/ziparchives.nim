@@ -11,6 +11,9 @@ const
   zip64EndOfCentralDirectorySignature = 0x06064b50.uint32
   zip64EndOfCentralDirectoryLocatorSignature = 0x07064b50.uint32
   zip64ExtraFieldId = 1.uint16
+  NoneCompression = 0.uint16
+  DeflateCompression = 8.uint16
+  Deflate64Compression = 9.uint16
 
 type
   ZipArchiveRecordKind = enum
@@ -78,11 +81,11 @@ proc extractFile*(
 
   case record.kind:
   of FileRecord:
-    if compressionMethod == 0: # No compression
+    if compressionMethod == NoneCompression: # No compression
       if record.compressedSize > 0:
         result.setLen(record.compressedSize)
         copyMem(result[0].addr, src[pos].addr, record.compressedSize)
-    elif compressionMethod == 8: # Deflate
+    elif compressionMethod in [DeflateCompression, Deflate64Compression]:
       result = uncompress(src[pos].addr, record.compressedSize, dfDeflate)
     else:
       raise newException(ZippyError, "Unsupported archive, compression method")
@@ -293,7 +296,7 @@ proc openZipArchive*(
         # internalFileAttr = read16(src, pos + 36)
         externalFileAttr = read32(src, pos + 38)
 
-      if compressionMethod notin [0.uint16, 8]:
+      if compressionMethod notin [NoneCompression, DeflateCompression, Deflate64Compression]:
         raise newException(ZippyError, "Unsupported archive, compression method")
 
       if fileDiskNumber != 0:
