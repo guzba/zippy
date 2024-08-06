@@ -1,4 +1,4 @@
-import std/os, zippy/ziparchives, std/tables
+import std/os, zippy/ziparchives, std/tables, std/strutils, std/strformat
 
 const testDir = getTempDir() # "tmp/zip"
 
@@ -61,3 +61,25 @@ block:
   except:
     let e = getCurrentException()
     doAssert e.msg == "Error adding file tests/data/ziparchives/ to archive, appears to be a directory?"
+
+block: # Test deflate64
+  # test file obtained from https://github.com/brianhelba/zipfile-deflate64/tree/beec33184da6da4697a1994c0ac4c64cef8cff50/tests/data
+  let
+    archive = openZipArchive("tests/data/ziparchives/deflate64test.zip")
+    entries = {
+      "100_lines.txt": (101, 1890),
+      "100k_lines.txt": (100_001, 2188890),
+      "10_lines.txt": (11, 180),
+      "10k_lines.txt": (10_001, 208890),
+    }.toTable()
+  var numEntries: int
+  for entry in archive.walkFiles:
+    let
+      contents = archive.extractFile(entry)
+      actual_lines = contents.splitLines.len
+      actual_size = contents.len
+      (lines, size) = entries[entry]
+    doAssert actual_lines == lines, &"Expected {entry} to have {lines} not {actual_lines}"
+    doAssert actual_size == size, &"Expected {entry} to be {size} bytes not {actual_size}"
+    inc numEntries
+  doAssert numEntries == entries.len
