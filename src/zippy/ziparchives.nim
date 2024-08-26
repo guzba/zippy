@@ -383,7 +383,7 @@ proc openZipArchive*(
         compressedSize: compressedSize,
         uncompressedSize: uncompressedSize,
         uncompressedCrc32: uncompressedCrc32,
-        filePermissions: parseFilePermissions((externalFileAttr.uint shr 16).int)
+        filePermissions: parseFilePermissions(externalFileAttr shr 16)
       )
   except IOError as e:
     result.close()

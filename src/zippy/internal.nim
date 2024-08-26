@@ -110,16 +110,16 @@ const
     16.uint8, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
   ]
 
-  S_IFDIR* = 0o0040000
-  TUREAD* = 0o00400 # read by owner */
-  TUWRITE* = 0o00200 # write by owner */
-  TUEXEC* = 0o00100 # execute/search by owner */
-  TGREAD* = 0o00040 # read by group */
-  TGWRITE* = 0o00020 # write by group */
-  TGEXEC* = 0o00010 # execute/search by group */
-  TOREAD* = 0o00004 # read by other */
-  TOWRITE* = 0o00002 # write by other */
-  TOEXEC* = 0o00001 # execute/search by other */
+  S_IFDIR* = 0o0040000'u32
+  TUREAD* = 0o00400'u32 # read by owner */
+  TUWRITE* = 0o00200'u32 # write by owner */
+  TUEXEC* = 0o00100'u32 # execute/search by owner */
+  TGREAD* = 0o00040'u32 # read by group */
+  TGWRITE* = 0o00020'u32 # write by group */
+  TGEXEC* = 0o00010'u32 # execute/search by group */
+  TOREAD* = 0o00004'u32 # read by other */
+  TOWRITE* = 0o00002'u32 # write by other */
+  TOEXEC* = 0o00001'u32 # execute/search by other */
 
 type
   CompressionConfig* = object
@@ -272,7 +272,7 @@ proc determineMatchLength*(
 proc toUnixPath*(path: string): string =
   path.replace('\\', '/')
 
-proc parseFilePermissions*(permissions: int): set[FilePermission] =
+proc parseFilePermissions*(permissions: uint32): set[FilePermission] =
   if defined(windows) or permissions == 0:
     # Ignore file permissions on Windows. If they are absent (.zip made on
     # Windows for example), set default permissions.
