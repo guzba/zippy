@@ -102,7 +102,10 @@ proc extractAll*(
             dest / path,
             uncompressed.toOpenArray(pos, max(pos + size - 1, 0))
           )
-          setFilePermissions(dest / path, parseFilePermissions(mode))
+          setFilePermissions(
+            dest / path,
+            parseFilePermissions(cast[uint32](mode))
+          )
           lastModifiedTimes.add (path, initTime(mtime, 0))
         elif typeflag == '5': # Directories
           createDir(dest / path)

@@ -145,7 +145,7 @@ proc openStreamImpl(
           kind: ekNormalFile,
           contents: data[pos ..< pos + fileSize],
           lastModified: initTime(lastModified, 0),
-          permissions: parseFilePermissions(fileMode),
+          permissions: parseFilePermissions(cast[uint32](fileMode)),
         )
     elif typeFlag == '5':
       tarball.contents[(fileNamePrefix / fileName).toUnixPath()] =
