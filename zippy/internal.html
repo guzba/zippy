@@ -184,16 +184,16 @@
 <li><a class="reference" href="#maxUncompressedBlockSize" title="maxUncompressedBlockSize = 65535">maxUncompressedBlockSize</a></li>
 <li><a class="reference" href="#maxWindowSize" title="maxWindowSize = 32768">maxWindowSize</a></li>
 <li><a class="reference" href="#minMatchLen" title="minMatchLen = 4">minMatchLen</a></li>
-<li><a class="reference" href="#S_IFDIR" title="S_IFDIR = 0o000000040000">S_IFDIR</a></li>
-<li><a class="reference" href="#TGEXEC" title="TGEXEC = 0o000000000010">TGEXEC</a></li>
-<li><a class="reference" href="#TGREAD" title="TGREAD = 0o000000000040">TGREAD</a></li>
-<li><a class="reference" href="#TGWRITE" title="TGWRITE = 0o000000000020">TGWRITE</a></li>
-<li><a class="reference" href="#TOEXEC" title="TOEXEC = 0o000000000001">TOEXEC</a></li>
-<li><a class="reference" href="#TOREAD" title="TOREAD = 0o000000000004">TOREAD</a></li>
-<li><a class="reference" href="#TOWRITE" title="TOWRITE = 0o000000000002">TOWRITE</a></li>
-<li><a class="reference" href="#TUEXEC" title="TUEXEC = 0o000000000100">TUEXEC</a></li>
-<li><a class="reference" href="#TUREAD" title="TUREAD = 0o000000000400">TUREAD</a></li>
-<li><a class="reference" href="#TUWRITE" title="TUWRITE = 0o000000000200">TUWRITE</a></li>
+<li><a class="reference" href="#S_IFDIR" title="S_IFDIR = 0o000000040000'u32">S_IFDIR</a></li>
+<li><a class="reference" href="#TGEXEC" title="TGEXEC = 0o000000000010'u32">TGEXEC</a></li>
+<li><a class="reference" href="#TGREAD" title="TGREAD = 0o000000000040'u32">TGREAD</a></li>
+<li><a class="reference" href="#TGWRITE" title="TGWRITE = 0o000000000020'u32">TGWRITE</a></li>
+<li><a class="reference" href="#TOEXEC" title="TOEXEC = 0o000000000001'u32">TOEXEC</a></li>
+<li><a class="reference" href="#TOREAD" title="TOREAD = 0o000000000004'u32">TOREAD</a></li>
+<li><a class="reference" href="#TOWRITE" title="TOWRITE = 0o000000000002'u32">TOWRITE</a></li>
+<li><a class="reference" href="#TUEXEC" title="TUEXEC = 0o000000000100'u32">TUEXEC</a></li>
+<li><a class="reference" href="#TUREAD" title="TUREAD = 0o000000000400'u32">TUREAD</a></li>
+<li><a class="reference" href="#TUWRITE" title="TUWRITE = 0o000000000200'u32">TUWRITE</a></li>
 
     </ul>
   </details>
@@ -219,7 +219,7 @@
 
 </ul>
 <ul class="simple nested-toc-section">parseFilePermissions
-  <li><a class="reference" href="#parseFilePermissions%2Cint" title="parseFilePermissions(permissions: int): set[FilePermission]">parseFilePermissions(permissions: int): set[FilePermission]</a></li>
+  <li><a class="reference" href="#parseFilePermissions%2Cuint32" title="parseFilePermissions(permissions: uint32): set[FilePermission]">parseFilePermissions(permissions: uint32): set[FilePermission]</a></li>
 
 </ul>
 <ul class="simple nested-toc-section">read16
@@ -663,7 +663,7 @@
   </dd>
 </div>
 <div id="S_IFDIR">
-  <dt><pre><a href="internal.html#S_IFDIR"><span class="Identifier">S_IFDIR</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000040000</span></pre></dt>
+  <dt><pre><a href="internal.html#S_IFDIR"><span class="Identifier">S_IFDIR</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000040000'u32</span></pre></dt>
   <dd>
     
     
@@ -673,7 +673,7 @@
   </dd>
 </div>
 <div id="TGEXEC">
-  <dt><pre><a href="internal.html#TGEXEC"><span class="Identifier">TGEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000010</span></pre></dt>
+  <dt><pre><a href="internal.html#TGEXEC"><span class="Identifier">TGEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000010'u32</span></pre></dt>
   <dd>
     
     
@@ -683,7 +683,7 @@
   </dd>
 </div>
 <div id="TGREAD">
-  <dt><pre><a href="internal.html#TGREAD"><span class="Identifier">TGREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000040</span></pre></dt>
+  <dt><pre><a href="internal.html#TGREAD"><span class="Identifier">TGREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000040'u32</span></pre></dt>
   <dd>
     
     
@@ -693,7 +693,7 @@
   </dd>
 </div>
 <div id="TGWRITE">
-  <dt><pre><a href="internal.html#TGWRITE"><span class="Identifier">TGWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000020</span></pre></dt>
+  <dt><pre><a href="internal.html#TGWRITE"><span class="Identifier">TGWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000020'u32</span></pre></dt>
   <dd>
     
     
@@ -703,7 +703,7 @@
   </dd>
 </div>
 <div id="TOEXEC">
-  <dt><pre><a href="internal.html#TOEXEC"><span class="Identifier">TOEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000001</span></pre></dt>
+  <dt><pre><a href="internal.html#TOEXEC"><span class="Identifier">TOEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000001'u32</span></pre></dt>
   <dd>
     
     
@@ -713,7 +713,7 @@
   </dd>
 </div>
 <div id="TOREAD">
-  <dt><pre><a href="internal.html#TOREAD"><span class="Identifier">TOREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000004</span></pre></dt>
+  <dt><pre><a href="internal.html#TOREAD"><span class="Identifier">TOREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000004'u32</span></pre></dt>
   <dd>
     
     
@@ -723,7 +723,7 @@
   </dd>
 </div>
 <div id="TOWRITE">
-  <dt><pre><a href="internal.html#TOWRITE"><span class="Identifier">TOWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000002</span></pre></dt>
+  <dt><pre><a href="internal.html#TOWRITE"><span class="Identifier">TOWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000002'u32</span></pre></dt>
   <dd>
     
     
@@ -733,7 +733,7 @@
   </dd>
 </div>
 <div id="TUEXEC">
-  <dt><pre><a href="internal.html#TUEXEC"><span class="Identifier">TUEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000100</span></pre></dt>
+  <dt><pre><a href="internal.html#TUEXEC"><span class="Identifier">TUEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000100'u32</span></pre></dt>
   <dd>
     
     
@@ -743,7 +743,7 @@
   </dd>
 </div>
 <div id="TUREAD">
-  <dt><pre><a href="internal.html#TUREAD"><span class="Identifier">TUREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000400</span></pre></dt>
+  <dt><pre><a href="internal.html#TUREAD"><span class="Identifier">TUREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000400'u32</span></pre></dt>
   <dd>
     
     
@@ -753,7 +753,7 @@
   </dd>
 </div>
 <div id="TUWRITE">
-  <dt><pre><a href="internal.html#TUWRITE"><span class="Identifier">TUWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000200</span></pre></dt>
+  <dt><pre><a href="internal.html#TUWRITE"><span class="Identifier">TUWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000200'u32</span></pre></dt>
   <dd>
     
     
@@ -825,9 +825,9 @@
 
 </div>
 <div id="parseFilePermissions-procs-all">
-  <div id="parseFilePermissions,int">
-  <dt><pre><span class="Keyword">proc</span> <a href="#parseFilePermissions%2Cint"><span class="Identifier">parseFilePermissions</span></a><span class="Other">(</span><span class="Identifier">permissions</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">set</span><span class="Other">[</span><span class="Identifier">FilePermission</span><span class="Other">]</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
-    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
+  <div id="parseFilePermissions,uint32">
+  <dt><pre><span class="Keyword">proc</span> <a href="#parseFilePermissions%2Cuint32"><span class="Identifier">parseFilePermissions</span></a><span class="Other">(</span><span class="Identifier">permissions</span><span class="Other">:</span> <span class="Identifier">uint32</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">set</span><span class="Other">[</span><span class="Identifier">FilePermission</span><span class="Other">]</span> {.
+    <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
     
     
@@ -1025,7 +1025,7 @@
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2024-08-26 21:57:04 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2024-08-26 22:16:18 UTC</small>
       </div>
     </div>
   </div>

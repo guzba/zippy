@@ -48,7 +48,7 @@ nim	read32	zippy/internal.html#read32,string,int	proc read32(s: string; pos: int
 nim	distanceCodeIndex	zippy/internal.html#distanceCodeIndex,uint16	proc distanceCodeIndex(value: uint16): uint16		224
 nim	determineMatchLength	zippy/internal.html#determineMatchLength,ptr.UncheckedArray[uint8],int,int,int	proc determineMatchLength(src: ptr UncheckedArray[uint8]; s1, s2, limit: int): int		251
 nim	toUnixPath	zippy/internal.html#toUnixPath,string	proc toUnixPath(path: string): string		272
-nim	parseFilePermissions	zippy/internal.html#parseFilePermissions,int	proc parseFilePermissions(permissions: int): set[FilePermission]		275
+nim	parseFilePermissions	zippy/internal.html#parseFilePermissions,uint32	proc parseFilePermissions(permissions: uint32): set[FilePermission]		275
 nim	verifyPathIsSafeToExtract	zippy/internal.html#verifyPathIsSafeToExtract,string	proc verifyPathIsSafeToExtract(path: string)		294
 nim	writeFile	zippy/internal.html#writeFile,string,openArray[char]	proc writeFile(filename: string; content: openArray[char])		305
 nim	currentExceptionAsZippyError	zippy/internal.html#currentExceptionAsZippyError.t	template currentExceptionAsZippyError(): untyped		318
