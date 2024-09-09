@@ -1,4 +1,4 @@
-import std/os, zippy/ziparchives, std/tables
+import std/os, zippy/ziparchives, std/tables, std/strformat
 
 const testDir = getTempDir() # "tmp/zip"
 
@@ -61,3 +61,16 @@ block:
   except:
     let e = getCurrentException()
     doAssert e.msg == "Error adding file tests/data/ziparchives/ to archive, appears to be a directory?"
+
+block: # Test deflate64
+  # test file obtained from https://github.com/brianhelba/zipfile-deflate64/tree/beec33184da6da4697a1994c0ac4c64cef8cff50/tests/data
+  let
+    archive = openZipArchive("tests/data/ziparchives/deflate64test.zip")
+  var numEntries: int
+  for entry in archive.walkFiles:
+    let
+      fromZip = archive.extractFile(entry)
+      fromDisk = readFile("tests/data/ziparchives/deflate64" / entry)
+    doAssert fromZip == fromDisk, &"{entry} not the same as on-disk version {fromZip.len} {fromDisk.len}"
+    inc numEntries
+  doAssert numEntries == 4
