@@ -200,7 +200,7 @@ proc findStartOfCentralDirectory(
     dec result
 
 
-proc openZipArchiveInternal*(
+proc openZipArchiveInternal(
   reader: ZipArchiveReader
 ): ZipArchiveReader {.raises: [IOError, OSError, ZippyError].} =
   result = reader
