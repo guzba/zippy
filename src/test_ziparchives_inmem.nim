@@ -1,4 +1,4 @@
-import zippy/ziparchives, zippy/ziparchives_inmem
+import zippy/ziparchives
 
 proc test_case() =
   var archive = open_zip_archive("inner_test.zip")
