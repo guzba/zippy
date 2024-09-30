@@ -426,10 +426,8 @@ proc openZipArchiveBytes*(
   result.byteString = byteString
   return openZipArchiveInternal(result)
 
-proc extractAll*(
-  zipPath, dest: string
-) {.raises: [IOError, OSError, ZippyError].} =
-  ## Extracts the files stored in archive to the destination directory.
+
+proc checkExtractDestination(dest: string) {.raises: [IOError, OSError, ZippyError].} =
   ## The path to the destination directory must exist.
   ## The destination directory itself must not exist (it is not overwitten).
   if dest == "" or dirExists(dest):
@@ -441,9 +439,10 @@ proc extractAll*(
   if head != "" and not dirExists(head):
     raise newException(ZippyError, "Path to " & dest & " does not exist")
 
-  let
-    reader = openZipArchive(zipPath)
-    src = reader.getDataPtr()
+proc extractAllInternal(
+  reader: ZipArchiveReader, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
+  let src = reader.getDataPtr()
 
   # Verify some things before attempting to write the files
   for _, record in reader.records:
@@ -482,6 +481,22 @@ proc extractAll*(
     raise e
   finally:
     reader.close()
+
+proc extractAll*(
+  zipPath, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
+  ## Extracts the files stored in archive to the destination directory.
+  checkExtractDestination(dest)
+  let reader = openZipArchive(zipPath)
+  extractAllInternal(reader, dest)
+
+proc extractAllBytes*(
+  zipBytes, dest: string
+) {.raises: [IOError, OSError, ZippyError].} =
+  ## Extracts the files stored in byte-string archive to the destination directory.
+  checkExtractDestination(dest)
+  let reader = openZipArchiveBytes(zipBytes)
+  extractAllInternal(reader, dest)
 
 when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
   # For some reason `sink Table | OrderedTable` does not work, so work around:
