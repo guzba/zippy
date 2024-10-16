@@ -10,6 +10,7 @@ else:
 const
   fastBits = 9
   fastMask = (1 shl fastBits) - 1
+  maxLookBack = 32_768
 
 type Huffman = object
   firstCode, firstSymbol: array[16, uint16]
@@ -289,6 +290,50 @@ proc inflate*(dst: var string, src: ptr UncheckedArray[uint8], len, pos: int) =
       raise newException(ZippyError, "Invalid block header")
 
   dst.setLen(op)
+
+iterator inflateStream*(src: ptr UncheckedArray[uint8], len, pos: int): string =
+  var
+    b = BitStreamReader(src: src, len: len, pos: pos)
+    op: int
+    finalBlock: bool
+    dst: string
+
+  var count = 0
+  while not finalBlock:
+    let
+      bfinal = b.readBits(1)
+      btype = b.readBits(2)
+
+    if bfinal != 0.uint16:
+      finalBlock = true
+
+    case btype:
+    of 0: # No compression
+      inflateNoCompression(dst, b, op)
+    of 1: # Compressed with fixed Huffman codes
+      inflateBlock(dst, b, op, true)
+    of 2: # Compressed with dynamic Huffman codes
+      inflateBlock(dst, b, op, false)
+    else:
+      raise newException(ZippyError, "Invalid block header")
+
+    count += 1
+    dst.setLen(op)
+    if op >= maxLookBack:
+      let tailEnd = op - maxLookBack
+      let tail = dst[0 ..< tailEnd]   # outside of lookback range
+      let head = dst[tailEnd .. ^1]   # inside of lookback range
+      op = maxLookBack                # reset op to same character position
+      dst = head
+      yield tail
+    else:
+      # small files may be smaller than the max lookback range
+      yield dst
+
+  if count > 1:
+    # final block when multiple
+    yield dst
+
 
 when defined(release):
   {.pop.}

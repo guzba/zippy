@@ -1,4 +1,4 @@
-import benchy, std/strformat, zip/zlib, zippy
+import benchy, std/strformat, zip/zlib, zippy, zippy/gzip
 
 const
   zs = [
@@ -8,6 +8,7 @@ const
     "randtest3.gz",
     "paper-100k.pdf.gz",
     "geo.protodata.gz",
+    "gzipfiletest_large.txt.gz",
     "tor-list.gz"
   ]
   golds = [
@@ -17,7 +18,7 @@ const
     "randtest3.gold",
     "paper-100k.pdf",
     "geo.protodata",
-    "gzipfiletest.txt",
+    "gzipfiletest_large.txt",
     "tor-list.gold"
   ]
 
@@ -68,3 +69,12 @@ for z in zs:
   let compressed = readFile(&"tests/data/{z}")
   timeIt z:
     discard zlib.uncompress(compressed)
+
+echo "https://github.com/guzba/zippy uncompress streaming"
+let z = "gzipfiletest_large.txt.gz"
+timeIt z:
+  let compressed = readFile(&"tests/data/{z}")
+  var uncompressed = ""
+  let data = cast[ptr UncheckedArray[uint8]](compressed.cstring)
+  for blok in uncompressGzipStream(data, compressed.len):
+    uncompressed.add(blok)
