@@ -1,4 +1,5 @@
-import std/strformat, zippy
+import std/strformat, zippy, zippy/gzip
+import std/memfiles as mm
 
 const
   gzs = [
@@ -83,3 +84,35 @@ for dataFormat in [dfDeflate, dfZlib, dfGzip]:
       )
     echo &"{dataFormat} all_uint8 original: {original.len} compressed: {compressed.len}"
     doAssert original == uncompressed
+
+block gzip_stream_single_block:
+  let
+    compressed = mm.open("tests/data/gzipfiletest.txt.gz", fmRead)
+    gold = readFile("tests/data/gzipfiletest.txt")
+
+  var num_blocks = 0
+  var uncompressed = ""
+  let data = cast[ptr UncheckedArray[uint8]](compressed.mem)
+  for blok in uncompressGzipStream(src=data, len=compressed.size):
+    uncompressed.add(blok)
+    num_blocks += 1
+
+  doASsert num_blocks == 1
+  echo &"gzip_stream uncompressed: {uncompressed.len} gold: {gold.len}"
+  doAssert uncompressed == gold
+
+block gzip_stream_many_blocks:
+  let
+    compressed = mm.open("tests/data/gzipfiletest_large.txt.gz", fmRead)
+    gold = readFile("tests/data/gzipfiletest_large.txt")
+
+  var num_blocks = 0
+  var uncompressed = ""
+  let data = cast[ptr UncheckedArray[uint8]](compressed.mem)
+  for blok in uncompressGzipStream(src=data, len=compressed.size):
+    uncompressed.add(blok)
+    num_blocks += 1
+
+  doASsert num_blocks > 1
+  echo &"gzip_stream uncompressed: {uncompressed.len} gold: {gold.len}"
+  doAssert uncompressed == gold
