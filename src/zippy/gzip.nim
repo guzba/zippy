@@ -73,5 +73,5 @@ proc uncompressGzip*(
   if checksum != crc32(dst):
     raise newException(ZippyError, "Checksum verification failed")
 
-  if isize != (dst.len mod (1 shl 32)).uint32:
+  if isize != (dst.len mod (1 shl 31)).uint32:
     raise newException(ZippyError, "Size verification failed")
