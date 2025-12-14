@@ -94,8 +94,8 @@ proc addBits*(
   assert bitLen >= 0 and bitLen <= 32
 
   if b.pos + 8 > dst.len:
-    # Make sure we have room to read64
-    dst.setLen(max(dst.len * 2, 8))
+    # Make sure we have room to write64
+    dst.setLen(max(dst.len * 2, b.pos + 8))
 
   let
     dst = cast[ptr UncheckedArray[uint8]](dst[0].addr)
