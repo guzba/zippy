@@ -5,5 +5,5 @@ nim	compress	zippy.html#compress,seq[uint8]	proc compress(src: seq[uint8]; level
 nim	uncompress	zippy.html#uncompress,pointer,int	proc uncompress(src: pointer; len: int; dataFormat = dfDetect): string		100
 nim	uncompress	zippy.html#uncompress,string	proc uncompress(src: string; dataFormat = dfDetect): string		167
 nim	uncompress	zippy.html#uncompress,seq[uint8]	proc uncompress(src: seq[uint8]; dataFormat = dfDetect): seq[uint8]		173
-nimgrp	compress	zippy.html#compress-procs-all	proc		11
 nimgrp	uncompress	zippy.html#uncompress-procs-all	proc		100
+nimgrp	compress	zippy.html#compress-procs-all	proc		11

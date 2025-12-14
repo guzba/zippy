@@ -53,5 +53,5 @@ nim	verifyPathIsSafeToExtract	zippy/internal.html#verifyPathIsSafeToExtract,stri
 nim	writeFile	zippy/internal.html#writeFile,string,openArray[char]	proc writeFile(filename: string; content: openArray[char])		305
 nim	currentExceptionAsZippyError	zippy/internal.html#currentExceptionAsZippyError.t	template currentExceptionAsZippyError(): untyped		318
 nim	cpuid	zippy/internal.html#cpuid,int32,int32	proc cpuid(eaxi, ecxi: int32): tuple[eax, ebx, ecx, edx: int32]		325
-nimgrp	read16	zippy/internal.html#read16-procs-all	proc		203
 nimgrp	read32	zippy/internal.html#read32-procs-all	proc		206
+nimgrp	read16	zippy/internal.html#read16-procs-all	proc		203
