@@ -66,8 +66,8 @@ proc uncompressGzip*(
     isize = read32(src, len - 4)
 
   when sizeof(int) == 4:
-    if isize > int.high:
-      raise newException(ZippyError, "Uncompressed size exceeds max string length")
+    if isize > int.high.uint32:
+      raise newException(ZippyError, "Uncompressed size exceeds max string len")
 
   if trustSize:
     when sizeof(int) == 4:
