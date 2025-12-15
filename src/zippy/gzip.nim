@@ -65,13 +65,24 @@ proc uncompressGzip*(
     checksum = read32(src, len - 8)
     isize = read32(src, len - 4)
 
+  when sizeof(int) == 4:
+    if isize > int.high.uint32:
+      raise newException(ZippyError, "Uncompressed size exceeds max string len")
+
   if trustSize:
-    dst.setLen(isize + 16) # Leave some room to write past the end
+    when sizeof(int) == 4:
+      dst.setLen(isize)
+    else:
+      dst.setLen(isize + 16) # Leave some room to write past the end
 
   inflate(dst, src, len, pos)
 
   if checksum != crc32(dst):
     raise newException(ZippyError, "Checksum verification failed")
 
-  if isize != (dst.len mod (1 shl 32)).uint32:
-    raise newException(ZippyError, "Size verification failed")
+  when sizeof(int) == 4:
+    if isize != dst.len.uint32:
+      raise newException(ZippyError, "Size verification failed")
+  else:
+    if isize != (dst.len mod (1 shl 32)).uint32:
+      raise newException(ZippyError, "Size verification failed")
