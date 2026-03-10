@@ -111,6 +111,7 @@ proc extractAll*(
           createDir(dest / path)
           lastModifiedTimes.add (path, initTime(mtime, 0))
         elif typeflag == '2': # Symlinks
+          linkname.verifyPathIsSafeToExtract()
           createDir(dest / splitFile(path).dir)
           createSymlink(linkname, dest / path)
         elif typeflag == 'L': # Long file names

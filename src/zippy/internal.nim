@@ -293,13 +293,16 @@ proc parseFilePermissions*(permissions: uint32): set[FilePermission] =
 
 proc verifyPathIsSafeToExtract*(path: string) =
   if path.isAbsolute():
-    raise newException(ZippyError, "Absolute path not allowed " & path)
+    raise newException(ZippyError, "Absolute path not allowed: " & path)
+
+  if path == "..":
+    raise newException(ZippyError, "Path .. not allowed: " & path)
 
   if path.startsWith("../") or path.startsWith(r"..\"):
-    raise newException(ZippyError, "Path ../ not allowed " & path)
+    raise newException(ZippyError, "Path ../ not allowed: " & path)
 
   if "/../" in path or r"\..\" in path:
-    raise newException(ZippyError, "Path /../ not allowed " & path)
+    raise newException(ZippyError, "Path /../ not allowed: " & path)
 
 # Nim std/os is missing a openArray[char] writeFile
 proc writeFile*(filename: string, content: openArray[char]) =

@@ -3,6 +3,11 @@ import std/os, std/strformat, zippy/tarballs
 let testDir = getTempDir()
 
 block:
+  removeDir(testDir / "bad")
+  doAssertRaises ZippyError:
+    extractAll("tests/data/tarballs/bad.tar", testDir / "bad")
+
+block:
   let testFilePaths = [
     "tests/data/tarballs/libressl-3.4.2.tar.gz"
   ]
