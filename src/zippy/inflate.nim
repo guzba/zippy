@@ -270,6 +270,14 @@ proc inflate*(dst: var string, src: ptr UncheckedArray[uint8], len, pos: int) =
     b = BitStreamReader(src: src, len: len, pos: pos)
     op: int
     finalBlock: bool
+
+  when sizeof(b.bitBuffer) == 4:
+    if len < 4:
+      raise newException(ZippyError, "Inflate src len expected to be >= 4")
+  else:
+    if len < 8:
+      raise newException(ZippyError, "Inflate src len expected to be >= 8")
+
   while not finalBlock:
     let
       bfinal = b.readBits(1)
