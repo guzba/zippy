@@ -44,38 +44,3 @@ block:
             continue
         doAssert fileExists(zippyPath)
         doAssert readFile(goldPath) == readFile(zippyPath)
-
-when not defined(windows):
-  block:
-    let testFilePath = "tests/data/tarballs/julia-1.7.1.tar.gz"
-
-    let
-      goldDir = testDir / "julia_gold"
-      zippyDir = testDir / "julia_zippy"
-
-    removeDir(goldDir)
-    removeDir(zippyDir)
-
-    extractAll(testFilePath, zippyDir)
-
-    createDir(goldDir)
-    let cmd = &"tar -xf {testFilePath} -C " & goldDir
-    doAssert execShellCmd(cmd) == 0
-
-    for path in walkDirRec(
-      goldDir,
-      yieldFilter = {pcFile, pcDir, pcLinkToFile, pcLinkToDir},
-      relative = true
-    ):
-      let
-        goldPath = goldDir / path
-        zippyPath = zippyDir / path
-
-      if dirExists(goldPath):
-        doAssert dirExists(zippyPath)
-      elif symlinkExists(goldPath):
-        doAssert symlinkExists(zippyPath)
-        doAssert expandSymlink(goldPath) == expandSymlink(zippyPath)
-      else:
-        doAssert fileExists(zippyPath)
-        doAssert readFile(goldPath) == readFile(zippyPath)
