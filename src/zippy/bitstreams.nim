@@ -32,15 +32,13 @@ proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
   when sizeof(b.bitBuffer) == 4:
     var src: uint32
     if bytesAvailable < 4:
-      copyMem(src.addr, b.src[b.len - 4].addr, 4)
-      src = src shr (8 * (4 - bytesAvailable))
+      copyMem(src.addr, b.src[b.len - bytesAvailable].addr, bytesAvailable)
     else:
       copyMem(src.addr, b.src[pos].addr, 4)
   else:
     var src: uint64
     if bytesAvailable < 8:
-      copyMem(src.addr, b.src[b.len - 8].addr, 8)
-      src = src shr (8 * (8 - bytesAvailable))
+      copyMem(src.addr, b.src[b.len - bytesAvailable].addr, bytesAvailable)
     else:
       copyMem(src.addr, b.src[pos].addr, 8)
 

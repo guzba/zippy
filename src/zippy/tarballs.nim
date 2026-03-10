@@ -47,7 +47,7 @@ proc extractAll*(
       let src = cast[ptr UncheckedArray[uint8]](memFile.mem)
       if src[0] == 31 and src[1] == 139:
         # Looks like a compressed tarball (.tar.gz)
-        uncompressGzip(uncompressed, src, memFile.size, trustSize = true)
+        uncompressGzip(uncompressed, src, memFile.size)
       else:
         # Treat this as an uncompressed tarball (.tar)
         uncompressed.setLen(memFile.size)
@@ -111,6 +111,7 @@ proc extractAll*(
           createDir(dest / path)
           lastModifiedTimes.add (path, initTime(mtime, 0))
         elif typeflag == '2': # Symlinks
+          linkname.verifyPathIsSafeToExtract()
           createDir(dest / splitFile(path).dir)
           createSymlink(linkname, dest / path)
         elif typeflag == 'L': # Long file names

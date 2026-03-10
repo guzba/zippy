@@ -102,7 +102,7 @@ proc extractPermissions(externalFileAttr: uint32): set[FilePermission] =
     if (permissions and 0o00002) != 0: result.incl fpOthersWrite
     if (permissions and 0o00001) != 0: result.incl fpOthersExec
 
-proc openStreamImpl*(archive: ZipArchive, stream: Stream) =
+proc openStreamImpl*(archive: ZipArchive, stream: Stream) {.deprecated.} =
   let data = stream.readAll() # TODO: actually treat as a stream
 
   archive.clear()
@@ -331,19 +331,19 @@ proc openStreamImpl*(archive: ZipArchive, stream: Stream) =
 when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
   proc open*(
     archive: ZipArchive, stream: Stream
-  ) {.raises: [IOError, OSError, ZippyError].} =
+  ) {.raises: [IOError, OSError, ZippyError], deprecated.} =
     ## Opens the zip archive from a stream and reads its contents into
     ## archive.contents (clears any existing archive.contents entries).
     openStreamImpl(archive, stream)
 else:
   proc open*(
     archive: ZipArchive, stream: Stream
-  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
+  ) {.raises: [Defect, IOError, OSError, ZippyError], deprecated.} =
     ## Opens the zip archive from a stream and reads its contents into
     ## archive.contents (clears any existing archive.contents entries).
     openStreamImpl(archive, stream)
 
-proc open*(archive: ZipArchive, path: string) {.inline.} =
+proc open*(archive: ZipArchive, path: string) {.inline, deprecated.} =
   ## Opens the zip archive file located at path and reads its contents into
   ## archive.contents (clears any existing archive.contents entries).
   archive.open(newStringStream(readFile(path)))
@@ -487,7 +487,7 @@ proc writeZipArchive*(
 
 proc extractAll*(
   archive: ZipArchive, dest: string
-) {.raises: [IOError, OSError, ZippyError].} =
+) {.raises: [IOError, OSError, ZippyError], deprecated.} =
   ## Extracts the files stored in archive to the destination directory.
   ## The path to the destination directory must exist.
   ## The destination directory itself must not exist (it is not overwitten).

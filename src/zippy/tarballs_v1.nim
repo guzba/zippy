@@ -159,14 +159,14 @@ proc openStreamImpl(
 when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
   proc open*(
     tarball: Tarball, stream: Stream, tarballFormat = tfDetect
-  ) {.raises: [IOError, OSError, ZippyError].} =
+  ) {.raises: [IOError, OSError, ZippyError], deprecated.} =
     ## Opens the zip archive from a stream and reads its contents into
     ## archive.contents (clears any existing archive.contents entries).
     openStreamImpl(tarball, stream, tarballFormat)
 else:
   proc open*(
     tarball: Tarball, stream: Stream, tarballFormat = tfDetect
-  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
+  ) {.raises: [Defect, IOError, OSError, ZippyError], deprecated.} =
     ## Opens the zip archive from a stream and reads its contents into
     ## archive.contents (clears any existing archive.contents entries).
     openStreamImpl(tarball, stream, tarballFormat)
@@ -186,7 +186,7 @@ proc openPathImpl(tarball: Tarball, path: string) =
 when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
   proc open*(
     tarball: Tarball, path: string
-  ) {.raises: [IOError, OSError, ZippyError].} =
+  ) {.raises: [IOError, OSError, ZippyError], deprecated.} =
     ## Opens the tarball file located at path and reads its contents into
     ## tarball.contents (clears any existing tarball.contents entries).
     ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
@@ -194,7 +194,7 @@ when (NimMajor, NimMinor, NimPatch) >= (1, 4, 0):
 else:
   proc open*(
     tarball: Tarball, path: string
-  ) {.raises: [Defect, IOError, OSError, ZippyError].} =
+  ) {.raises: [Defect, IOError, OSError, ZippyError], deprecated.} =
     ## Opens the tarball file located at path and reads its contents into
     ## tarball.contents (clears any existing tarball.contents entries).
     ## Supports .tar, .tar.gz, .taz and .tgz file extensions.
@@ -272,7 +272,7 @@ proc writeTarball*(
 
 proc extractAll*(
   tarball: Tarball, dest: string
-) {.raises: [IOError, OSError, ZippyError].} =
+) {.raises: [IOError, OSError, ZippyError], deprecated.} =
   ## Extracts the files stored in tarball to the destination directory.
   ## The path to the destination directory must exist.
   ## The destination directory itself must not exist (it is not overwitten).
