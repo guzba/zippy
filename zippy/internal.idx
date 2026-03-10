@@ -50,8 +50,8 @@ nim	determineMatchLength	zippy/internal.html#determineMatchLength,ptr.UncheckedA
 nim	toUnixPath	zippy/internal.html#toUnixPath,string	proc toUnixPath(path: string): string		272
 nim	parseFilePermissions	zippy/internal.html#parseFilePermissions,uint32	proc parseFilePermissions(permissions: uint32): set[FilePermission]		275
 nim	verifyPathIsSafeToExtract	zippy/internal.html#verifyPathIsSafeToExtract,string	proc verifyPathIsSafeToExtract(path: string)		294
-nim	writeFile	zippy/internal.html#writeFile,string,openArray[char]	proc writeFile(filename: string; content: openArray[char])		305
-nim	currentExceptionAsZippyError	zippy/internal.html#currentExceptionAsZippyError.t	template currentExceptionAsZippyError(): untyped		318
-nim	cpuid	zippy/internal.html#cpuid,int32,int32	proc cpuid(eaxi, ecxi: int32): tuple[eax, ebx, ecx, edx: int32]		325
+nim	writeFile	zippy/internal.html#writeFile,string,openArray[char]	proc writeFile(filename: string; content: openArray[char])		308
+nim	currentExceptionAsZippyError	zippy/internal.html#currentExceptionAsZippyError.t	template currentExceptionAsZippyError(): untyped		321
+nim	cpuid	zippy/internal.html#cpuid,int32,int32	proc cpuid(eaxi, ecxi: int32): tuple[eax, ebx, ecx, edx: int32]		328
 nimgrp	read32	zippy/internal.html#read32-procs-all	proc		206
 nimgrp	read16	zippy/internal.html#read16-procs-all	proc		203
