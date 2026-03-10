@@ -103,11 +103,11 @@ proc parseMsDosDateTime(time, date: uint16): Time =
     days = (date and 0b0000000000011111).int
     months = ((date shr 5) and 0b0000000000001111).int
     years = ((date shr 9) and 0b0000000001111111).int
-  if seconds in [0 .. 59] and
-    minutes in [0 .. 59] and
-    hours in [0 .. 23] and
-    days in [1 .. 31] and
-    months in [1 .. 12]:
+  if seconds in 0 .. 59 and
+    minutes in 0 .. 59 and
+    hours in 0 .. 23 and
+    days in 1 .. 31 and
+    months in 1 .. 12:
     result = initDateTime(
       days.MonthdayRange,
       months.Month,
