@@ -1,2 +1,2 @@
-nimTitle	deflate	zippy/deflate.html	module src/zippy/deflate		0
+nimTitle	deflate	zippy/deflate.html	module zippy/deflate		0
 nim	deflate	zippy/deflate.html#deflate,string,ptr.UncheckedArray[uint8],int,int	proc deflate(dst: var string; src: ptr UncheckedArray[uint8]; len, level: int)		207

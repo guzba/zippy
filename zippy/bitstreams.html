@@ -5,7 +5,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>src/zippy/bitstreams</title>
+<title>zippy/bitstreams</title>
 
 <!-- Google fonts -->
 <link href='https://fonts.googleapis.com/css?family=Lato:400,600,900' rel='stylesheet' type='text/css'/>
@@ -16,15 +16,18 @@
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4QQQEwksSS9ZWwAAAk1JREFUWMPtll2ITVEUx39nn/O7Y5qR8f05wtCUUr6ZIS++8pEnkZInPImneaCQ5METNdOkeFBKUhMPRIkHKfEuUZSUlGlKPN2TrgfncpvmnntnmlEyq1Z7t89/rf9a6+y99oZxGZf/XeIq61EdtgKXgdXA0xrYAvBjOIF1AI9zvjcC74BSpndrJPkBWDScTF8Aa4E3wDlgHbASaANmVqlcCnwHvgDvgVfAJ+AikAAvgfVZwLnSVZHZaOuKoQi3ZOMi4NkYkpe1p4J7A8BpYAD49hfIy/oqG0+hLomiKP2L5L+1ubn5115S+3OAn4EnwBlgMzCjyt6ZAnQCJ4A7wOs88iRJHvw50HoujuPBoCKwHWiosy8MdfZnAdcHk8dxXFJ3VQbQlCTJvRBCGdRbD4M6uc5glpY3eAihpN5S5w12diSEcCCEcKUO4ljdr15T76ur1FDDLIQQ3qv71EdDOe3Kxj3leRXyk+pxdWnFWod6Wt2bY3de3aSuUHcPBVimHs7mK9WrmeOF6lR1o9qnzskh2ar2qm1qizpfXaPeVGdlmGN5pb09qMxz1Xb1kLqgzn1RyH7JUXW52lr5e/Kqi9qpto7V1atuUzfnARrV7jEib1T76gG2qxdGmXyiekkt1GswPTtek0aBfJp6YySGBfWg2tPQ0FAYgf1stUfdmdcjarbYJEniKIq6gY/Aw+zWHAC+p2labGpqiorFYgGYCEzN7oQdQClN07O1/EfDyGgC0ALMBdYAi4FyK+4H3gLPsxfR1zRNi+NP7nH5J+QntnXe5B5mpfQAAAAASUVORK5CYII=">
 
 <!-- CSS -->
-<link rel="stylesheet" type="text/css" href="../nimdoc.out.css?v=2.2.8">
+<link rel="stylesheet" type="text/css" href="../nimdoc.out.css?v=2.2.10">
 
 <!-- JS -->
-<script type="text/javascript" src="../dochack.js?v=2.2.8"></script>
+<script type="text/javascript" src="../dochack.js?v=2.2.10"></script>
 </head>
 <body>
   <div class="document" id="documentId">
+    <input type="checkbox" id="nav-toggle" hidden>
+    <label for="nav-toggle" id="nav-burger">&#9776;</label>
+    <label for="nav-toggle" id="nav-overlay"></label>
     <div class="container">
-      <h1 class="title">src/zippy/bitstreams</h1>
+      <h1 class="title">zippy/bitstreams</h1>
       <div class="row">
   <div class="three columns">
     <div class="theme-select-wrapper">
@@ -140,7 +143,7 @@
   <h1><a class="toc-backref" href="#7">Types</a></h1>
   <dl class="item">
     <div id="BitStreamReader">
-  <dt><pre><a href="bitstreams.html#BitStreamReader"><span class="Identifier">BitStreamReader</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
+  <dt><pre><a href="#BitStreamReader"><span class="Identifier">BitStreamReader</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">src</span><span class="Operator">*</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">uint8</span><span class="Other">]</span>
   <span class="Identifier">len</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">pos</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span>
   <span class="Keyword">when</span> <span class="Other">(</span><span class="Identifier">defined</span><span class="Other">(</span><span class="Identifier">arm64</span><span class="Other">)</span> <span class="Keyword">and</span> <span class="Identifier">defined</span><span class="Other">(</span><span class="Identifier">macosx</span><span class="Other">)</span><span class="Other">)</span> <span class="Keyword">or</span> <span class="Identifier">sizeof</span><span class="Other">(</span><span class="Identifier">int</span><span class="Other">)</span> <span class="Operator">==</span> <span class="DecNumber">4</span><span class="Other">:</span>
@@ -157,7 +160,7 @@
   </dd>
 </div>
 <div id="BitStreamWriter">
-  <dt><pre><a href="bitstreams.html#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
+  <dt><pre><a href="#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">pos</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">bitPos</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span></pre></dt>
   <dd>
     
@@ -175,7 +178,7 @@
   <dl class="item">
     <div id="addBits-procs-all">
   <div id="addBits,BitStreamWriter,string,uint32,int">
-  <dt><pre><span class="Keyword">proc</span> <a href="#addBits%2CBitStreamWriter%2Cstring%2Cuint32%2Cint"><span class="Identifier">addBits</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitstreams.html#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a><span class="Other">;</span> <span class="Identifier">dst</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">value</span><span class="Other">:</span> <span class="Identifier">uint32</span><span class="Other">;</span> <span class="Identifier">bitLen</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span> {.
+  <dt><pre><span class="Keyword">proc</span> <a href="#addBits%2CBitStreamWriter%2Cstring%2Cuint32%2Cint"><span class="Identifier">addBits</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a><span class="Other">;</span> <span class="Identifier">dst</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">value</span><span class="Other">:</span> <span class="Identifier">uint32</span><span class="Other">;</span> <span class="Identifier">bitLen</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
     
@@ -189,7 +192,7 @@
 </div>
 <div id="addBytes-procs-all">
   <div id="addBytes,BitStreamWriter,string,ptr.UncheckedArray[uint8],int,int">
-  <dt><pre><span class="Keyword">proc</span> <a href="#addBytes%2CBitStreamWriter%2Cstring%2Cptr.UncheckedArray%5Buint8%5D%2Cint%2Cint"><span class="Identifier">addBytes</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitstreams.html#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a><span class="Other">;</span> <span class="Identifier">dst</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">string</span><span class="Other">;</span>
+  <dt><pre><span class="Keyword">proc</span> <a href="#addBytes%2CBitStreamWriter%2Cstring%2Cptr.UncheckedArray%5Buint8%5D%2Cint%2Cint"><span class="Identifier">addBytes</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a><span class="Other">;</span> <span class="Identifier">dst</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">string</span><span class="Other">;</span>
               <span class="Identifier">src</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">uint8</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">srcPos</span><span class="Other">,</span> <span class="Identifier">len</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ZippyError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
@@ -204,7 +207,7 @@
 </div>
 <div id="fillBitBuffer-procs-all">
   <div id="fillBitBuffer,BitStreamReader">
-  <dt><pre><span class="Keyword">proc</span> <a href="#fillBitBuffer%2CBitStreamReader"><span class="Identifier">fillBitBuffer</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitstreams.html#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">)</span> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
+  <dt><pre><span class="Keyword">proc</span> <a href="#fillBitBuffer%2CBitStreamReader"><span class="Identifier">fillBitBuffer</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">)</span> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
     
@@ -218,7 +221,7 @@
 </div>
 <div id="readBits-procs-all">
   <div id="readBits,BitStreamReader,int,static[bool]">
-  <dt><pre><span class="Keyword">proc</span> <a href="#readBits%2CBitStreamReader%2Cint%2Cstatic%5Bbool%5D"><span class="Identifier">readBits</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitstreams.html#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">;</span> <span class="Identifier">bits</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">;</span>
+  <dt><pre><span class="Keyword">proc</span> <a href="#readBits%2CBitStreamReader%2Cint%2Cstatic%5Bbool%5D"><span class="Identifier">readBits</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">;</span> <span class="Identifier">bits</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">;</span>
               <span class="Identifier">fillBitBuffer</span><span class="Other">:</span> <span class="Identifier">static</span><span class="Other">[</span><span class="Identifier">bool</span><span class="Other">]</span> <span class="Other">=</span> <span class="Identifier">true</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">uint16</span> {.<span class="Identifier">inline</span>.}</pre></dt>
   <dd>
     
@@ -232,7 +235,7 @@
 </div>
 <div id="readBytes-procs-all">
   <div id="readBytes,BitStreamReader,pointer,int">
-  <dt><pre><span class="Keyword">proc</span> <a href="#readBytes%2CBitStreamReader%2Cpointer%2Cint"><span class="Identifier">readBytes</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitstreams.html#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">;</span> <span class="Identifier">dst</span><span class="Other">:</span> <span class="Identifier">pointer</span><span class="Other">;</span> <span class="Identifier">len</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span> {.
+  <dt><pre><span class="Keyword">proc</span> <a href="#readBytes%2CBitStreamReader%2Cpointer%2Cint"><span class="Identifier">readBytes</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">;</span> <span class="Identifier">dst</span><span class="Other">:</span> <span class="Identifier">pointer</span><span class="Other">;</span> <span class="Identifier">len</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ZippyError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
     
@@ -246,7 +249,7 @@
 </div>
 <div id="skipRemainingBitsInCurrentByte-procs-all">
   <div id="skipRemainingBitsInCurrentByte,BitStreamReader">
-  <dt><pre><span class="Keyword">proc</span> <a href="#skipRemainingBitsInCurrentByte%2CBitStreamReader"><span class="Identifier">skipRemainingBitsInCurrentByte</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitstreams.html#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
+  <dt><pre><span class="Keyword">proc</span> <a href="#skipRemainingBitsInCurrentByte%2CBitStreamReader"><span class="Identifier">skipRemainingBitsInCurrentByte</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="#BitStreamReader"><span class="Identifier">BitStreamReader</span></a><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
     
@@ -257,7 +260,7 @@
   </dd>
 </div>
 <div id="skipRemainingBitsInCurrentByte,BitStreamWriter">
-  <dt><pre><span class="Keyword">proc</span> <a href="#skipRemainingBitsInCurrentByte%2CBitStreamWriter"><span class="Identifier">skipRemainingBitsInCurrentByte</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="bitstreams.html#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
+  <dt><pre><span class="Keyword">proc</span> <a href="#skipRemainingBitsInCurrentByte%2CBitStreamWriter"><span class="Identifier">skipRemainingBitsInCurrentByte</span></a><span class="Other">(</span><span class="Identifier">b</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="#BitStreamWriter"><span class="Identifier">BitStreamWriter</span></a><span class="Other">)</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
     
@@ -298,7 +301,7 @@
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2026-03-10 17:37:21 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2026-05-01 21:49:16 UTC</small>
       </div>
     </div>
   </div>

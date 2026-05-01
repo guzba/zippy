@@ -1,4 +1,4 @@
-nimTitle	zippy	zippy.html	module src/zippy		0
+nimTitle	zippy	zippy.html	module zippy		0
 nim	compress	zippy.html#compress,pointer,int	proc compress(src: pointer; len: int; level = DefaultCompression; dataFormat = dfGzip): string		11
 nim	compress	zippy.html#compress,string	proc compress(src: string; level = DefaultCompression; dataFormat = dfGzip): string		86
 nim	compress	zippy.html#compress,seq[uint8]	proc compress(src: seq[uint8]; level = DefaultCompression; dataFormat = dfGzip): seq[\n    uint8]		93

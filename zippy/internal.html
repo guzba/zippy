@@ -5,7 +5,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>src/zippy/internal</title>
+<title>zippy/internal</title>
 
 <!-- Google fonts -->
 <link href='https://fonts.googleapis.com/css?family=Lato:400,600,900' rel='stylesheet' type='text/css'/>
@@ -16,15 +16,18 @@
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4QQQEwksSS9ZWwAAAk1JREFUWMPtll2ITVEUx39nn/O7Y5qR8f05wtCUUr6ZIS++8pEnkZInPImneaCQ5METNdOkeFBKUhMPRIkHKfEuUZSUlGlKPN2TrgfncpvmnntnmlEyq1Z7t89/rf9a6+y99oZxGZf/XeIq61EdtgKXgdXA0xrYAvBjOIF1AI9zvjcC74BSpndrJPkBWDScTF8Aa4E3wDlgHbASaANmVqlcCnwHvgDvgVfAJ+AikAAvgfVZwLnSVZHZaOuKoQi3ZOMi4NkYkpe1p4J7A8BpYAD49hfIy/oqG0+hLomiKP2L5L+1ubn5115S+3OAn4EnwBlgMzCjyt6ZAnQCJ4A7wOs88iRJHvw50HoujuPBoCKwHWiosy8MdfZnAdcHk8dxXFJ3VQbQlCTJvRBCGdRbD4M6uc5glpY3eAihpN5S5w12diSEcCCEcKUO4ljdr15T76ur1FDDLIQQ3qv71EdDOe3Kxj3leRXyk+pxdWnFWod6Wt2bY3de3aSuUHcPBVimHs7mK9WrmeOF6lR1o9qnzskh2ar2qm1qizpfXaPeVGdlmGN5pb09qMxz1Xb1kLqgzn1RyH7JUXW52lr5e/Kqi9qpto7V1atuUzfnARrV7jEib1T76gG2qxdGmXyiekkt1GswPTtek0aBfJp6YySGBfWg2tPQ0FAYgf1stUfdmdcjarbYJEniKIq6gY/Aw+zWHAC+p2labGpqiorFYgGYCEzN7oQdQClN07O1/EfDyGgC0ALMBdYAi4FyK+4H3gLPsxfR1zRNi+NP7nH5J+QntnXe5B5mpfQAAAAASUVORK5CYII=">
 
 <!-- CSS -->
-<link rel="stylesheet" type="text/css" href="../nimdoc.out.css?v=2.2.8">
+<link rel="stylesheet" type="text/css" href="../nimdoc.out.css?v=2.2.10">
 
 <!-- JS -->
-<script type="text/javascript" src="../dochack.js?v=2.2.8"></script>
+<script type="text/javascript" src="../dochack.js?v=2.2.10"></script>
 </head>
 <body>
   <div class="document" id="documentId">
+    <input type="checkbox" id="nav-toggle" hidden>
+    <label for="nav-toggle" id="nav-burger">&#9776;</label>
+    <label for="nav-toggle" id="nav-overlay"></label>
     <div class="container">
-      <h1 class="title">src/zippy/internal</h1>
+      <h1 class="title">zippy/internal</h1>
       <div class="row">
   <div class="three columns">
     <div class="theme-select-wrapper">
@@ -305,7 +308,7 @@
   <h1><a class="toc-backref" href="#7">Types</a></h1>
   <dl class="item">
     <div id="BlockMetadata">
-  <dt><pre><a href="internal.html#BlockMetadata"><span class="Identifier">BlockMetadata</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
+  <dt><pre><a href="#BlockMetadata"><span class="Identifier">BlockMetadata</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">litLenFreq</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">array</span><span class="Other">[</span><span class="Identifier">maxLitLenCodes</span><span class="Other">,</span> <span class="Identifier">uint32</span><span class="Other">]</span>
   <span class="Identifier">distanceFreq</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">array</span><span class="Other">[</span><span class="Identifier">maxDistanceCodes</span><span class="Other">,</span> <span class="Identifier">uint32</span><span class="Other">]</span>
   <span class="Identifier">numLiterals</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span></pre></dt>
@@ -318,7 +321,7 @@
   </dd>
 </div>
 <div id="CompressionConfig">
-  <dt><pre><a href="internal.html#CompressionConfig"><span class="Identifier">CompressionConfig</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
+  <dt><pre><a href="#CompressionConfig"><span class="Identifier">CompressionConfig</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">good</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">lazy</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">nice</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">chain</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span></pre></dt>
   <dd>
     
@@ -335,7 +338,7 @@
   <h1><a class="toc-backref" href="#10">Consts</a></h1>
   <dl class="item">
     <div id="allowSimd">
-  <dt><pre><a href="internal.html#allowSimd"><span class="Identifier">allowSimd</span></a> <span class="Other">=</span> <span class="DecNumber">true</span></pre></dt>
+  <dt><pre><a href="#allowSimd"><span class="Identifier">allowSimd</span></a> <span class="Other">=</span> <span class="DecNumber">true</span></pre></dt>
   <dd>
     
     
@@ -345,7 +348,7 @@
   </dd>
 </div>
 <div id="baseDistanceExtraBits">
-  <dt><pre><a href="internal.html#baseDistanceExtraBits"><span class="Identifier">baseDistanceExtraBits</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span>
+  <dt><pre><a href="#baseDistanceExtraBits"><span class="Identifier">baseDistanceExtraBits</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span>
                          <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">]</span></pre></dt>
   <dd>
     
@@ -356,7 +359,7 @@
   </dd>
 </div>
 <div id="baseDistances">
-  <dt><pre><a href="internal.html#baseDistances"><span class="Identifier">baseDistances</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">1'u</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">25</span><span class="Other">,</span> <span class="DecNumber">33</span><span class="Other">,</span> <span class="DecNumber">49</span><span class="Other">,</span> <span class="DecNumber">65</span><span class="Other">,</span> <span class="DecNumber">97</span><span class="Other">,</span> <span class="DecNumber">129</span><span class="Other">,</span> <span class="DecNumber">193</span><span class="Other">,</span>
+  <dt><pre><a href="#baseDistances"><span class="Identifier">baseDistances</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">1'u</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">25</span><span class="Other">,</span> <span class="DecNumber">33</span><span class="Other">,</span> <span class="DecNumber">49</span><span class="Other">,</span> <span class="DecNumber">65</span><span class="Other">,</span> <span class="DecNumber">97</span><span class="Other">,</span> <span class="DecNumber">129</span><span class="Other">,</span> <span class="DecNumber">193</span><span class="Other">,</span>
                  <span class="DecNumber">257</span><span class="Other">,</span> <span class="DecNumber">385</span><span class="Other">,</span> <span class="DecNumber">513</span><span class="Other">,</span> <span class="DecNumber">769</span><span class="Other">,</span> <span class="DecNumber">1025</span><span class="Other">,</span> <span class="DecNumber">1537</span><span class="Other">,</span> <span class="DecNumber">2049</span><span class="Other">,</span> <span class="DecNumber">3073</span><span class="Other">,</span> <span class="DecNumber">4097</span><span class="Other">,</span> <span class="DecNumber">6145</span><span class="Other">,</span> <span class="DecNumber">8193</span><span class="Other">,</span>
                  <span class="DecNumber">12289</span><span class="Other">,</span> <span class="DecNumber">16385</span><span class="Other">,</span> <span class="DecNumber">24577</span><span class="Other">]</span></pre></dt>
   <dd>
@@ -368,7 +371,7 @@
   </dd>
 </div>
 <div id="baseLengthIndices">
-  <dt><pre><a href="internal.html#baseLengthIndices"><span class="Identifier">baseLengthIndices</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span>
+  <dt><pre><a href="#baseLengthIndices"><span class="Identifier">baseLengthIndices</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span>
                      <span class="DecNumber">12</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">14</span><span class="Other">,</span> <span class="DecNumber">14</span><span class="Other">,</span> <span class="DecNumber">14</span><span class="Other">,</span> <span class="DecNumber">14</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">,</span>
                      <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span>
                      <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span>
@@ -394,7 +397,7 @@
   </dd>
 </div>
 <div id="baseLengths">
-  <dt><pre><a href="internal.html#baseLengths"><span class="Identifier">baseLengths</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">3'u</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span> <span class="DecNumber">23</span><span class="Other">,</span> <span class="DecNumber">27</span><span class="Other">,</span> <span class="DecNumber">31</span><span class="Other">,</span> <span class="DecNumber">35</span><span class="Other">,</span>
+  <dt><pre><a href="#baseLengths"><span class="Identifier">baseLengths</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">3'u</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">19</span><span class="Other">,</span> <span class="DecNumber">23</span><span class="Other">,</span> <span class="DecNumber">27</span><span class="Other">,</span> <span class="DecNumber">31</span><span class="Other">,</span> <span class="DecNumber">35</span><span class="Other">,</span>
                <span class="DecNumber">43</span><span class="Other">,</span> <span class="DecNumber">51</span><span class="Other">,</span> <span class="DecNumber">59</span><span class="Other">,</span> <span class="DecNumber">67</span><span class="Other">,</span> <span class="DecNumber">83</span><span class="Other">,</span> <span class="DecNumber">99</span><span class="Other">,</span> <span class="DecNumber">115</span><span class="Other">,</span> <span class="DecNumber">131</span><span class="Other">,</span> <span class="DecNumber">163</span><span class="Other">,</span> <span class="DecNumber">195</span><span class="Other">,</span> <span class="DecNumber">227</span><span class="Other">,</span> <span class="DecNumber">258</span><span class="Other">]</span></pre></dt>
   <dd>
     
@@ -405,7 +408,7 @@
   </dd>
 </div>
 <div id="baseLengthsExtraBits">
-  <dt><pre><a href="internal.html#baseLengthsExtraBits"><span class="Identifier">baseLengthsExtraBits</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span>
+  <dt><pre><a href="#baseLengthsExtraBits"><span class="Identifier">baseLengthsExtraBits</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span>
                         <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">]</span></pre></dt>
   <dd>
     
@@ -416,7 +419,7 @@
   </dd>
 </div>
 <div id="baseMatchLen">
-  <dt><pre><a href="internal.html#baseMatchLen"><span class="Identifier">baseMatchLen</span></a> <span class="Other">=</span> <span class="DecNumber">3</span></pre></dt>
+  <dt><pre><a href="#baseMatchLen"><span class="Identifier">baseMatchLen</span></a> <span class="Other">=</span> <span class="DecNumber">3</span></pre></dt>
   <dd>
     
     
@@ -426,7 +429,7 @@
   </dd>
 </div>
 <div id="clclOrder">
-  <dt><pre><a href="internal.html#clclOrder"><span class="Identifier">clclOrder</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">16'u</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">14</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">]</span></pre></dt>
+  <dt><pre><a href="#clclOrder"><span class="Identifier">clclOrder</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">16'u</span><span class="Other">,</span> <span class="DecNumber">17</span><span class="Other">,</span> <span class="DecNumber">18</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="DecNumber">7</span><span class="Other">,</span> <span class="DecNumber">9</span><span class="Other">,</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="DecNumber">10</span><span class="Other">,</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="DecNumber">11</span><span class="Other">,</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="DecNumber">12</span><span class="Other">,</span> <span class="DecNumber">3</span><span class="Other">,</span> <span class="DecNumber">13</span><span class="Other">,</span> <span class="DecNumber">2</span><span class="Other">,</span> <span class="DecNumber">14</span><span class="Other">,</span> <span class="DecNumber">1</span><span class="Other">,</span> <span class="DecNumber">15</span><span class="Other">]</span></pre></dt>
   <dd>
     
     
@@ -436,7 +439,7 @@
   </dd>
 </div>
 <div id="configurationTable">
-  <dt><pre><a href="internal.html#configurationTable"><span class="Identifier">configurationTable</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="Other">(</span><span class="Identifier">good</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="Identifier">lazy</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="Identifier">nice</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="Identifier">chain</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">,</span>
+  <dt><pre><a href="#configurationTable"><span class="Identifier">configurationTable</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="Other">(</span><span class="Identifier">good</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="Identifier">lazy</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="Identifier">nice</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">,</span> <span class="Identifier">chain</span><span class="Other">:</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">,</span>
                       <span class="Other">(</span><span class="Identifier">good</span><span class="Other">:</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="Identifier">lazy</span><span class="Other">:</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="Identifier">nice</span><span class="Other">:</span> <span class="DecNumber">8</span><span class="Other">,</span> <span class="Identifier">chain</span><span class="Other">:</span> <span class="DecNumber">4</span><span class="Other">)</span><span class="Other">,</span>
                       <span class="Other">(</span><span class="Identifier">good</span><span class="Other">:</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="Identifier">lazy</span><span class="Other">:</span> <span class="DecNumber">5</span><span class="Other">,</span> <span class="Identifier">nice</span><span class="Other">:</span> <span class="DecNumber">16</span><span class="Other">,</span> <span class="Identifier">chain</span><span class="Other">:</span> <span class="DecNumber">8</span><span class="Other">)</span><span class="Other">,</span>
                       <span class="Other">(</span><span class="Identifier">good</span><span class="Other">:</span> <span class="DecNumber">4</span><span class="Other">,</span> <span class="Identifier">lazy</span><span class="Other">:</span> <span class="DecNumber">6</span><span class="Other">,</span> <span class="Identifier">nice</span><span class="Other">:</span> <span class="DecNumber">32</span><span class="Other">,</span> <span class="Identifier">chain</span><span class="Other">:</span> <span class="DecNumber">32</span><span class="Other">)</span><span class="Other">,</span>
@@ -455,7 +458,7 @@
   </dd>
 </div>
 <div id="firstLengthCodeIndex">
-  <dt><pre><a href="internal.html#firstLengthCodeIndex"><span class="Identifier">firstLengthCodeIndex</span></a> <span class="Other">=</span> <span class="DecNumber">257</span></pre></dt>
+  <dt><pre><a href="#firstLengthCodeIndex"><span class="Identifier">firstLengthCodeIndex</span></a> <span class="Other">=</span> <span class="DecNumber">257</span></pre></dt>
   <dd>
     
     
@@ -465,7 +468,7 @@
   </dd>
 </div>
 <div id="fixedDistanceCodeLengths">
-  <dt><pre><a href="internal.html#fixedDistanceCodeLengths"><span class="Identifier">fixedDistanceCodeLengths</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span>
+  <dt><pre><a href="#fixedDistanceCodeLengths"><span class="Identifier">fixedDistanceCodeLengths</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span>
                             <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span>
                             <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">5'u</span><span class="Other">]</span></pre></dt>
   <dd>
@@ -477,7 +480,7 @@
   </dd>
 </div>
 <div id="fixedDistanceCodes">
-  <dt><pre><a href="internal.html#fixedDistanceCodes"><span class="Identifier">fixedDistanceCodes</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">16'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">24'u</span><span class="Other">,</span> <span class="DecNumber">4'u</span><span class="Other">,</span> <span class="DecNumber">20'u</span><span class="Other">,</span> <span class="DecNumber">12'u</span><span class="Other">,</span> <span class="DecNumber">28'u</span><span class="Other">,</span> <span class="DecNumber">2'u</span><span class="Other">,</span> <span class="DecNumber">18'u</span><span class="Other">,</span>
+  <dt><pre><a href="#fixedDistanceCodes"><span class="Identifier">fixedDistanceCodes</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">0'u</span><span class="Other">,</span> <span class="DecNumber">16'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">24'u</span><span class="Other">,</span> <span class="DecNumber">4'u</span><span class="Other">,</span> <span class="DecNumber">20'u</span><span class="Other">,</span> <span class="DecNumber">12'u</span><span class="Other">,</span> <span class="DecNumber">28'u</span><span class="Other">,</span> <span class="DecNumber">2'u</span><span class="Other">,</span> <span class="DecNumber">18'u</span><span class="Other">,</span>
                       <span class="DecNumber">10'u</span><span class="Other">,</span> <span class="DecNumber">26'u</span><span class="Other">,</span> <span class="DecNumber">6'u</span><span class="Other">,</span> <span class="DecNumber">22'u</span><span class="Other">,</span> <span class="DecNumber">14'u</span><span class="Other">,</span> <span class="DecNumber">30'u</span><span class="Other">,</span> <span class="DecNumber">1'u</span><span class="Other">,</span> <span class="DecNumber">17'u</span><span class="Other">,</span> <span class="DecNumber">9'u</span><span class="Other">,</span> <span class="DecNumber">25'u</span><span class="Other">,</span>
                       <span class="DecNumber">5'u</span><span class="Other">,</span> <span class="DecNumber">21'u</span><span class="Other">,</span> <span class="DecNumber">13'u</span><span class="Other">,</span> <span class="DecNumber">29'u</span><span class="Other">,</span> <span class="DecNumber">3'u</span><span class="Other">,</span> <span class="DecNumber">19'u</span><span class="Other">,</span> <span class="DecNumber">11'u</span><span class="Other">,</span> <span class="DecNumber">27'u</span><span class="Other">,</span> <span class="DecNumber">7'u</span><span class="Other">,</span> <span class="DecNumber">23'u</span><span class="Other">]</span></pre></dt>
   <dd>
@@ -489,7 +492,7 @@
   </dd>
 </div>
 <div id="fixedLitLenCodeLengths">
-  <dt><pre><a href="internal.html#fixedLitLenCodeLengths"><span class="Identifier">fixedLitLenCodeLengths</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span>
+  <dt><pre><a href="#fixedLitLenCodeLengths"><span class="Identifier">fixedLitLenCodeLengths</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span>
                           <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span>
                           <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span>
                           <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span> <span class="DecNumber">8'u</span><span class="Other">,</span>
@@ -525,7 +528,7 @@
   </dd>
 </div>
 <div id="fixedLitLenCodes">
-  <dt><pre><a href="internal.html#fixedLitLenCodes"><span class="Identifier">fixedLitLenCodes</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">12'u</span><span class="Other">,</span> <span class="DecNumber">140'u</span><span class="Other">,</span> <span class="DecNumber">76'u</span><span class="Other">,</span> <span class="DecNumber">204'u</span><span class="Other">,</span> <span class="DecNumber">44'u</span><span class="Other">,</span> <span class="DecNumber">172'u</span><span class="Other">,</span> <span class="DecNumber">108'u</span><span class="Other">,</span> <span class="DecNumber">236'u</span><span class="Other">,</span> <span class="DecNumber">28'u</span><span class="Other">,</span>
+  <dt><pre><a href="#fixedLitLenCodes"><span class="Identifier">fixedLitLenCodes</span></a> <span class="Other">=</span> <span class="Other">[</span><span class="DecNumber">12'u</span><span class="Other">,</span> <span class="DecNumber">140'u</span><span class="Other">,</span> <span class="DecNumber">76'u</span><span class="Other">,</span> <span class="DecNumber">204'u</span><span class="Other">,</span> <span class="DecNumber">44'u</span><span class="Other">,</span> <span class="DecNumber">172'u</span><span class="Other">,</span> <span class="DecNumber">108'u</span><span class="Other">,</span> <span class="DecNumber">236'u</span><span class="Other">,</span> <span class="DecNumber">28'u</span><span class="Other">,</span>
                     <span class="DecNumber">156'u</span><span class="Other">,</span> <span class="DecNumber">92'u</span><span class="Other">,</span> <span class="DecNumber">220'u</span><span class="Other">,</span> <span class="DecNumber">60'u</span><span class="Other">,</span> <span class="DecNumber">188'u</span><span class="Other">,</span> <span class="DecNumber">124'u</span><span class="Other">,</span> <span class="DecNumber">252'u</span><span class="Other">,</span> <span class="DecNumber">2'u</span><span class="Other">,</span> <span class="DecNumber">130'u</span><span class="Other">,</span>
                     <span class="DecNumber">66'u</span><span class="Other">,</span> <span class="DecNumber">194'u</span><span class="Other">,</span> <span class="DecNumber">34'u</span><span class="Other">,</span> <span class="DecNumber">162'u</span><span class="Other">,</span> <span class="DecNumber">98'u</span><span class="Other">,</span> <span class="DecNumber">226'u</span><span class="Other">,</span> <span class="DecNumber">18'u</span><span class="Other">,</span> <span class="DecNumber">146'u</span><span class="Other">,</span> <span class="DecNumber">82'u</span><span class="Other">,</span>
                     <span class="DecNumber">210'u</span><span class="Other">,</span> <span class="DecNumber">50'u</span><span class="Other">,</span> <span class="DecNumber">178'u</span><span class="Other">,</span> <span class="DecNumber">114'u</span><span class="Other">,</span> <span class="DecNumber">242'u</span><span class="Other">,</span> <span class="DecNumber">10'u</span><span class="Other">,</span> <span class="DecNumber">138'u</span><span class="Other">,</span> <span class="DecNumber">74'u</span><span class="Other">,</span> <span class="DecNumber">202'u</span><span class="Other">,</span>
@@ -567,7 +570,7 @@
   </dd>
 </div>
 <div id="maxBlockSize">
-  <dt><pre><a href="internal.html#maxBlockSize"><span class="Identifier">maxBlockSize</span></a> <span class="Other">=</span> <span class="DecNumber">4194304</span></pre></dt>
+  <dt><pre><a href="#maxBlockSize"><span class="Identifier">maxBlockSize</span></a> <span class="Other">=</span> <span class="DecNumber">4194304</span></pre></dt>
   <dd>
     
     
@@ -577,7 +580,7 @@
   </dd>
 </div>
 <div id="maxCodeLength">
-  <dt><pre><a href="internal.html#maxCodeLength"><span class="Identifier">maxCodeLength</span></a> <span class="Other">=</span> <span class="DecNumber">15</span></pre></dt>
+  <dt><pre><a href="#maxCodeLength"><span class="Identifier">maxCodeLength</span></a> <span class="Other">=</span> <span class="DecNumber">15</span></pre></dt>
   <dd>
     
     
@@ -587,7 +590,7 @@
   </dd>
 </div>
 <div id="maxDistanceCodes">
-  <dt><pre><a href="internal.html#maxDistanceCodes"><span class="Identifier">maxDistanceCodes</span></a> <span class="Other">=</span> <span class="DecNumber">30</span></pre></dt>
+  <dt><pre><a href="#maxDistanceCodes"><span class="Identifier">maxDistanceCodes</span></a> <span class="Other">=</span> <span class="DecNumber">30</span></pre></dt>
   <dd>
     
     
@@ -597,7 +600,7 @@
   </dd>
 </div>
 <div id="maxFixedLitLenCodes">
-  <dt><pre><a href="internal.html#maxFixedLitLenCodes"><span class="Identifier">maxFixedLitLenCodes</span></a> <span class="Other">=</span> <span class="DecNumber">288</span></pre></dt>
+  <dt><pre><a href="#maxFixedLitLenCodes"><span class="Identifier">maxFixedLitLenCodes</span></a> <span class="Other">=</span> <span class="DecNumber">288</span></pre></dt>
   <dd>
     
     
@@ -607,7 +610,7 @@
   </dd>
 </div>
 <div id="maxLiteralLength">
-  <dt><pre><a href="internal.html#maxLiteralLength"><span class="Identifier">maxLiteralLength</span></a> <span class="Other">=</span> <span class="DecNumber">32767</span></pre></dt>
+  <dt><pre><a href="#maxLiteralLength"><span class="Identifier">maxLiteralLength</span></a> <span class="Other">=</span> <span class="DecNumber">32767</span></pre></dt>
   <dd>
     
     
@@ -617,7 +620,7 @@
   </dd>
 </div>
 <div id="maxLitLenCodes">
-  <dt><pre><a href="internal.html#maxLitLenCodes"><span class="Identifier">maxLitLenCodes</span></a> <span class="Other">=</span> <span class="DecNumber">286</span></pre></dt>
+  <dt><pre><a href="#maxLitLenCodes"><span class="Identifier">maxLitLenCodes</span></a> <span class="Other">=</span> <span class="DecNumber">286</span></pre></dt>
   <dd>
     
     
@@ -627,7 +630,7 @@
   </dd>
 </div>
 <div id="maxMatchLen">
-  <dt><pre><a href="internal.html#maxMatchLen"><span class="Identifier">maxMatchLen</span></a> <span class="Other">=</span> <span class="DecNumber">258</span></pre></dt>
+  <dt><pre><a href="#maxMatchLen"><span class="Identifier">maxMatchLen</span></a> <span class="Other">=</span> <span class="DecNumber">258</span></pre></dt>
   <dd>
     
     
@@ -637,7 +640,7 @@
   </dd>
 </div>
 <div id="maxUncompressedBlockSize">
-  <dt><pre><a href="internal.html#maxUncompressedBlockSize"><span class="Identifier">maxUncompressedBlockSize</span></a> <span class="Other">=</span> <span class="DecNumber">65535</span></pre></dt>
+  <dt><pre><a href="#maxUncompressedBlockSize"><span class="Identifier">maxUncompressedBlockSize</span></a> <span class="Other">=</span> <span class="DecNumber">65535</span></pre></dt>
   <dd>
     
     
@@ -647,7 +650,7 @@
   </dd>
 </div>
 <div id="maxWindowSize">
-  <dt><pre><a href="internal.html#maxWindowSize"><span class="Identifier">maxWindowSize</span></a> <span class="Other">=</span> <span class="DecNumber">32768</span></pre></dt>
+  <dt><pre><a href="#maxWindowSize"><span class="Identifier">maxWindowSize</span></a> <span class="Other">=</span> <span class="DecNumber">32768</span></pre></dt>
   <dd>
     
     
@@ -657,7 +660,7 @@
   </dd>
 </div>
 <div id="minMatchLen">
-  <dt><pre><a href="internal.html#minMatchLen"><span class="Identifier">minMatchLen</span></a> <span class="Other">=</span> <span class="DecNumber">4</span></pre></dt>
+  <dt><pre><a href="#minMatchLen"><span class="Identifier">minMatchLen</span></a> <span class="Other">=</span> <span class="DecNumber">4</span></pre></dt>
   <dd>
     
     
@@ -667,7 +670,7 @@
   </dd>
 </div>
 <div id="S_IFDIR">
-  <dt><pre><a href="internal.html#S_IFDIR"><span class="Identifier">S_IFDIR</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000040000'u32</span></pre></dt>
+  <dt><pre><a href="#S_IFDIR"><span class="Identifier">S_IFDIR</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000040000'u32</span></pre></dt>
   <dd>
     
     
@@ -677,7 +680,7 @@
   </dd>
 </div>
 <div id="TGEXEC">
-  <dt><pre><a href="internal.html#TGEXEC"><span class="Identifier">TGEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000010'u32</span></pre></dt>
+  <dt><pre><a href="#TGEXEC"><span class="Identifier">TGEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000010'u32</span></pre></dt>
   <dd>
     
     
@@ -687,7 +690,7 @@
   </dd>
 </div>
 <div id="TGREAD">
-  <dt><pre><a href="internal.html#TGREAD"><span class="Identifier">TGREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000040'u32</span></pre></dt>
+  <dt><pre><a href="#TGREAD"><span class="Identifier">TGREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000040'u32</span></pre></dt>
   <dd>
     
     
@@ -697,7 +700,7 @@
   </dd>
 </div>
 <div id="TGWRITE">
-  <dt><pre><a href="internal.html#TGWRITE"><span class="Identifier">TGWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000020'u32</span></pre></dt>
+  <dt><pre><a href="#TGWRITE"><span class="Identifier">TGWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000020'u32</span></pre></dt>
   <dd>
     
     
@@ -707,7 +710,7 @@
   </dd>
 </div>
 <div id="TOEXEC">
-  <dt><pre><a href="internal.html#TOEXEC"><span class="Identifier">TOEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000001'u32</span></pre></dt>
+  <dt><pre><a href="#TOEXEC"><span class="Identifier">TOEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000001'u32</span></pre></dt>
   <dd>
     
     
@@ -717,7 +720,7 @@
   </dd>
 </div>
 <div id="TOREAD">
-  <dt><pre><a href="internal.html#TOREAD"><span class="Identifier">TOREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000004'u32</span></pre></dt>
+  <dt><pre><a href="#TOREAD"><span class="Identifier">TOREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000004'u32</span></pre></dt>
   <dd>
     
     
@@ -727,7 +730,7 @@
   </dd>
 </div>
 <div id="TOWRITE">
-  <dt><pre><a href="internal.html#TOWRITE"><span class="Identifier">TOWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000002'u32</span></pre></dt>
+  <dt><pre><a href="#TOWRITE"><span class="Identifier">TOWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000002'u32</span></pre></dt>
   <dd>
     
     
@@ -737,7 +740,7 @@
   </dd>
 </div>
 <div id="TUEXEC">
-  <dt><pre><a href="internal.html#TUEXEC"><span class="Identifier">TUEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000100'u32</span></pre></dt>
+  <dt><pre><a href="#TUEXEC"><span class="Identifier">TUEXEC</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000100'u32</span></pre></dt>
   <dd>
     
     
@@ -747,7 +750,7 @@
   </dd>
 </div>
 <div id="TUREAD">
-  <dt><pre><a href="internal.html#TUREAD"><span class="Identifier">TUREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000400'u32</span></pre></dt>
+  <dt><pre><a href="#TUREAD"><span class="Identifier">TUREAD</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000400'u32</span></pre></dt>
   <dd>
     
     
@@ -757,7 +760,7 @@
   </dd>
 </div>
 <div id="TUWRITE">
-  <dt><pre><a href="internal.html#TUWRITE"><span class="Identifier">TUWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000200'u32</span></pre></dt>
+  <dt><pre><a href="#TUWRITE"><span class="Identifier">TUWRITE</span></a> <span class="Other">=</span> <span class="DecNumber">0o000000000200'u32</span></pre></dt>
   <dd>
     
     
@@ -1029,7 +1032,7 @@
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2026-03-10 17:37:21 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2026-05-01 21:49:16 UTC</small>
       </div>
     </div>
   </div>

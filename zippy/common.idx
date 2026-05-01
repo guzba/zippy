@@ -1,4 +1,4 @@
-nimTitle	common	zippy/common.html	module src/zippy/common		0
+nimTitle	common	zippy/common.html	module zippy/common		0
 nim	ZippyError	zippy/common.html#ZippyError	object ZippyError		2
 nim	dfDetect	zippy/common.html#dfDetect	CompressedDataFormat.dfDetect		4
 nim	dfZlib	zippy/common.html#dfZlib	CompressedDataFormat.dfZlib		4

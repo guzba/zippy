@@ -1,4 +1,4 @@
-nimTitle	bitstreams	zippy/bitstreams.html	module src/zippy/bitstreams		0
+nimTitle	bitstreams	zippy/bitstreams.html	module zippy/bitstreams		0
 nim	BitStreamReader	zippy/bitstreams.html#BitStreamReader	object BitStreamReader		4
 nim	BitStreamWriter	zippy/bitstreams.html#BitStreamWriter	object BitStreamWriter		13
 nim	failEndOfBuffer	zippy/bitstreams.html#failEndOfBuffer.t	template failEndOfBuffer()		16

@@ -1,4 +1,4 @@
-nimTitle	adler32	zippy/adler32.html	module src/zippy/adler32		0
+nimTitle	adler32	zippy/adler32.html	module zippy/adler32		0
 nim	adler32	zippy/adler32.html#adler32,pointer,int	proc adler32(src: pointer; len: int): uint32		6
 nim	adler32	zippy/adler32.html#adler32,string	proc adler32(src: string): uint32		65
 nimgrp	adler32	zippy/adler32.html#adler32-procs-all	proc		6

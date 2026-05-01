@@ -1,4 +1,4 @@
-nimTitle	internal	zippy/internal.html	module src/zippy/internal		0
+nimTitle	internal	zippy/internal.html	module zippy/internal		0
 nim	allowSimd	zippy/internal.html#allowSimd	const allowSimd		3
 nim	maxCodeLength	zippy/internal.html#maxCodeLength	const maxCodeLength		10
 nim	maxLitLenCodes	zippy/internal.html#maxLitLenCodes	const maxLitLenCodes		11
