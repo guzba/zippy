@@ -132,10 +132,10 @@ elif defined(arm64):
 
   func vmovq_n_u32(a: uint32): uint32x4
   func vmovq_n_u16(a: uint16): uint16x8
-  func vld1q_u32(p: pointer): uint32x4
-  func vld1q_lane_u32(p: pointer, v: uint32x4, lane: int): uint32x4
-  func vld1q_u8(p: pointer): uint8x16
-  func vld1_u16(p: pointer): uint16x4
+  func vld1q_u32(p: ptr uint32): uint32x4
+  func vld1q_lane_u32(p: ptr uint32, v: uint32x4, lane: int): uint32x4
+  func vld1q_u8(p: ptr uint8): uint8x16
+  func vld1_u16(p: ptr uint16): uint16x4
   func vaddq_u32(a, b: uint32x4): uint32x4
   func vpaddlq_u8(a: uint8x16): uint16x8
   func vpadalq_u8(a: uint16x8, b: uint8x16): uint16x8
@@ -153,6 +153,22 @@ elif defined(arm64):
   func vmlal_u16(a: uint32x4, b, c: uint16x4): uint32x4
 
   {.pop.}
+
+  template vld1q_u32(p: pointer): uint32x4 =
+    vld1q_u32(cast[ptr uint32](p))
+
+  template vld1q_lane_u32(
+    p: pointer,
+    v: uint32x4,
+    lane: int
+  ): uint32x4 =
+    vld1q_lane_u32(cast[ptr uint32](p), v, lane)
+
+  template vld1q_u8(p: pointer): uint8x16 =
+    vld1q_u8(cast[ptr uint8](p))
+
+  template vld1_u16(p: pointer): uint16x4 =
+    vld1_u16(cast[ptr uint16](p))
 
   proc adler32_neon*(src: pointer, len: int): uint32 =
     if len == 0:
