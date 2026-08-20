@@ -64,10 +64,7 @@
       <li><a class="reference" href="#BitStreamReader" title="BitStreamReader = object
   src*: ptr UncheckedArray[uint8]
   len*, pos*: int
-  when (defined(arm64) and defined(macosx)) or sizeof(int) == 4:
-    bitBuffer*: uint32
-  else:
-    bitBuffer*: uint64
+  bitBuffer*: uint64
   bitsBuffered*: int">BitStreamReader</a></li>
 <li><a class="reference" href="#BitStreamWriter" title="BitStreamWriter = object
   pos*, bitPos*: int">BitStreamWriter</a></li>
@@ -146,10 +143,7 @@
   <dt><pre><a href="#BitStreamReader"><span class="Identifier">BitStreamReader</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">src</span><span class="Operator">*</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">uint8</span><span class="Other">]</span>
   <span class="Identifier">len</span><span class="Operator">*</span><span class="Other">,</span> <span class="Identifier">pos</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span>
-  <span class="Keyword">when</span> <span class="Other">(</span><span class="Identifier">defined</span><span class="Other">(</span><span class="Identifier">arm64</span><span class="Other">)</span> <span class="Keyword">and</span> <span class="Identifier">defined</span><span class="Other">(</span><span class="Identifier">macosx</span><span class="Other">)</span><span class="Other">)</span> <span class="Keyword">or</span> <span class="Identifier">sizeof</span><span class="Other">(</span><span class="Identifier">int</span><span class="Other">)</span> <span class="Operator">==</span> <span class="DecNumber">4</span><span class="Other">:</span>
-    <span class="Identifier">bitBuffer</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint32</span>
-  <span class="Keyword">else</span><span class="Other">:</span>
-    <span class="Identifier">bitBuffer</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint64</span>
+  <span class="Identifier">bitBuffer</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">uint64</span>
   <span class="Identifier">bitsBuffered</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span></pre></dt>
   <dd>
     
@@ -165,8 +159,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L13" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L13" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L10" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L10" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -183,8 +177,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L86" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L86" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L76" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L76" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -198,8 +192,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L104" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L104" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L94" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L94" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -212,8 +206,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L22" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L22" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L19" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L19" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -226,8 +220,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L48" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L48" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L38" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L38" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -240,8 +234,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L62" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L62" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L52" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L52" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -254,8 +248,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L76" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L76" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L66" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L66" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -265,8 +259,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L119" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L119" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L109" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L109" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -284,8 +278,8 @@
   <dd>
     
     
-    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L16" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
-<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L16" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
+    <a href="https://github.com/guzba/zippy/tree/master/src/zippy/bitstreams.nim#L13" class="link-seesrc" target="_blank">Source</a>&nbsp;&nbsp;
+<a href="https://github.com/guzba/zippy/edit/devel/src/zippy/bitstreams.nim#L13" class="link-seesrc" target="_blank" >Edit</a>&nbsp;&nbsp;
 
   </dd>
 </div>
@@ -301,7 +295,7 @@
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2026-05-01 21:49:16 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2026-08-20 00:40:10 UTC</small>
       </div>
     </div>
   </div>
