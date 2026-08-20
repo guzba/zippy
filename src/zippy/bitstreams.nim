@@ -4,10 +4,7 @@ type
   BitStreamReader* = object
     src*: ptr UncheckedArray[uint8]
     len*, pos*: int
-    when (defined(arm64) and defined(macosx)) or sizeof(int) == 4:
-      bitBuffer*: uint32
-    else:
-      bitBuffer*: uint64
+    bitBuffer*: uint64
     bitsBuffered*: int
 
   BitStreamWriter* = object
@@ -29,18 +26,11 @@ proc fillBitBuffer*(b: var BitStreamReader) {.inline.} =
 
   b.pos += bytesAdded
 
-  when sizeof(b.bitBuffer) == 4:
-    var src: uint32
-    if bytesAvailable < 4:
-      copyMem(src.addr, b.src[b.len - bytesAvailable].addr, bytesAvailable)
-    else:
-      copyMem(src.addr, b.src[pos].addr, 4)
+  var src: uint64
+  if bytesAvailable < 8:
+    copyMem(src.addr, b.src[b.len - bytesAvailable].addr, bytesAvailable)
   else:
-    var src: uint64
-    if bytesAvailable < 8:
-      copyMem(src.addr, b.src[b.len - bytesAvailable].addr, bytesAvailable)
-    else:
-      copyMem(src.addr, b.src[pos].addr, 8)
+    copyMem(src.addr, b.src[pos].addr, 8)
 
   b.bitBuffer = b.bitBuffer or (src shl b.bitsBuffered)
   b.bitsBuffered += 8 * bytesAdded
