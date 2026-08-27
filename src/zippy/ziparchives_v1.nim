@@ -44,10 +44,10 @@ proc addDir*(
   archive: ZipArchive, dir: string
 ) {.raises: [IOError, OSError, ZippyError].} =
   ## Recursively adds all of the files and directories inside dir to archive.
-  if splitFile(dir).ext.len > 0:
+  if not dirExists(dir):
     raise newException(
       ZippyError,
-      "Error adding dir " & dir & " to archive, appears to be a file?"
+      "Error adding dir " & dir & " to archive, not a directory?"
     )
 
   let (head, tail) = splitPath(dir)
