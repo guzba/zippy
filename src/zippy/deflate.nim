@@ -133,7 +133,8 @@ proc huffmanCodes(
     for node in nodes:
       codeLens[node.symbol] = node.freq.uint8
 
-  var histogram: array[maxCodeLength + 1, uint8]
+  # Up to 286 symbols can share one length, so the count must not be uint8.
+  var histogram: array[maxCodeLength + 1, uint16]
   for l in codeLens:
     inc histogram[l]
   histogram[0] = 0
