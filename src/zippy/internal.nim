@@ -9,7 +9,7 @@ const allowSimd* =
 const
   maxCodeLength* = 15
   maxLitLenCodes* = 286
-  maxDistanceCodes* = 30
+  maxDistanceCodes* = 32
   maxFixedLitLenCodes* = 288
   maxWindowSize* = 32768
   maxUncompressedBlockSize* = 65535
@@ -86,7 +86,8 @@ const
     2049, 3073, # 22-23
     4097, 6145, # 24-25
     8193, 12289, # 26-27
-    16385, 24577 # 28-29
+    16385, 24577, # 28-29
+    32769, 49153, # 30-31
   ]
 
   baseDistanceExtraBits* = [
@@ -103,7 +104,8 @@ const
     10, 10, # 22-23
     11, 11, # 24-25
     12, 12, # 26-27
-    13, 13 # 28-29
+    13, 13, # 28-29
+    14, 14, # 30-31
   ]
 
   clclOrder* = [
