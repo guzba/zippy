@@ -226,7 +226,8 @@ proc writeTarball*(
         "File name " & tail & " too long, must be < 100 characters"
       )
 
-    var header = newStringOfCap(512)
+    var header = newString(512)
+    header.setLen(0)
     header.add(tail)
     header.setLen(100)
     header.add("000777 \0") # File mode
